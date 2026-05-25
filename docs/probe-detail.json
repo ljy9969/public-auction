@@ -1,0 +1,26 @@
+[
+  {
+    "path": "/op/cltrpbancinf/cltr/cltrdtl/CltrDtlController/mvmnCltrDtl.do",
+    "status": 404,
+    "len": 2623,
+    "has_table": false
+  },
+  {
+    "path": "/op/cltrpbancinf/cltr/cltrdtl/CltrDtlController/selectCltrDtl.do",
+    "status": 404,
+    "len": 2623,
+    "has_table": false
+  },
+  {
+    "path": "/op/cltrpbancinf/cltr/cltrdtl/CltrDtlController/mvmnCltrPbctDtl.do",
+    "status": 404,
+    "len": 2623,
+    "has_table": false
+  },
+  {
+    "path": "/op/cta/cltrpbancinf/cltr/cltrdtl/CltrDtlController/mvmnCltrDtl.do",
+    "status": 404,
+    "len": 2623,
+    "has_table": false
+  }
+]

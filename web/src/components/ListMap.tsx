@@ -1,0 +1,151 @@
+import { useEffect, useRef } from "react";
+
+export interface ListMarker {
+  id: number;
+  lat: number;
+  lng: number;
+  label: string;
+  index: number;
+}
+
+interface Props {
+  markers: ListMarker[];
+  highlightedId: number | null;
+  /** Optional click handler — selects a list item from the map */
+  onMarkerClick?: (id: number) => void;
+}
+
+type NaverMap = {
+  setCenter: (latlng: unknown) => void;
+  panTo: (latlng: unknown) => void;
+  fitBounds: (bounds: unknown) => void;
+  setZoom: (z: number) => void;
+};
+
+type NaverMarker = {
+  setMap: (m: NaverMap | null) => void;
+  setIcon: (icon: object) => void;
+  setZIndex: (z: number) => void;
+  getPosition: () => unknown;
+  addListener: (ev: string, fn: () => void) => void;
+};
+
+type NaverMaps = {
+  Map: new (el: HTMLElement, opts: object) => NaverMap;
+  LatLng: new (lat: number, lng: number) => unknown;
+  LatLngBounds: new () => { extend: (latlng: unknown) => void };
+  Marker: new (opts: object) => NaverMarker;
+  Point: new (x: number, y: number) => unknown;
+  Size: new (w: number, h: number) => unknown;
+};
+
+type NaverWindow = Window & { naver?: { maps?: NaverMaps } };
+
+const SCRIPT_ID = "naver-map-sdk";
+
+function makeIcon(naver: NaverMaps, num: number, active: boolean) {
+  const bg = active ? "#ef4444" : "#1d4ed8";
+  const scale = active ? "scale(1.35)" : "scale(1)";
+  return {
+    content: `<div style="background:${bg};color:#fff;width:28px;height:28px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.35);transform:${scale};transition:transform 0.15s ease-out,background 0.15s">${num}</div>`,
+    size: new naver.Size(28, 28),
+    anchor: new naver.Point(14, 14),
+  };
+}
+
+export default function ListMap({ markers, highlightedId, onMarkerClick }: Props) {
+  const mapDiv = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<NaverMap | null>(null);
+  const markerInstances = useRef<NaverMarker[]>([]);
+  const naverKey = (import.meta.env.VITE_NAVER_MAP_CLIENT_ID as string | undefined)?.trim();
+
+  // Initialize map + markers when the marker set changes
+  useEffect(() => {
+    if (!naverKey || !mapDiv.current || markers.length === 0) return;
+
+    const init = () => {
+      const naver = (window as NaverWindow).naver?.maps;
+      if (!naver || !mapDiv.current) return;
+
+      markerInstances.current.forEach((m) => m.setMap(null));
+      markerInstances.current = [];
+
+      const bounds = new naver.LatLngBounds();
+      markers.forEach((m) => bounds.extend(new naver.LatLng(m.lat, m.lng)));
+
+      const map = new naver.Map(mapDiv.current, { zoom: 14 });
+      mapInstance.current = map;
+
+      if (markers.length === 1) {
+        map.setCenter(new naver.LatLng(markers[0].lat, markers[0].lng));
+        map.setZoom(15);
+      } else {
+        map.fitBounds(bounds);
+      }
+
+      markerInstances.current = markers.map((m) => {
+        const marker = new naver.Marker({
+          position: new naver.LatLng(m.lat, m.lng),
+          map,
+          title: m.label,
+          icon: makeIcon(naver, m.index, false),
+          zIndex: 100,
+        });
+        if (onMarkerClick) {
+          marker.addListener("click", () => onMarkerClick(m.id));
+        }
+        return marker;
+      });
+    };
+
+    const w = window as NaverWindow;
+    if (w.naver?.maps) {
+      init();
+      return;
+    }
+    if (document.getElementById(SCRIPT_ID)) {
+      const t = window.setInterval(() => {
+        if ((window as NaverWindow).naver?.maps) {
+          window.clearInterval(t);
+          init();
+        }
+      }, 60);
+      return () => window.clearInterval(t);
+    }
+    const s = document.createElement("script");
+    s.id = SCRIPT_ID;
+    s.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${encodeURIComponent(naverKey)}`;
+    s.async = true;
+    s.onload = init;
+    document.head.appendChild(s);
+  }, [markers, naverKey, onMarkerClick]);
+
+  // Update highlight when selection changes
+  useEffect(() => {
+    const naver = (window as NaverWindow).naver?.maps;
+    if (!naver) return;
+    markers.forEach((m, i) => {
+      const marker = markerInstances.current[i];
+      if (!marker) return;
+      const active = m.id === highlightedId;
+      marker.setIcon(makeIcon(naver, m.index, active));
+      marker.setZIndex(active ? 1000 : 100);
+    });
+    if (highlightedId != null && mapInstance.current) {
+      const m = markers.find((x) => x.id === highlightedId);
+      if (m) mapInstance.current.panTo(new naver.LatLng(m.lat, m.lng));
+    }
+  }, [highlightedId, markers]);
+
+  if (!naverKey) {
+    return (
+      <div className="list-map-empty">
+        지도를 보려면 <code>web/.env</code>의 <code>VITE_NAVER_MAP_CLIENT_ID</code>를 설정하세요.
+      </div>
+    );
+  }
+  if (markers.length === 0) {
+    return <div className="list-map-empty">표시할 좌표가 있는 물건이 없습니다.</div>;
+  }
+  return <div ref={mapDiv} className="list-map" />;
+}

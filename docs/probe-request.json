@@ -1,0 +1,23 @@
+{
+  "csrf": "25395e2a-f176-4d68-810a-b35e3449f1bf",
+  "requests": [
+    {
+      "url": "https://www.onbid.co.kr/op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/srchCltrCdtn.do",
+      "method": "POST",
+      "post_data": "pageIndex=1&srchBidPerdBgngDt=2026-05-25&srchBidPerdEndDt=2026-06-25&srchPvctYn=&srchArrayCtgrId=&srchArrayRgn=&srchWordType=0001&srchSortType=ASC&srchLowstBidBgngPrc=&srchLowstBidEndPrc=&srchApslEvlBgngAmt=&srchApslEvlEndAmt=&cltrScrnGrpCd=&cltrPrptDivCd=&onbidCltrno=&onbidPbancNo=&pbctNo=&pbctCdtnNo=&srchLowstBidBgng=&srchApslEvlAmtType=001&rtnListUrl=&searchCltrMnmtNoYn=N&test=&pinHistory=&dtlChk=&srchPbancStatSrchPvctYn=&srchCltrType=0001&srchPrptType=&srchPrptType=0007&srchPrptType=0010&srchPrptType=0005&srchPrptType=0003&srchPrptType=0013&srchPrptType=0002&srchPrptType=0011&srchPrptType=0006&srchPrptType=0008&srchPrptType=0004&srchDspsMthod=&checkMobileUsg=on&checkMobileRgn=on&calOpbdBgdd=&calOpbdEndd=&srchBidDivType=&srchBidPerdType=0002&calBidPerdBgngDt=2026-05-25&calhBidPerdEndDt=2026-06-25&srchBidMthod=&scr02_011=0&srchApslEvlBgngType=&srchApslEvlEndType=&scr02_01=0&srchLowstBidBgngType=&srchLowstBidEndType=&srchLdarType=ALL&srchMinLdar=&srchMaxLdar=&srchBldSqmsType=ALL&srchMinBldLdar=&srchMaxBldLdar=&srchMvastMkr=&srchMvastMdlNm=&srchMvastMnftYr=&srchMvastMbs=&srchScrtNm=&srchItmNm=&srchStkKind=&srchDsplFinCo=&srchNplKind=&hdorAstCfmtnBgdd=&hdorAstCfmtnEndd=&srchVhcMkr=&srchVhcMdlNm=&srchVhcYrmdl=&srchDrvDstcBgng=&srchDrvDstcEnd=&srchFuelType=&srchFuelType=0001&srchFuelType=0002&srchFuelType=0003&srchFuelType=0004&srchFuelType=0005&srchFuelType=0006&srchFuelType=0007&srchFuelType=0008&srchFuelType=0099&srchAlcYnType=&srchUsbdNftType=ALL&srchUsbdNftBgng=&srchUsbdNftEnd=&srchCltrNm=&srchCltrMnmtNo=&srchOrgNm=&pageUnit=10",
+      "headers": {
+        "sec-ch-ua-platform": "\"Windows\"",
+        "x-csrf-token": "25395e2a-f176-4d68-810a-b35e3449f1bf",
+        "referer": "https://www.onbid.co.kr/op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/mvmnCltrCdtnSrchClg.do",
+        "ajax": "true",
+        "accept-language": "ko-KR",
+        "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+        "sec-ch-ua-mobile": "?0",
+        "x-requested-with": "XMLHttpRequest",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/148.0.7778.96 Safari/537.36",
+        "accept": "text/plain, */*; q=0.01",
+        "content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+      }
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+# User search criteria → Onbid form + post-filters
+
+onbid:
+  base_url: https://www.onbid.co.kr
+  search_path: /op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/mvmnCltrCdtnSrchClg.do
+  list_path: /op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/srchCltrCdtn.do
+  detail_path: /op/cltrpbancinf/cltr/cltrdtl/CltrDtlController/mvmnCltrDtl.do
+  page_unit: 30
+  request_delay_sec: 1.5
+
+form:
+  srch_cltr_type: "0001"          # 부동산
+  srch_dsps_mthod: "0001"         # 매각
+  srch_bid_mthod: "0001"          # 전자입찰
+  srch_bid_div_type: "0001"       # 일반경쟁
+  # 토지(대) 지분은 다세대·오피스텔의 정상 구조이므로 검색 단계에서는 지분도 포함시키고,
+  # post-filter에서 건물 지분만 차단한다.
+  srch_shr_yn: ""
+  srch_lowst_bid_end_prc: 300000000
+  srch_bld_sqms_type: RANGE
+  srch_min_bld_ldar: 24
+  srch_sort_type: ASC
+  srch_word_type: "0001"
+  bid_period_days: 90
+  # 용도: 주거(0007), 용도복합·오피스텔(0005) — 상가·업무(0010) 제외
+  srch_prpt_types:
+    - "0007"
+    - "0005"
+  # 서울 송파·강남 (동 단위 검색어로 한정 — broad gu-only 검색 없음)
+  srch_array_rgn:
+    - "1100000000|1171000000"   # 서울 송파구
+    - "1100000000|1168000000"   # 서울 강남구
+
+regions:
+  # 송파구 화이트리스트
+  # 행정동(잠실본·삼전·석촌·송파1·방이2) + 법정동(방이·송파) 혼합 등록 — 온비드 매물 주소가
+  # 법정동으로만 표기되는 경우(예: '송파구 방이동 35-4')도 잡기 위함.
+  # 단, 잠실동(법정)은 잠실2~7동까지 포괄하므로 추가하지 않고 잠실본동(행정)만 유지.
+  songpa_dongs:
+    - 잠실본동
+    - 삼전동
+    - 석촌동
+    - 송파1동
+    - 방이2동
+    - 방이동
+    - 송파동
+  # 선릉역 3km 이내 강남 동만 (자곡·개포·일원 등 남부 제외)
+  gangnam_whitelist:
+    - 삼성동
+    - 대치동
+    - 역삼동
+    - 논현동
+    - 청담동
+    - 압구정동
+    - 신사동
+  seolleung:
+    lat: 37.5045
+    lng: 127.0489
+    radius_km: 3.0
+  transit_destination:
+    address: "서울 강남구 선릉로 433"
+    lat: 37.5045
+    lng: 127.0489
+
+post_filters:
+  max_transit_minutes: 30
+  max_fail_count: 3
+  max_min_price: 300000000
+  exclude_land_only: true
+  require_elevator: true
+  # 제목에 명시적 지분 표기가 있는 경우만 (예: '지분매각', '○○○ 지분')
+  exclude_share_keywords:
+    - 지분매각
+    - 지분처분
+    - 공유지분
+    - 대지지분
+  # 카테고리 부분 일치로 차단
+  exclude_categories:
+    - 상가용및업무용건물

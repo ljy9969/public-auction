@@ -1,0 +1,33 @@
+# Onbid UI / HTML selectors (condition search + detail)
+
+search_page:
+  csrf_meta: 'meta[name="_csrf"]'
+  search_button: '#btnSrch, button.srch, .btn_srch'
+
+list:
+  # JSON API — no DOM selectors for rows
+  json_root: cltrInfVOList
+
+detail:
+  url_template: >-
+    https://www.onbid.co.kr/op/cltrpbancinf/cltr/cltrdtl/CltrDtlController/mvmnCltrDtl.do
+  url_params:
+    - onbidCltrno
+    - pbctCdtnNo
+    - pbctNo
+    - onbidPbancNo
+  title: '.detail_tit, h2.tit, .cltr_nm'
+  tables: 'table.tbl_list, table.data_table, .tbl_type01 table'
+  row_label: 'th'
+  row_value: 'td'
+  rights_section: 'text=권리관계'
+  schedule_section: 'text=입찰일정'
+  share_keywords:
+    - 지분
+    - 대지지분
+
+popups:
+  close:
+    - "button:has-text('닫기')"
+    - '.layer_close'
+    - '#todayClose'
