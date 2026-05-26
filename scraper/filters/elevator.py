@@ -44,6 +44,11 @@ def apply_elevator_filter(prop: dict[str, Any], raw: dict[str, Any] | None = Non
     if not criteria.get("post_filters", {}).get("require_elevator", True):
         return prop
 
+    # 토지/도로 매물은 엘리베이터 무의미 — 스킵
+    cat = (prop.get("category") or "") + (prop.get("title") or "")
+    if any(k in cat for k in ("도로", "토지", "전 /", "답 /", "과수원", "임야", "대지")):
+        return prop
+
     notes: list[str] = list(prop.get("filter_notes") or [])
     yn = resolve_elevator_yn(prop, raw)
     prop["elevator_yn"] = yn

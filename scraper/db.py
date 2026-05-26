@@ -67,6 +67,27 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     ("transit_mode", "TEXT"),
     ("cltr_mnmt_no", "TEXT"),
     ("transit_summary", "TEXT"),
+    ("image_url", "TEXT"),
+    ("image_urls", "TEXT"),  # JSON array
+    ("atch_file_lst_no", "INTEGER"),
+    # 국토부 실거래가 기반 시세 통계
+    ("market_median_price", "INTEGER"),
+    ("market_min_price", "INTEGER"),
+    ("market_max_price", "INTEGER"),
+    ("market_sample_count", "INTEGER"),
+    ("market_period_months", "INTEGER"),
+    ("market_diff_percent", "REAL"),
+    ("market_endpoint_label", "TEXT"),
+    ("market_match_kind", "TEXT"),
+    ("market_samples", "TEXT"),  # JSON
+    # 임대 수익률 (전월세 실거래)
+    ("rental_monthly_avg", "INTEGER"),
+    ("rental_deposit_avg", "INTEGER"),
+    ("rental_sample_count", "INTEGER"),
+    ("rental_yield_percent", "REAL"),
+    ("rental_match_kind", "TEXT"),
+    ("rental_endpoint_label", "TEXT"),
+    ("rental_samples", "TEXT"),  # JSON
 ]
 
 
@@ -160,6 +181,34 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
         "transit_mode": prop.get("transit_mode"),
         "cltr_mnmt_no": prop.get("cltr_mnmt_no"),
         "transit_summary": prop.get("transit_summary"),
+        "image_url": prop.get("image_url"),
+        "image_urls": (
+            json.dumps(prop.get("image_urls"), ensure_ascii=False)
+            if prop.get("image_urls") else None
+        ),
+        "atch_file_lst_no": prop.get("atch_file_lst_no"),
+        "market_median_price": prop.get("market_median_price"),
+        "market_min_price": prop.get("market_min_price"),
+        "market_max_price": prop.get("market_max_price"),
+        "market_sample_count": prop.get("market_sample_count"),
+        "market_period_months": prop.get("market_period_months"),
+        "market_diff_percent": prop.get("market_diff_percent"),
+        "market_endpoint_label": prop.get("market_endpoint_label"),
+        "market_match_kind": prop.get("market_match_kind"),
+        "market_samples": (
+            json.dumps(prop.get("market_samples"), ensure_ascii=False)
+            if prop.get("market_samples") else None
+        ),
+        "rental_monthly_avg": prop.get("rental_monthly_avg"),
+        "rental_deposit_avg": prop.get("rental_deposit_avg"),
+        "rental_sample_count": prop.get("rental_sample_count"),
+        "rental_yield_percent": prop.get("rental_yield_percent"),
+        "rental_match_kind": prop.get("rental_match_kind"),
+        "rental_endpoint_label": prop.get("rental_endpoint_label"),
+        "rental_samples": (
+            json.dumps(prop.get("rental_samples"), ensure_ascii=False)
+            if prop.get("rental_samples") else None
+        ),
     }
     cols = ", ".join(fields.keys())
     placeholders = ", ".join("?" * len(fields))
@@ -212,7 +261,7 @@ def count_properties(passes_only: bool = True, db_path: Path | None = None) -> i
 
 def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
     d = dict(row)
-    for key in ("detail_json", "rights_json", "schedule_json", "filter_notes"):
+    for key in ("detail_json", "rights_json", "schedule_json", "filter_notes", "market_samples", "rental_samples", "image_urls"):
         if d.get(key):
             try:
                 d[key] = json.loads(d[key])

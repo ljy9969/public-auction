@@ -1,18 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import MarketRangeChart from "../components/MarketRangeChart";
+import PhotoGallery from "../components/PhotoGallery";
 import PropertyMap from "../components/PropertyMap";
 import {
   bidDeposit,
   buildingAge,
   buildingAgeCategory,
+  dDayLevel,
   fetchProperties,
   fetchProperty,
   formatArea,
   formatDDay,
+  formatDate,
   formatDateTime,
   formatPrice,
+  formatPriceFull,
   formatStatus,
-  formatUseAprDay,
   isRedundantTag,
   parseFloor,
   tagCategory,
@@ -126,10 +130,6 @@ export default function PropertyDetail() {
 
   return (
     <div className="detail-page">
-      <p className="back-link">
-        <Link to="/">← 목록으로</Link>
-      </p>
-
       <header className="detail-hero">
         <div className="hero-meta">
           {prop.category && <span className="hero-category">{prop.category}</span>}
@@ -151,20 +151,51 @@ export default function PropertyDetail() {
             )}
           </div>
         </div>
-        <h1 className="hero-title">{prop.title}</h1>
-        {(prop.address_jibun || prop.region_line) && (
-          <p className="hero-address">{prop.address_jibun || prop.region_line}</p>
-        )}
+        <div className="hero-main">
+          <div className="hero-left">
+            <h1 className="hero-title">{prop.title}</h1>
+            {(prop.address_jibun || prop.region_line) && (
+              <p className="hero-address">{prop.address_jibun || prop.region_line}</p>
+            )}
+          </div>
+          {prop.source_url && (
+            <a
+              href={prop.source_url}
+              target="_blank"
+              rel="noreferrer"
+              className="cta-button cta-hero"
+            >
+              온비드 원문 보기 →
+            </a>
+          )}
+        </div>
       </header>
+
+      {(prop.image_urls?.length || prop.image_url) && (
+        <PhotoGallery
+          urls={prop.image_urls && prop.image_urls.length > 0
+            ? prop.image_urls
+            : prop.image_url
+            ? [prop.image_url]
+            : []}
+          alt={prop.title}
+        />
+      )}
 
       <section className="kpi-row">
         <div className="kpi-card primary">
           <span className="kpi-label">최저입찰가</span>
-          <span className="kpi-value">{formatPrice(prop.min_price)}</span>
+          <div className="kpi-value-row">
+            <span className="kpi-value">{formatPriceFull(prop.min_price)}</span>
+            <span className="kpi-sub">{formatPrice(prop.min_price)}</span>
+          </div>
         </div>
         <div className="kpi-card">
           <span className="kpi-label">감정가</span>
-          <span className="kpi-value">{formatPrice(prop.appraisal_price)}</span>
+          <div className="kpi-value-row">
+            <span className="kpi-value">{formatPriceFull(prop.appraisal_price)}</span>
+            <span className="kpi-sub">{formatPrice(prop.appraisal_price)}</span>
+          </div>
         </div>
         <div className="kpi-card">
           <span className="kpi-label">할인율</span>
@@ -204,7 +235,7 @@ export default function PropertyDetail() {
                   label: "사용승인일",
                   value: prop.use_apr_day ? (
                     <>
-                      {formatUseAprDay(prop.use_apr_day)}
+                      {formatDate(prop.use_apr_day)}
                       {buildingAge(prop.use_apr_day) && (
                         <span style={{ color: "#64748b", marginLeft: "0.5rem" }}>
                           ({buildingAge(prop.use_apr_day)})
@@ -240,7 +271,9 @@ export default function PropertyDetail() {
                     <>
                       {formatDateTime(prop.bid_start)}
                       {formatDDay(prop.bid_start) && (
-                        <span className="dday-pill">{formatDDay(prop.bid_start)}</span>
+                        <span className={`dday-pill dday-${dDayLevel(prop.bid_start)}`}>
+                          {formatDDay(prop.bid_start)}
+                        </span>
                       )}
                     </>
                   ) : null,
@@ -251,7 +284,9 @@ export default function PropertyDetail() {
                     <>
                       {formatDateTime(prop.bid_end)}
                       {formatDDay(prop.bid_end) && (
-                        <span className="dday-pill">{formatDDay(prop.bid_end)}</span>
+                        <span className={`dday-pill dday-${dDayLevel(prop.bid_end)}`}>
+                          {formatDDay(prop.bid_end)}
+                        </span>
                       )}
                     </>
                   ) : null,
@@ -291,6 +326,287 @@ export default function PropertyDetail() {
             />
           </section>
 
+          <section className="detail-section">
+            <h3 className="section-title">시세 검증</h3>
+            {prop.market_median_price != null && prop.market_samples ? (
+              <>
+                <p className="section-hint">
+                  국토부 실거래가 {prop.market_endpoint_label} {prop.market_period_months}개월 윈도우 ·{" "}
+                  {prop.market_match_kind === "building"
+                    ? `같은 단지 ${prop.market_sample_count}건`
+                    : `같은 동 ${prop.market_sample_count}건`}
+                </p>
+                <div className="market-summary">
+                  <div className="market-stat">
+                    <span className="market-stat-label">시세 중앙값</span>
+                    <span className="market-stat-value">
+                      {formatPriceFull(prop.market_median_price)}
+                    </span>
+                    <span className="market-stat-sub">
+                      {formatPrice(prop.market_median_price)}
+                    </span>
+                  </div>
+                  <div className="market-stat">
+                    <span className="market-stat-label">최저~최고</span>
+                    <span className="market-stat-value market-range">
+                      {formatPrice(prop.market_min_price)} ~ {formatPrice(prop.market_max_price)}
+                    </span>
+                  </div>
+                  <div className="market-stat">
+                    <span className="market-stat-label">우리 매물 vs 시세</span>
+                    {prop.market_diff_percent != null && (
+                      <span
+                        className={`market-diff ${
+                          prop.market_diff_percent < -3
+                            ? "good"
+                            : prop.market_diff_percent > 3
+                            ? "warn"
+                            : "neutral"
+                        }`}
+                      >
+                        {prop.market_diff_percent > 0 ? "+" : ""}
+                        {prop.market_diff_percent}%{" "}
+                        {prop.market_diff_percent < -3
+                          ? "(저렴)"
+                          : prop.market_diff_percent > 3
+                          ? "(시세 상회)"
+                          : "(시세 근접)"}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {prop.market_min_price != null &&
+                  prop.market_max_price != null &&
+                  prop.market_median_price != null && (
+                    <MarketRangeChart
+                      min={prop.market_min_price}
+                      median={prop.market_median_price}
+                      max={prop.market_max_price}
+                      ourPrice={prop.min_price}
+                      samples={prop.market_samples}
+                    />
+                  )}
+                {prop.market_samples.length > 0 && (() => {
+                  const prices = prop.market_samples
+                    .map((s) => s.deal_amount)
+                    .filter((p): p is number => p != null);
+                  const minP = prices.length ? Math.min(...prices) : null;
+                  const maxP = prices.length ? Math.max(...prices) : null;
+                  const ourBuilding = prop.building_name;
+                  const ourArea = prop.area_build_m2;
+                  const ourFloor = floor.current;
+                  const matches = prop.market_samples.map((s) => {
+                    const sameBuilding =
+                      !!ourBuilding && !!s.name && s.name.trim() === ourBuilding.trim();
+                    const sameArea =
+                      ourArea != null &&
+                      s.area_m2 != null &&
+                      Math.abs(s.area_m2 - ourArea) < 0.5;
+                    const sameFloor =
+                      ourFloor != null && s.floor != null && s.floor === ourFloor;
+                    return sameBuilding && sameArea && sameFloor;
+                  });
+                  const matchCount = matches.filter(Boolean).length;
+                  const distinctive = matchCount > 0 && matchCount < matches.length;
+                  return (
+                    <div className="market-samples-scroll">
+                      <table className="market-samples-table">
+                        <thead>
+                          <tr>
+                            <th>단지</th>
+                            <th>면적</th>
+                            <th>층</th>
+                            <th>거래가</th>
+                            <th>거래일</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {prop.market_samples.map((s, i) => {
+                            const isMin = minP != null && s.deal_amount === minP;
+                            const isMax = maxP != null && s.deal_amount === maxP && maxP !== minP;
+                            const exactMatch = matches[i] && distinctive;
+                            const classes = [
+                              isMin ? "price-min" : isMax ? "price-max" : "",
+                              exactMatch ? "exact-match" : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ");
+                            return (
+                              <tr key={i}>
+                                <td>{s.name || "-"}</td>
+                                <td>{formatArea(s.area_m2)}</td>
+                                <td>{s.floor != null ? `${s.floor}층` : "-"}</td>
+                                <td className={classes}>{formatPrice(s.deal_amount)}</td>
+                                <td>{formatDate(s.deal_date)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })()}
+                <p className="section-hint" style={{ marginTop: "0.75rem" }}>
+                  추가 검증 (KB / 네이버는 자동 시세 비공개) — 외부 사이트 직접 확인 권장
+                </p>
+              </>
+            ) : (
+              <p className="section-hint">
+                시세 데이터 미수집 — <code>python -m scripts.backfill_realprice</code> 실행 후 표시됩니다.
+              </p>
+            )}
+            <div className="market-links">
+              <a
+                href={`https://kbland.kr/search/search?searchKeyword=${encodeURIComponent(
+                  prop.building_name || prop.address_jibun || prop.title
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="market-link kb"
+              >
+                <span className="market-name">KB부동산</span>
+                <span className="market-desc">
+                  {prop.building_name ? `「${prop.building_name}」 단지 검색` : "단지 검색"}
+                </span>
+              </a>
+              <a
+                href={`https://m.land.naver.com/search/result/${encodeURIComponent(
+                  prop.building_name || prop.address_jibun || prop.title
+                )}`}
+                target="_blank"
+                rel="noreferrer"
+                className="market-link naver"
+              >
+                <span className="market-name">네이버 부동산</span>
+                <span className="market-desc">
+                  {prop.building_name ? `「${prop.building_name}」 매물 검색` : "매물 검색"}
+                </span>
+              </a>
+            </div>
+          </section>
+
+          {prop.rental_yield_percent != null && (
+            <section className="detail-section">
+              <h3 className="section-title">
+                예상 임대 수익률
+                <button
+                  type="button"
+                  className="info-tip"
+                  aria-label="계산식 보기"
+                  tabIndex={0}
+                >
+                  i
+                  <span className="info-tip-content">
+                    연 수익률 = (월세 × 12) ÷ (매수가 − 평균 보증금) × 100
+                  </span>
+                </button>
+              </h3>
+              <p className="section-hint">
+                국토부 오피스텔 전월세 12개월 ·{" "}
+                {prop.rental_match_kind === "building"
+                  ? `같은 단지 ${prop.rental_sample_count}건`
+                  : `같은 동 ${prop.rental_sample_count}건`}{" "}
+                · 보증금 차감 후 연 수익률
+              </p>
+              <div className="market-summary">
+                <div className="market-stat">
+                  <span className="market-stat-label">연 수익률 (예상)</span>
+                  <span
+                    className={`market-stat-value ${
+                      prop.rental_yield_percent >= 5
+                        ? "yield-good"
+                        : prop.rental_yield_percent >= 3
+                        ? "yield-mid"
+                        : "yield-low"
+                    }`}
+                  >
+                    {prop.rental_yield_percent.toFixed(2)}%
+                  </span>
+                </div>
+                <div className="market-stat">
+                  <span className="market-stat-label">월세 (중앙값)</span>
+                  <span className="market-stat-value">
+                    {prop.rental_monthly_avg != null
+                      ? `${(prop.rental_monthly_avg / 10000).toLocaleString()}만원`
+                      : "-"}
+                  </span>
+                </div>
+                <div className="market-stat">
+                  <span className="market-stat-label">보증금 (중앙값)</span>
+                  <span className="market-stat-value">
+                    {prop.rental_deposit_avg != null
+                      ? `${(prop.rental_deposit_avg / 10000).toLocaleString()}만원`
+                      : "-"}
+                  </span>
+                </div>
+              </div>
+              {prop.rental_samples && prop.rental_samples.length > 0 && (() => {
+                const samples = prop.rental_samples!;
+                const monthlies = samples
+                  .map((s) => s.monthly)
+                  .filter((m): m is number => m != null && m > 0);
+                const minM = monthlies.length ? Math.min(...monthlies) : null;
+                const maxM = monthlies.length ? Math.max(...monthlies) : null;
+                const ourBuilding = prop.building_name;
+                const ourArea = prop.area_build_m2;
+                const ourFloor = floor.current;
+                const matches = samples.map((s) => {
+                  const sameBuilding =
+                    !!ourBuilding && !!s.name && s.name.trim() === ourBuilding.trim();
+                  const sameArea =
+                    ourArea != null &&
+                    s.area_m2 != null &&
+                    Math.abs(s.area_m2 - ourArea) < 0.5;
+                  const sameFloor =
+                    ourFloor != null && s.floor != null && s.floor === ourFloor;
+                  return sameBuilding && sameArea && sameFloor;
+                });
+                const matchCount = matches.filter(Boolean).length;
+                const distinctive = matchCount > 0 && matchCount < matches.length;
+                return (
+                  <div className="market-samples-scroll">
+                    <table className="market-samples-table">
+                      <thead>
+                        <tr>
+                          <th>단지</th>
+                          <th>면적</th>
+                          <th>층</th>
+                          <th>보증금/월세</th>
+                          <th>거래일</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {samples.map((s, i) => {
+                          const isMin = minM != null && s.monthly === minM;
+                          const isMax = maxM != null && s.monthly === maxM && maxM !== minM;
+                          const exactMatch = matches[i] && distinctive;
+                          const classes = [
+                            isMin ? "price-min" : isMax ? "price-max" : "",
+                            exactMatch ? "exact-match" : "",
+                          ]
+                            .filter(Boolean)
+                            .join(" ");
+                          return (
+                            <tr key={i}>
+                              <td>{s.name || "-"}</td>
+                              <td>{s.area_m2 ? `${s.area_m2}㎡` : "-"}</td>
+                              <td>{s.floor != null ? `${s.floor}층` : "-"}</td>
+                              <td className={classes}>
+                                {(s.deposit / 10000).toLocaleString()} /{" "}
+                                {(s.monthly / 10000).toLocaleString()}만
+                              </td>
+                              <td>{formatDate(s.deal_date)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()}
+            </section>
+          )}
+
           {(() => {
             const visibleNotes = (prop.filter_notes || []).filter(
               (t) => !isRedundantTag(t)
@@ -309,16 +625,6 @@ export default function PropertyDetail() {
             ) : null;
           })()}
 
-          {prop.source_url && (
-            <a
-              href={prop.source_url}
-              target="_blank"
-              rel="noreferrer"
-              className="cta-button"
-            >
-              온비드 원문 보기 →
-            </a>
-          )}
         </div>
 
         <aside className="detail-aside">

@@ -48,6 +48,30 @@ def _extract_jibun(title: str, region: str) -> str | None:
     return m.group(1) if m else None
 
 
+def _cltr_image_url(row: dict[str, Any]) -> str | None:
+    """Onbid 매물 대표 사진 (첫 번째 — atchSn=2)."""
+    atch_lst = row.get("atchFileLstNo")
+    if not atch_lst:
+        return None
+    return _cltr_image_url_for(atch_lst, 2)
+
+
+def _cltr_image_url_for(atch_lst: Any, sn: int) -> str:
+    return (
+        "https://www.onbid.co.kr/op/cm/syc/filemng/filemngprcs/FileMngPrcsController/"
+        f"dnldImgFile.do?atchFileLstNo={atch_lst}&atchSn={sn}"
+        "&thnImgDownloadFlag=false&downloadImageKind=CLG_FILE_NM"
+    )
+
+
+def _cltr_image_urls(row: dict[str, Any], max_count: int = 5) -> list[str]:
+    """대표 사진 + 추가 사진들 (atchSn 2..N). 실제 존재 여부는 프론트에서 onerror 처리."""
+    atch_lst = row.get("atchFileLstNo")
+    if not atch_lst:
+        return []
+    return [_cltr_image_url_for(atch_lst, sn) for sn in range(2, 2 + max_count)]
+
+
 def parse_list_row(row: dict[str, Any]) -> dict[str, Any]:
     title = (row.get("onbidCltrNm") or "").strip()
     region = (row.get("sidoSgkEmd") or "").strip()
@@ -76,6 +100,9 @@ def parse_list_row(row: dict[str, Any]) -> dict[str, Any]:
         "region_line": region,
         "source_url": public_source_url(row),
         "cltr_mnmt_no": row.get("scrnIndctCltrMngNo") or row.get("cltrMnmtNo"),
+        "image_url": _cltr_image_url(row),
+        "image_urls": _cltr_image_urls(row, max_count=5),
+        "atch_file_lst_no": row.get("atchFileLstNo"),
         "scraped_at": datetime.now(timezone.utc).isoformat(),
         "raw_list": row,
     }

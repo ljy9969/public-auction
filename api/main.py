@@ -110,16 +110,54 @@ def trigger_scrape(
     return ScrapeTriggerResponse(started=True, message="Scrape started in background")
 
 
+def _latest_db_run() -> dict[str, Any] | None:
+    """In-memory state는 uvicorn 재시작 시 휘발 — DB의 search_runs에서 가장 최근 완료 행 조회."""
+    try:
+        conn = scraper_db.get_connection()
+        row = conn.execute(
+            "SELECT id, started_at, finished_at, count, error "
+            "FROM search_runs WHERE finished_at IS NOT NULL "
+            "ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        conn.close()
+        return dict(row) if row else None
+    except Exception:
+        return None
+
+
+def _parse_iso(s: str | None) -> datetime | None:
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
 @app.get("/api/scrape/status", response_model=ScrapeStatus)
 def scrape_status() -> ScrapeStatus:
+    finished_at = _scrape_state.get("finished_at")
+    started_at = _scrape_state.get("started_at")
+    last_run_id = _scrape_state.get("last_run_id")
+    count = _scrape_state.get("count", 0)
+    error = _scrape_state.get("error")
+    # In-memory 비어있고 진행 중도 아니면 DB 마지막 run으로 보강
+    if not _scrape_state["running"] and finished_at is None:
+        last = _latest_db_run()
+        if last:
+            finished_at = _parse_iso(last.get("finished_at"))
+            started_at = _parse_iso(last.get("started_at"))
+            last_run_id = last.get("id")
+            count = last.get("count", 0) or 0
+            error = last.get("error")
     return ScrapeStatus(
         running=_scrape_state["running"],
-        last_run_id=_scrape_state.get("last_run_id"),
-        started_at=_scrape_state.get("started_at"),
-        finished_at=_scrape_state.get("finished_at"),
+        last_run_id=last_run_id,
+        started_at=started_at,
+        finished_at=finished_at,
         message=_scrape_state.get("message"),
-        count=_scrape_state.get("count", 0),
-        error=_scrape_state.get("error"),
+        count=count,
+        error=error,
     )
 
 

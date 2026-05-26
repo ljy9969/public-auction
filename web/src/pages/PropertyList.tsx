@@ -4,30 +4,32 @@ import ListMap, { type ListMarker } from "../components/ListMap";
 import {
   buildingAge,
   buildingAgeCategory,
+  dDayLevel,
   fetchProperties,
-  fetchScrapeStatus,
   formatArea,
   formatDDay,
   formatDateTime,
   formatPrice,
+  formatPriceFull,
   isCautionTag,
   isRedundantTag,
   parseFloor,
+  propertyTab,
+  PROPERTY_TABS,
   tagCategory,
   translateTag,
   transitModeLabel,
-  triggerScrape,
   type Property,
+  type PropertyTab,
 } from "../api";
 import { useFavorites } from "../favorites";
 
 export default function PropertyList() {
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const [scraping, setScraping] = useState(false);
-  const [lastRun, setLastRun] = useState<string | null>(null);
   const [maxFail, setMaxFail] = useState(3);
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
+  const [tab, setTab] = useState<PropertyTab>("용도복합·오피스텔");
   // 추가 필터 (클라이언트 사이드)
   const [favOnly, setFavOnly] = useState(false);
   const [regionFilter, setRegionFilter] = useState<"all" | "gangnam" | "songpa">("all");
@@ -62,27 +64,30 @@ export default function PropertyList() {
     load();
   }, [load]);
 
+  // 수집 완료 시 App.tsx에서 fire하는 이벤트로 목록 자동 갱신
   useEffect(() => {
-    fetchScrapeStatus().then((s) => {
-      setScraping(s.running);
-      if (s.finished_at) setLastRun(s.finished_at);
-    });
-    const t = setInterval(async () => {
-      const s = await fetchScrapeStatus();
-      setScraping(s.running);
-      if (s.finished_at) setLastRun(s.finished_at);
-      if (!s.running && scraping) load();
-    }, 5000);
-    return () => clearInterval(t);
-  }, [load, scraping]);
+    const onScrapeDone = () => load();
+    window.addEventListener("scrape:completed", onScrapeDone);
+    return () => window.removeEventListener("scrape:completed", onScrapeDone);
+  }, [load]);
 
-  async function onScrape() {
-    setScraping(true);
-    await triggerScrape(5);
-  }
+  const tabCounts = useMemo(() => {
+    const m: Record<PropertyTab, number> = {
+      "주거": 0,
+      "용도복합·오피스텔": 0,
+      "주거 지분": 0,
+      "도로": 0,
+    };
+    for (const p of items) {
+      const t = propertyTab(p);
+      if (t) m[t] += 1;
+    }
+    return m;
+  }, [items]);
 
   const filteredItems: Property[] = useMemo(() => {
     return items.filter((p) => {
+      if (propertyTab(p) !== tab) return false;
       if (favOnly && (p.id == null || !fav.has(p.id))) return false;
       if (regionFilter !== "all") {
         const addr = p.address_jibun || "";
@@ -104,7 +109,7 @@ export default function PropertyList() {
       }
       return true;
     });
-  }, [items, favOnly, regionFilter, priceMax, ageMax, floorFilter, fav]);
+  }, [items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, fav]);
 
   const markers: ListMarker[] = useMemo(
     () =>
@@ -140,19 +145,20 @@ export default function PropertyList() {
 
   return (
     <>
-      <div className="header-actions" style={{ marginBottom: "1rem" }}>
-        <button onClick={onScrape} disabled={scraping}>
-          {scraping ? "수집 중…" : "지금 수집"}
-        </button>
-        <button className="secondary" onClick={load} disabled={loading}>
-          새로고침
-        </button>
-        {lastRun && (
-          <span className="status-msg last-updated" style={{ color: "#64748b" }}>
-            마지막 갱신: {formatDateTime(lastRun)}
-          </span>
-        )}
-      </div>
+      <nav className="property-tabs" role="tablist">
+        {PROPERTY_TABS.map((t) => (
+          <button
+            key={t}
+            role="tab"
+            aria-selected={tab === t}
+            className={`property-tab ${tab === t ? "active" : ""}`}
+            onClick={() => setTab(t)}
+          >
+            {t}
+            <span className="property-tab-count">{tabCounts[t]}</span>
+          </button>
+        ))}
+      </nav>
 
       <div className="filters filter-bar">
         <button
@@ -297,9 +303,15 @@ export default function PropertyList() {
                     <dt>용도</dt>
                     <dd>{p.category || "-"}</dd>
                     <dt>최저가</dt>
-                    <dd>{formatPrice(p.min_price)}</dd>
+                    <dd>
+                      {formatPriceFull(p.min_price)}
+                      <span className="price-sub">{formatPrice(p.min_price)}</span>
+                    </dd>
                     <dt>감정가</dt>
-                    <dd>{formatPrice(p.appraisal_price)}</dd>
+                    <dd>
+                      {formatPriceFull(p.appraisal_price)}
+                      <span className="price-sub">{formatPrice(p.appraisal_price)}</span>
+                    </dd>
                     <dt>건물면적</dt>
                     <dd>{formatArea(p.area_build_m2)}</dd>
                     {floor.current != null && (
@@ -336,7 +348,9 @@ export default function PropertyList() {
                     <dd>
                       {formatDateTime(p.bid_start)}
                       {formatDDay(p.bid_start) && (
-                        <span className="dday-pill">{formatDDay(p.bid_start)}</span>
+                        <span className={`dday-pill dday-${dDayLevel(p.bid_start)}`}>
+                          {formatDDay(p.bid_start)}
+                        </span>
                       )}
                     </dd>
                     <dt>입찰 마감</dt>

@@ -32,19 +32,22 @@ def _matches_list_criteria(raw: dict, exclude_categories: tuple[str, ...] = ()) 
     price = raw.get("lowstBidPrc")
     if price is not None and float(price) > 300_000_000:
         return False
-    bld = raw.get("bldSqms") or 0
-    if float(bld) > 0 and float(bld) < 24:
-        return False
-    # shrYn=Y는 토지지분만 있어도 표시되므로 list 단계에서 자동 거절하지 않고
-    # 상세 페이지 면적정보로 건물 지분 여부를 따로 판단한다 (quality.py).
+    cat = (raw.get("ctgrFullNm") or raw.get("ctgrNm") or "")
+    is_land = any(k in cat for k in ("도로", "토지", "전 /", "답 /", "과수원", "임야", "대지"))
+
+    if not is_land:
+        # 건물 매물에만 24㎡ 면적 하한 적용
+        bld = raw.get("bldSqms") or 0
+        if float(bld) > 0 and float(bld) < 24:
+            return False
+    # 토지 지분(예: 도로 부속토지)은 입문자 권장 매물이므로 제목의 "지분매각" 키워드 허용
     title = (raw.get("onbidCltrNm") or "")
-    if any(kw in title for kw in ("지분매각", "지분처분", "공유지분")):
+    if not is_land and any(kw in title for kw in ("지분매각", "지분처분", "공유지분")):
         return False
     fail = raw.get("usbdCnt")
     if fail is not None and int(fail) > 2:
         return False
     if exclude_categories:
-        cat = (raw.get("ctgrFullNm") or raw.get("ctgrNm") or "")
         if any(ex and ex in cat for ex in exclude_categories):
             return False
     return True

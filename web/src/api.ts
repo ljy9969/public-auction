@@ -37,6 +37,44 @@ export interface Property {
   transit_mode: string | null;
   transit_summary: string | null;
   cltr_mnmt_no: string | null;
+  image_url: string | null;
+  image_urls: string[] | null;
+  atch_file_lst_no: number | null;
+  market_median_price: number | null;
+  market_min_price: number | null;
+  market_max_price: number | null;
+  market_sample_count: number | null;
+  market_period_months: number | null;
+  market_diff_percent: number | null;
+  market_endpoint_label: string | null;
+  market_match_kind: string | null;
+  market_samples: MarketSample[] | null;
+  rental_monthly_avg: number | null;
+  rental_deposit_avg: number | null;
+  rental_sample_count: number | null;
+  rental_yield_percent: number | null;
+  rental_match_kind: string | null;
+  rental_endpoint_label: string | null;
+  rental_samples: RentalSample[] | null;
+}
+
+export interface RentalSample {
+  name: string;
+  dong: string;
+  area_m2: number | null;
+  floor: number | null;
+  monthly: number;
+  deposit: number;
+  deal_date: string;
+}
+
+export interface MarketSample {
+  name: string;
+  dong: string;
+  area_m2: number | null;
+  floor: number | null;
+  deal_amount: number | null;
+  deal_date: string;
 }
 
 export async function fetchProperties(params: {
@@ -90,6 +128,12 @@ export function formatPrice(n: number | null | undefined): string {
   return `${Math.round(n / 10_000).toLocaleString()}만`;
 }
 
+/** "225,000,000원" — 1원 단위 정확한 금액 */
+export function formatPriceFull(n: number | null | undefined): string {
+  if (n == null) return "-";
+  return `${n.toLocaleString("ko-KR")}원`;
+}
+
 /** "29.65㎡ (8.97평)" — 1평 = 3.3058m² */
 export function formatArea(m2: number | null | undefined): string {
   if (m2 == null || m2 <= 0) return "-";
@@ -103,14 +147,55 @@ export function bidDeposit(minPrice: number | null | undefined): number | null {
   return Math.round(minPrice * 0.1);
 }
 
+export type PropertyTab = "주거" | "용도복합·오피스텔" | "주거 지분" | "도로";
+
+export const PROPERTY_TABS: PropertyTab[] = [
+  "용도복합·오피스텔",
+  "주거",
+  "주거 지분",
+  "도로",
+];
+
+/** 매물 → 4개 탭 분류 (없으면 null) */
+export function propertyTab(p: Property): PropertyTab | null {
+  const cat = p.category || "";
+  const haystack = cat + " " + (p.title || "");
+  if (
+    haystack.includes("도로") ||
+    /토지\s*\//.test(haystack) ||
+    haystack.includes("전 /") ||
+    haystack.includes("답 /") ||
+    haystack.includes("과수원") ||
+    haystack.includes("임야") ||
+    haystack.includes("대지")
+  ) {
+    return "도로";
+  }
+  if (cat.includes("용도복합") || cat.includes("오피스텔")) {
+    return "용도복합·오피스텔";
+  }
+  if (cat.includes("주거")) {
+    if (p.share_yn === "Y") return "주거 지분";
+    return "주거";
+  }
+  return null;
+}
+
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 function _parseDate(v: string | Date | null | undefined): Date | null {
   if (!v) return null;
   if (v instanceof Date) return isNaN(v.getTime()) ? null : v;
-  // Accept "YYYY-MM-DD HH:mm" (Onbid format) and ISO strings
-  const normalized = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(v) ? v.replace(" ", "T") : v;
-  const d = new Date(normalized);
+  let s = v;
+  // "20040319" (YYYYMMDD compact, 건축물대장 useAprDay 형식)
+  if (/^\d{8}$/.test(s)) {
+    s = `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}`;
+  }
+  // "YYYY-MM-DD HH:mm" (Onbid format)
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(s)) {
+    s = s.replace(" ", "T");
+  }
+  const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }
 
@@ -187,6 +272,13 @@ export function translateTag(tag: string): string {
   m = tag.match(/^quality: share interest$/);
   if (m) return "지분 (제외)";
 
+  // 위험 시그널 (danger.py)
+  m = tag.match(/^danger: (.+)$/);
+  if (m) return `위험: ${m[1]}`;
+
+  m = tag.match(/^caution: (.+)$/);
+  if (m) return `주의: ${m[1]}`;
+
   return tag;
 }
 
@@ -197,6 +289,7 @@ export function isCautionTag(tag: string): boolean {
 
 /** 태그를 색상 그룹으로 분류 — CSS 클래스 suffix 반환 */
 export function tagCategory(tag: string): string {
+  if (tag.startsWith("danger:")) return "danger";
   if (tag.includes("Gangnam") || tag.includes("강남")) return "gangnam";
   if (tag.includes("Songpa") || tag.includes("송파")) return "songpa";
   if (tag === "elevator: yes") return "elevator-yes";
@@ -284,6 +377,25 @@ export function formatDDay(v: string | Date | null | undefined, now: Date = new 
   if (diff === 0) return "D-Day";
   if (diff > 0) return `D-${diff}`;
   return `D+${Math.abs(diff)}`;
+}
+
+/** D-day 임박도 — 칩 색상 결정용 */
+export type DDayLevel = "far" | "medium" | "near" | "imminent" | "past";
+
+export function dDayLevel(
+  v: string | Date | null | undefined,
+  now: Date = new Date()
+): DDayLevel | null {
+  const d = _parseDate(v);
+  if (!d) return null;
+  const a = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const b = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diff = Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+  if (diff < 0) return "past";
+  if (diff <= 3) return "imminent";   // 0~3일: 진한 빨강
+  if (diff <= 7) return "near";       // 4~7일: 주황
+  if (diff <= 30) return "medium";    // 8~30일: 노랑/앰버
+  return "far";                       // 30일+: 청록
 }
 
 export type AgeCategory = "신축" | "준신축" | "일반" | "구축" | "노후";

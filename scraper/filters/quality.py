@@ -7,10 +7,16 @@ from typing import Any
 from scraper.session import load_criteria
 
 
+def _is_land_or_road(prop: dict[str, Any]) -> bool:
+    cat = (prop.get("category") or "") + (prop.get("title") or "")
+    return any(k in cat for k in ("도로", "토지", "전 /", "답 /", "과수원", "임야", "대지"))
+
+
 def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
     criteria = load_criteria()
     pf = criteria["post_filters"]
     notes: list[str] = list(prop.get("filter_notes") or [])
+    is_land = _is_land_or_road(prop)
 
     # Active bids only (rough: status not closed)
     status = (prop.get("status") or "").strip()
@@ -18,29 +24,25 @@ def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
         prop["passes_filters"] = False
         notes.append(f"quality: closed status ({status})")
 
-    # Land-only exclusion
-    if pf.get("exclude_land_only"):
-        cat = (prop.get("category") or "") + (prop.get("title") or "")
-        bld = prop.get("area_build_m2") or 0
-        if "토지 /" in cat or (bld <= 0 and "토지" in cat):
+    # Land/road exclusion — DISABLED when land is the target (소액 입문 토지 투자)
+    # 도로·토지·농지 지분은 소액 입문에 핵심 매물이므로 통과
+    # (책: '실전 부동산 경매' — 토지 지분 + 도로 부속토지 입문자 권장 종목)
+
+    if not is_land:
+        # Building area only matters for 건물 매물
+        bld = prop.get("area_build_m2")
+        if bld is not None and bld > 0 and bld < 24:
             prop["passes_filters"] = False
-            notes.append("quality: land-only")
+            notes.append(f"quality: building {bld}㎡ < 24㎡")
 
-    # Building area re-check >= 24 sqm
-    bld = prop.get("area_build_m2")
-    if bld is not None and bld > 0 and bld < 24:
-        prop["passes_filters"] = False
-        notes.append(f"quality: building {bld}㎡ < 24㎡")
-
-    # 건물 지분 차단 (토지지분만 있는 다세대·오피스텔은 허용)
-    bs = prop.get("building_shared")
-    if bs is True:
-        prop["passes_filters"] = False
-        notes.append("quality: building share (제외)")
-    # 상세 페이지를 못 가져왔는데 list-level shrYn=Y면 보수적으로 차단
-    elif bs is None and prop.get("share_yn") == "Y":
-        prop["passes_filters"] = False
-        notes.append("quality: share unresolved (detail unavailable)")
+        # 건물 지분 차단 (토지지분만 있는 다세대·오피스텔은 허용)
+        bs = prop.get("building_shared")
+        if bs is True:
+            prop["passes_filters"] = False
+            notes.append("quality: building share (제외)")
+        elif bs is None and prop.get("share_yn") == "Y":
+            prop["passes_filters"] = False
+            notes.append("quality: share unresolved (detail unavailable)")
 
     title = prop.get("title") or ""
     for kw in pf.get("exclude_share_keywords", []):

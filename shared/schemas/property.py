@@ -41,6 +41,25 @@ class PropertyBase(BaseModel):
     transit_mode: str | None = None
     transit_summary: str | None = None
     cltr_mnmt_no: str | None = None
+    image_url: str | None = None
+    image_urls: list[str] | None = None
+    atch_file_lst_no: int | None = None
+    market_median_price: int | None = None
+    market_min_price: int | None = None
+    market_max_price: int | None = None
+    market_sample_count: int | None = None
+    market_period_months: int | None = None
+    market_diff_percent: float | None = None
+    market_endpoint_label: str | None = None
+    market_match_kind: str | None = None
+    market_samples: list[dict[str, Any]] | None = None
+    rental_monthly_avg: int | None = None
+    rental_deposit_avg: int | None = None
+    rental_sample_count: int | None = None
+    rental_yield_percent: float | None = None
+    rental_match_kind: str | None = None
+    rental_endpoint_label: str | None = None
+    rental_samples: list[dict[str, Any]] | None = None
 
 
 class PropertyDetail(PropertyBase):

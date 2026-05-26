@@ -61,39 +61,57 @@ def fetch_building_info(address: str) -> dict[str, Any] | None:
     if not bun or bun == "0000":
         return None
 
-    try:
-        with httpx.Client(timeout=20.0) as c:
-            r = c.get(
-                REGISTRY_URL,
-                params={
-                    "serviceKey": bldg_key,
-                    "sigunguCd": b_code[:5],
-                    "bjdongCd": b_code[5:],
-                    "platGbCd": "1" if addr_info.get("mountain_yn") == "Y" else "0",
-                    "bun": bun,
-                    "ji": ji,
-                    "_type": "json",
-                    "numOfRows": "30",
-                    "pageNo": "1",
-                },
+    # data.go.kr 건축물대장 API는 종종 응답 지연/장애 — 3회 retry with backoff
+    import time
+
+    params = {
+        "serviceKey": bldg_key,
+        "sigunguCd": b_code[:5],
+        "bjdongCd": b_code[5:],
+        "platGbCd": "1" if addr_info.get("mountain_yn") == "Y" else "0",
+        "bun": bun,
+        "ji": ji,
+        "_type": "json",
+        "numOfRows": "30",
+        "pageNo": "1",
+    }
+    last_exc: Exception | None = None
+    for attempt in range(3):
+        try:
+            with httpx.Client(timeout=45.0) as c:
+                r = c.get(REGISTRY_URL, params=params)
+                r.raise_for_status()
+                data = r.json()
+                header = data.get("response", {}).get("header", {})
+                if header.get("resultCode") not in ("00", "000"):
+                    logger.warning(
+                        "Registry %s: %s (addr=%s)",
+                        header.get("resultCode"),
+                        header.get("resultMsg"),
+                        address,
+                    )
+                    return None
+                items = data.get("response", {}).get("body", {}).get("items") or {}
+                raw = items.get("item") if isinstance(items, dict) else None
+                if not raw:
+                    return None
+                item_list = raw if isinstance(raw, list) else [raw]
+                return max(item_list, key=lambda it: _safe_int(it.get("grndFlrCnt")) or 0)
+        except Exception as exc:
+            last_exc = exc
+            logger.warning(
+                "Registry attempt %d/3 failed for %r: %s",
+                attempt + 1,
+                address,
+                type(exc).__name__,
             )
-            r.raise_for_status()
-            data = r.json()
-            header = data.get("response", {}).get("header", {})
-            if header.get("resultCode") != "00":
-                logger.debug(
-                    "Registry %s: %s", header.get("resultCode"), header.get("resultMsg")
-                )
-                return None
-            items = data.get("response", {}).get("body", {}).get("items") or {}
-            raw = items.get("item") if isinstance(items, dict) else None
-            if not raw:
-                return None
-            item_list = raw if isinstance(raw, list) else [raw]
-            return max(item_list, key=lambda it: _safe_int(it.get("grndFlrCnt")) or 0)
-    except Exception as exc:
-        logger.debug("Registry fetch failed for %r: %s", address, exc)
-        return None
+            time.sleep(2 * (attempt + 1))  # backoff: 2s, 4s
+    logger.error(
+        "Registry permanently failed for %r after 3 attempts (last: %s)",
+        address,
+        last_exc,
+    )
+    return None
 
 
 def apply_building_registry(prop: dict[str, Any]) -> dict[str, Any]:
