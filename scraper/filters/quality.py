@@ -31,18 +31,13 @@ def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
     if not is_land:
         # Building area only matters for 건물 매물
         bld = prop.get("area_build_m2")
-        if bld is not None and bld > 0 and bld < 24:
+        min_bld = pf.get("min_bld_area_m2", 23)
+        if bld is not None and bld > 0 and bld < min_bld:
             prop["passes_filters"] = False
-            notes.append(f"quality: building {bld}㎡ < 24㎡")
+            notes.append(f"quality: building {bld}㎡ < {min_bld}㎡")
 
-        # 건물 지분 차단 (토지지분만 있는 다세대·오피스텔은 허용)
-        bs = prop.get("building_shared")
-        if bs is True:
-            prop["passes_filters"] = False
-            notes.append("quality: building share (제외)")
-        elif bs is None and prop.get("share_yn") == "Y":
-            prop["passes_filters"] = False
-            notes.append("quality: share unresolved (detail unavailable)")
+        # 건물 지분은 차단하지 않음 — UI '주거 지분' 탭으로 자동 분류 (share_yn=Y)
+        # (이전엔 차단했지만, 사용자 요청으로 지분 매물도 보이도록 변경)
 
     title = prop.get("title") or ""
     for kw in pf.get("exclude_share_keywords", []):
@@ -58,12 +53,30 @@ def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
             notes.append(f"quality: category excluded ({excluded})")
             break
 
-    # Fail count cap
-    max_fail = pf.get("max_fail_count", 2)
-    fail = prop.get("fail_count")
-    if fail is not None and fail > max_fail:
-        prop["passes_filters"] = False
-        notes.append(f"quality: fail count {fail} > {max_fail}")
+    # 주거용건물 세부 7종 화이트리스트 (토지는 우회)
+    allowed = pf.get("allowed_categories") or []
+    if allowed and not is_land:
+        if not any(ac in category for ac in allowed):
+            prop["passes_filters"] = False
+            notes.append(f"quality: category not in allowed list ({category})")
+
+    # 유찰 cap — 매물 종류별 분기
+    #   단독 건물:           max_fail_count        (기본 4 — 5회 이상 제외)
+    #   지분/토지/도로:      max_fail_count_share  (기본 10 — 11회 이상 제외)
+    is_share = (
+        is_land
+        or prop.get("share_yn") == "Y"
+        or prop.get("building_shared") is True
+    )
+    max_fail_default = pf.get("max_fail_count")
+    max_fail_share = pf.get("max_fail_count_share", max_fail_default)
+    max_fail = max_fail_share if is_share else max_fail_default
+    if max_fail is not None:
+        fail = prop.get("fail_count")
+        if fail is not None and fail > max_fail:
+            prop["passes_filters"] = False
+            label = "share/land" if is_share else "default"
+            notes.append(f"quality: fail count {fail} > {max_fail} ({label})")
 
     # Max price re-check
     min_price = prop.get("min_price")

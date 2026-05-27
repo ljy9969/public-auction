@@ -164,11 +164,11 @@ def apply_geo_filters(prop: dict[str, Any]) -> dict[str, Any]:
     criteria = load_criteria()
     regions = criteria["regions"]
     seolleung = regions["seolleung"]
+    mode = regions.get("mode", "songpa_gangnam")
     notes: list[str] = list(prop.get("filter_notes") or [])
     addr = prop.get("address_jibun") or prop.get("title") or prop.get("region_line") or ""
-
-    songpa_ok = matches_songpa_strict(addr, regions["songpa_dongs"])
-    gangnam_ok = matches_gangnam_dong(addr, regions["gangnam_whitelist"])
+    cat = prop.get("category") or ""
+    is_officetel_mixed = ("오피스텔" in cat) or ("용도복합" in cat)
 
     coords = resolve_coords(prop, criteria)
     dist_km = None
@@ -176,6 +176,15 @@ def apply_geo_filters(prop: dict[str, Any]) -> dict[str, Any]:
         dist_km = haversine_km(coords[0], coords[1], seolleung["lat"], seolleung["lng"])
         prop["distance_seolleung_km"] = round(dist_km, 2)
 
+    # mode=seoul_all + 오피스텔/용도복합이 아닌 매물 → 화이트리스트/3km 검사 skip
+    if mode == "seoul_all" and not is_officetel_mixed:
+        if prop.get("geo_source") == "dong_centroid":
+            notes.append("geo: approximate (dong centroid)")
+        prop["filter_notes"] = notes
+        return prop
+
+    songpa_ok = matches_songpa_strict(addr, regions["songpa_dongs"])
+    gangnam_ok = matches_gangnam_dong(addr, regions["gangnam_whitelist"])
     gangnam_radius_ok = gangnam_ok and dist_km is not None and dist_km <= seolleung["radius_km"]
 
     region_ok = songpa_ok or gangnam_radius_ok

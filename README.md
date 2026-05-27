@@ -10,7 +10,8 @@
 - **국토부 실거래가 5종**으로 시세 검증 (매매 중앙값/최저~최고, 같은 단지·면적·층 우선)
 - **국토부 오피스텔 전월세**로 임대 수익률 추정 (보증금 차감 후 연 수익률)
 - **온비드 사진 다건**(atchSn 2~6) — 갤러리 + lightbox 큰 사진(CLG)
-- 송파/강남 화이트리스트 + 선릉 3km + 건물지분 차단 등 다중 후처리 필터
+- **온비드 상세 페이지 자동 fetch** — `fn_goCltrDetail()` POST 우회로 면적정보 표 파싱 (건물지분 자동 분류)
+- 카테고리별 지역 분기 + 매물별 유찰 cap 분기 등 다중 후처리 필터
 
 ## 사전 준비
 
@@ -68,21 +69,31 @@ http://localhost:5173 — Vite dev 서버가 `/api` → port 8000 프록시.
 
 `scraper/config/criteria.yaml`:
 
-- **지역**: 송파 7동(잠실본·삼전·석촌·송파1·방이2·**방이·송파**) + 강남 화이트리스트(삼성/대치/역삼/논현/청담/압구정/신사) 선릉 3km 이내
-- **출퇴근**: ≤ 30분 (선릉로 433, **ODsay 대중교통** 우선 → 도보 10분 이내 → 휴리스틱). 자가용은 출퇴근에 사용 안 함 — Kakao Mobility 폴백 제거.
+- **검색 키워드**: 서울 25개 자치구 키워드 반복 호출 (`srchArrayRgn` 파라미터가 무시되는 이슈 우회)
+- **온비드 검색폼**: 부동산·매각·전자입찰·일반경쟁·최저 ≤3억·**건물 ≥23㎡**·입찰기간 90일·**유찰 ≤10회**(검색 단계)
+- **용도 코드**: 주거용건물(0007) + 용도복합용건물(0005) + 토지(0001) 모두 수집 — UI 탭으로 분류 (주거 / 용도복합·오피스텔 / 주거 지분 / 도로)
+- **카테고리별 지역 분기**:
+  - **오피스텔/용도복합**: 송파 7동 + 강남 7동 화이트리스트 + 선릉 3km (엄격)
+  - **그 외 (주거/지분/도로)**: 서울 전체
+- **카테고리별 유찰 cap**:
+  - 단독 건물: ≤4회 (5회 이상 제외)
+  - 지분/토지/도로: ≤10회 (지분 매물은 유찰 잦으므로 완화)
+- **Post-filter**: 입찰 마감 제외, 카테고리 제외(상가용및업무용), 제목 키워드(지분매각·공유지분 등 → 토지지분은 통과)
+- **(옵션) 출퇴근 30분 + 선릉 3km**: `regions.mode: songpa_gangnam` 일 때 전 매물 적용 — `transit_destination` 기준 ODsay
 - **지오코딩**: Kakao address → Kakao keyword → Nominatim → 동 중심 폴백
 - **상세 페이지 지도**: Naver Maps (키 있을 때) / OSM iframe (키 없을 때)
-- **온비드 검색폼**: 부동산·매각·전자입찰·일반경쟁·최저 ≤3억·건물 ≥24㎡·입찰기간 90일
-- **용도 코드**: 주거용(0007), 용도복합·오피스텔(0005) — 상가/업무 제외
-- **Post-filter**: 토지만 제외, 유찰 ≤3, 입찰 마감 제외, 카테고리 제외(상가용및업무용), 건물 지분 차단(토지지분 OK), 제목 키워드(지분매각·공유지분 등)
+- **상세 페이지 fetch**: 검색 페이지의 `fn_goCltrDetail()` JS 함수를 `page.evaluate`로 호출 — POST submit으로 detail HTML(792KB+) 정상 수신 후 면적정보 표 파싱 (PC table + 모바일 `.op_mobile_tbl01 ul li.col_item` 양쪽 지원)
 - **건축물대장 보강**: 지상층수, 엘리베이터 대수, 사용승인일, 도로명주소 자동 수집
 
 ## 주요 UI 기능 (목록 / 상세 페이지)
 
 ### 목록 페이지
-- **좌측 sticky 지도** (Naver Maps) — 매물별 번호 마커, 카드 hover 시 빨강·확대 활성화, 마커 클릭 시 카드 활성화
+- **탭** — 용도복합·오피스텔 / 주거 / 주거 지분 / 도로 (기본 "주거")
+- **좌측 sticky 지도** (Naver Maps) — 매물별 번호 마커, 카드 hover 시 빨강·확대 활성화, **마커 클릭 시 우측 카드로 부드러운 스크롤**
 - **카드 표** — 용도 / 최저가 / 감정가 / 건물면적(평) / 층수 / 건물 연식 / 입찰일 (D-day) / 직장까지 등
-- **상단 필터 바** — 즐겨찾기만 / 지역(강남/송파) / 최저가(1·2·3억) / 연식(5·10·20년) / 층수(저/중/고) / 유찰 ≤ N / 초기화
+- **상단 필터 바** — 즐겨찾기만 / 지역(강남/송파) / 최저가(1·2·3억) / 연식(5·10·20년) / 층수(저/중/고) / 용도 상세(아파트/다세대/도시형 등) / 유찰 ≤ N / 초기화
+- **정렬 토글** — 최저가 / 건물면적 / 직장까지 / 입찰 시작 (각각 오름·내림 토글, 화살표 표시)
+- **자동 제외** — 입찰 시작이 이미 지난 매물(D+1 이상)은 목록에서 숨김
 - **카드 우측 별 ★** — 즐겨찾기 토글 (localStorage, 카드 클릭 navigation과 분리)
 - **태그 색상 구분** — 강남(파랑) / 송파(보라) / 엘리베이터 있음(녹색) / caution(노랑)
 
@@ -169,9 +180,30 @@ docs/                 API notes + TODO
 | **ODsay 대중교통** | https://lib.odsay.com | 5천건/일 | 환승 최적 경로·시간 |
 | **Naver Maps NCP** | https://console.ncloud.com → AI·NAVER API > Maps | 응용에 따라 다름 | 지도 JS SDK (`ncpClientId`) |
 
+## 외부에서 접속 (Cloudflare Tunnel)
+
+로컬 dev 서버를 외부 URL로 노출하려면 [cloudflared](https://github.com/cloudflare/cloudflared/releases/latest)를 설치 후:
+
+```powershell
+# 임시 URL (TryCloudflare, 도메인 불필요)
+cloudflared tunnel --url http://localhost:5173
+# → https://xxx-xxx-xxx.trycloudflare.com 발급 (cloudflared 재시작 시 변경됨)
+
+# 고정 도메인 (Cloudflare에서 .com 구매 ~₩13,500/년)
+cloudflared tunnel login
+cloudflared tunnel create auction-app
+cloudflared tunnel route dns auction-app auction.yourdomain.com
+cloudflared tunnel run auction-app
+```
+
+[`web/vite.config.ts`](web/vite.config.ts)에 `host: true` + `allowedHosts: [".trycloudflare.com", ".cfargotunnel.com"]` 적용됨 — Vite는 그대로 사용.
+
+**Naver Maps NCP 주의**: NCP는 hostname 와일드카드 미지원이라 매번 URL이 바뀌면 콘솔에 재등록 필요. 고정 도메인 사용 권장.
+
 ## 알려진 한계
 
-- **온비드 상세 페이지 HTML 직접 접근 불가** — `mvmnCltrDtl.do`가 외부 직접 접근 시 에러 페이지 반환. "온비드 원문 보기" 버튼은 검색 페이지에 물건관리번호 prefill로 우회. 엘리베이터·층수·도로명은 **건축물대장 API**로 대체 확보.
+- **온비드 상세 페이지 직접 GET 차단** — `mvmnCltrDtl.do`는 외부 직접 접근 시 에러 페이지(2558 byte) 반환. **검색 페이지의 `fn_goCltrDetail()` JS 함수를 `page.evaluate`로 호출하면 POST submit으로 정상 페이지(792KB+) 수신 가능** ([scraper/detail.py](scraper/detail.py)).
+- **온비드 검색폼 일부 필터가 서버에서 무시됨** — `srchArrayRgn`(지역), `srchShrYn`(지분 여부), `srch_prpt_types` 세부 카테고리는 서버 응답에 적용 X. 우회: 25개 자치구 키워드 반복 호출 + post-filter로 카테고리/지분 분류.
 - Naver Maps Client ID 미설정 시 OSM iframe 폴백.
 - 외부 API 키 미설정 시 각각 휴리스틱 폴백:
   - Kakao 키 없음 → Nominatim → 동 중심 폴백

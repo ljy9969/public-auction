@@ -23,32 +23,43 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 
-def _matches_list_criteria(raw: dict, exclude_categories: tuple[str, ...] = ()) -> bool:
+def _matches_list_criteria(
+    raw: dict,
+    exclude_categories: tuple[str, ...] = (),
+    *,
+    min_bld_area: float = 23.0,
+    max_min_price: float = 300_000_000,
+    max_fail_count: int | None = None,
+    allowed_categories: tuple[str, ...] = (),
+) -> bool:
     """Onbid list-row checks before detail fetch."""
     if raw.get("dspsMthodCd") != "0001":
         return False
     if raw.get("cptnMthodCd") != "0001":
         return False
     price = raw.get("lowstBidPrc")
-    if price is not None and float(price) > 300_000_000:
+    if price is not None and float(price) > max_min_price:
         return False
     cat = (raw.get("ctgrFullNm") or raw.get("ctgrNm") or "")
     is_land = any(k in cat for k in ("도로", "토지", "전 /", "답 /", "과수원", "임야", "대지"))
 
     if not is_land:
-        # 건물 매물에만 24㎡ 면적 하한 적용
         bld = raw.get("bldSqms") or 0
-        if float(bld) > 0 and float(bld) < 24:
+        if float(bld) > 0 and float(bld) < min_bld_area:
             return False
     # 토지 지분(예: 도로 부속토지)은 입문자 권장 매물이므로 제목의 "지분매각" 키워드 허용
     title = (raw.get("onbidCltrNm") or "")
     if not is_land and any(kw in title for kw in ("지분매각", "지분처분", "공유지분")):
         return False
-    fail = raw.get("usbdCnt")
-    if fail is not None and int(fail) > 2:
-        return False
+    if max_fail_count is not None:
+        fail = raw.get("uscbdCnt") or raw.get("usbdCnt")
+        if fail is not None and int(fail) > max_fail_count:
+            return False
     if exclude_categories:
         if any(ex and ex in cat for ex in exclude_categories):
+            return False
+    if allowed_categories and not is_land:
+        if not any(ac in cat for ac in allowed_categories):
             return False
     return True
 
@@ -75,12 +86,25 @@ def run_scrape(
         session = create_session(headless=headless)
 
         pages_cap = max_pages if max_pages is not None else 3
-        exclude_cats = tuple(criteria.get("post_filters", {}).get("exclude_categories", []) or ())
+        pf = criteria.get("post_filters", {})
+        exclude_cats = tuple(pf.get("exclude_categories", []) or ())
+        allowed_cats = tuple(pf.get("allowed_categories", []) or ())
+        min_bld = float(pf.get("min_bld_area_m2", 23))
+        max_min_price = float(pf.get("max_min_price", 300_000_000))
+        # list 단계는 느슨하게 (지분 매물도 일단 통과) — 정확한 분기는 quality.py에서 처리
+        max_fail_count = pf.get("max_fail_count_share") or pf.get("max_fail_count")
         for query, raw in iter_all_queries(session, max_pages_per_query=pages_cap):
             if not in_target_region(raw):
                 skipped += 1
                 continue
-            if not _matches_list_criteria(raw, exclude_cats):
+            if not _matches_list_criteria(
+                raw,
+                exclude_cats,
+                min_bld_area=min_bld,
+                max_min_price=max_min_price,
+                max_fail_count=max_fail_count,
+                allowed_categories=allowed_cats,
+            ):
                 skipped += 1
                 continue
             logger.debug("Match from query %s: %s", query, raw.get("onbidCltrno"))

@@ -583,6 +583,34 @@ button.secondary {
   font-size: 0.9rem;
   font-weight: 500;
   word-break: keep-all;
+  min-width: 0;        /* grid item이 컨테이너 폭을 넘지 못하게 */
+  overflow-wrap: anywhere;
+}
+
+/* 권리관계 / 상세정보 — 긴 텍스트는 stacked layout (dt 위, dd 아래 full width) */
+.raw-dict {
+  margin-top: 0.5rem;
+}
+
+.raw-dict-row {
+  display: block;
+  padding: 0.65rem 0;
+}
+
+.raw-dict-row dt {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.raw-dict-row dd {
+  color: #0f172a;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .section-hint {
@@ -1038,6 +1066,51 @@ button.secondary {
   background: #fef3c7;
   color: #b45309;
   border-color: #fbbf24;
+}
+
+.filter-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0 0.4rem;
+  border-left: 1px solid #e2e8f0;
+  margin-left: 0.2rem;
+}
+
+.filter-sort-label {
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-right: 0.2rem;
+}
+
+.filter-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #fff;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-sort-btn:hover {
+  border-color: #94a3b8;
+}
+
+.filter-sort-btn.on {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+  font-weight: 600;
+}
+
+.sort-arrow {
+  font-size: 0.9rem;
+  line-height: 1;
 }
 
 .filter-select {

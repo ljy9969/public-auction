@@ -56,6 +56,16 @@ def build_search_payload(page_index: int = 1, cltr_nm: str | None = None) -> str
         ("checkMobileRgn", "on"),
     ]
 
+    # 유찰횟수 cap (직접입력 모드)
+    usbd_bgng = form.get("srch_usbd_nft_bgng")
+    usbd_end = form.get("srch_usbd_nft_end")
+    if usbd_bgng is not None or usbd_end is not None:
+        pairs.append(("srchUsbdNftType", "0001"))
+        pairs.append(("srchUsbdNftBgng", str(usbd_bgng) if usbd_bgng is not None else ""))
+        pairs.append(("srchUsbdNftEnd", str(usbd_end) if usbd_end is not None else ""))
+    else:
+        pairs.append(("srchUsbdNftType", "ALL"))
+
     for code in form.get("srch_prpt_types", []):
         pairs.append(("srchPrptType", code))
 
@@ -107,13 +117,27 @@ def iter_list_pages(
 
 
 def search_queries() -> list[str]:
-    """Targeted srchCltrNm only — no broad 송파구/강남구-only queries."""
+    """Region-mode 분기:
+      seoul_all       → 서울 25개 자치구 키워드 (srchArrayRgn 무시되는 이슈 대응)
+      songpa_gangnam  → 동별 키워드 검색 ('송파구 잠실본동' 등)
+    """
     criteria = load_criteria()
     regions = criteria["regions"]
+    mode = regions.get("mode", "songpa_gangnam")
+    if mode == "seoul_all":
+        return [
+            "서울특별시 종로구", "서울특별시 중구", "서울특별시 용산구", "서울특별시 성동구",
+            "서울특별시 광진구", "서울특별시 동대문구", "서울특별시 중랑구", "서울특별시 성북구",
+            "서울특별시 강북구", "서울특별시 도봉구", "서울특별시 노원구", "서울특별시 은평구",
+            "서울특별시 서대문구", "서울특별시 마포구", "서울특별시 양천구", "서울특별시 강서구",
+            "서울특별시 구로구", "서울특별시 금천구", "서울특별시 영등포구", "서울특별시 동작구",
+            "서울특별시 관악구", "서울특별시 서초구", "서울특별시 강남구", "서울특별시 송파구",
+            "서울특별시 강동구",
+        ]
     queries: list[str] = []
-    for dong in regions["songpa_dongs"]:
+    for dong in regions.get("songpa_dongs", []):
         queries.append(f"송파구 {dong}")
-    for dong in regions["gangnam_whitelist"]:
+    for dong in regions.get("gangnam_whitelist", []):
         queries.append(f"강남구 {dong}")
     return queries
 
@@ -124,7 +148,7 @@ def iter_all_queries(
 ):
     seen: set[str] = set()
     for q in search_queries():
-        for _page, rows in iter_list_pages(session, max_pages=max_pages_per_query, cltr_nm=q):
+        for _page, rows in iter_list_pages(session, max_pages=max_pages_per_query, cltr_nm=q or None):
             for raw in rows:
                 key = f"{raw.get('onbidCltrno')}-{raw.get('pbctCdtnNo')}"
                 if key in seen:

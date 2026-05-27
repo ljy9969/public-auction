@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ListMap, { type ListMarker } from "../components/ListMap";
 import {
@@ -29,15 +29,50 @@ export default function PropertyList() {
   const [loading, setLoading] = useState(true);
   const [maxFail, setMaxFail] = useState(3);
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
-  const [tab, setTab] = useState<PropertyTab>("용도복합·오피스텔");
+  const [tab, setTab] = useState<PropertyTab>("주거");
   // 추가 필터 (클라이언트 사이드)
   const [favOnly, setFavOnly] = useState(false);
   const [regionFilter, setRegionFilter] = useState<"all" | "gangnam" | "songpa">("all");
   const [priceMax, setPriceMax] = useState<"all" | "1" | "2" | "3">("all");
   const [ageMax, setAgeMax] = useState<"all" | "5" | "10" | "20">("all");
   const [floorFilter, setFloorFilter] = useState<"all" | "저층" | "중층" | "고층">("all");
+  const [subCategory, setSubCategory] = useState<string>("all");
+  const [sortKey, setSortKey] = useState<"default" | "price" | "area" | "transit" | "bidStart">("default");
+  const [sortAsc, setSortAsc] = useState(true);
+  const cardListRef = useRef<HTMLDivElement | null>(null);
+  const [scrollTargetId, setScrollTargetId] = useState<number | null>(null);
   const navigate = useNavigate();
   const fav = useFavorites();
+
+  // 마커 클릭 시에만 우측 카드로 스크롤 (카드 호버는 강조만, 스크롤 X)
+  useEffect(() => {
+    if (scrollTargetId == null || !cardListRef.current) return;
+    const el = cardListRef.current.querySelector<HTMLElement>(
+      `[data-card-id="${scrollTargetId}"]`
+    );
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [scrollTargetId]);
+
+  const SUB_CATEGORIES = [
+    "아파트",
+    "주상복합",
+    "빌라",
+    "단독주택",
+    "다세대주택",
+    "도시형생활주택",
+    "전원주택",
+    "오피스텔",
+  ];
+
+  const toggleSort = (key: typeof sortKey) => {
+    if (sortKey === key) setSortAsc((v) => !v);
+    else {
+      setSortKey(key);
+      setSortAsc(true);
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,8 +121,15 @@ export default function PropertyList() {
   }, [items]);
 
   const filteredItems: Property[] = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     return items.filter((p) => {
       if (propertyTab(p) !== tab) return false;
+      // 입찰 시작이 이미 지난 매물 제외
+      if (p.bid_start) {
+        const start = new Date(p.bid_start.replace(" ", "T"));
+        if (!isNaN(start.getTime()) && start < today) return false;
+      }
       if (favOnly && (p.id == null || !fav.has(p.id))) return false;
       if (regionFilter !== "all") {
         const addr = p.address_jibun || "";
@@ -107,13 +149,38 @@ export default function PropertyList() {
         const floor = parseFloor(p.title, p.floor_total);
         if (floor.category !== floorFilter) return false;
       }
+      if (subCategory !== "all") {
+        if (!(p.category || "").includes(subCategory)) return false;
+      }
       return true;
     });
-  }, [items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, fav]);
+  }, [items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, subCategory, fav]);
+
+  const sortedItems: Property[] = useMemo(() => {
+    if (sortKey === "default") return filteredItems;
+    const getter = (p: Property): number | null => {
+      if (sortKey === "price") return p.min_price ?? null;
+      if (sortKey === "area") return p.area_build_m2 ?? null;
+      if (sortKey === "bidStart") {
+        if (!p.bid_start) return null;
+        const d = new Date(p.bid_start.replace(" ", "T"));
+        return isNaN(d.getTime()) ? null : d.getTime();
+      }
+      return p.transit_minutes ?? null;
+    };
+    return [...filteredItems].sort((a, b) => {
+      const av = getter(a);
+      const bv = getter(b);
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return sortAsc ? av - bv : bv - av;
+    });
+  }, [filteredItems, sortKey, sortAsc]);
 
   const markers: ListMarker[] = useMemo(
     () =>
-      filteredItems
+      sortedItems
         .map((p, idx) => ({ p, idx }))
         .filter(
           ({ p }) =>
@@ -126,7 +193,7 @@ export default function PropertyList() {
           label: p.title,
           index: idx + 1,
         })),
-    [filteredItems]
+    [sortedItems]
   );
 
   const resetFilters = () => {
@@ -135,13 +202,18 @@ export default function PropertyList() {
     setPriceMax("all");
     setAgeMax("all");
     setFloorFilter("all");
+    setSubCategory("all");
+    setSortKey("default");
+    setSortAsc(true);
   };
   const anyFilterActive =
     favOnly ||
     regionFilter !== "all" ||
     priceMax !== "all" ||
     ageMax !== "all" ||
-    floorFilter !== "all";
+    floorFilter !== "all" ||
+    subCategory !== "all" ||
+    sortKey !== "default";
 
   return (
     <>
@@ -216,6 +288,41 @@ export default function PropertyList() {
             <option value="고층">고층</option>
           </select>
         </label>
+        <label className="filter-select">
+          <span>용도</span>
+          <select
+            value={subCategory}
+            onChange={(e) => setSubCategory(e.target.value)}
+          >
+            <option value="all">전체</option>
+            {SUB_CATEGORIES.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </label>
+        <div className="filter-sort" role="group" aria-label="정렬">
+          <span className="filter-sort-label">정렬</span>
+          {([
+            ["price", "최저가"],
+            ["area", "건물면적"],
+            ["transit", "직장까지"],
+            ["bidStart", "입찰 시작"],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              className={`filter-sort-btn ${sortKey === key ? "on" : ""}`}
+              onClick={() => toggleSort(key)}
+              aria-pressed={sortKey === key}
+              title={sortKey === key ? (sortAsc ? "오름차순" : "내림차순") + " — 클릭 시 반대로" : "이 키로 정렬"}
+            >
+              {label}
+              {sortKey === key && (
+                <span className="sort-arrow">{sortAsc ? "↑" : "↓"}</span>
+              )}
+            </button>
+          ))}
+        </div>
         <label className="fail-filter">
           <span>유찰 ≤</span>
           <input
@@ -233,8 +340,8 @@ export default function PropertyList() {
           </button>
         )}
         <span className="filter-count">
-          총 {filteredItems.length}건
-          {filteredItems.length !== items.length && (
+          총 {sortedItems.length}건
+          {sortedItems.length !== items.length && (
             <span style={{ color: "#94a3b8" }}> / {items.length}</span>
           )}
         </span>
@@ -242,7 +349,7 @@ export default function PropertyList() {
 
       {loading ? (
         <p className="empty">불러오는 중…</p>
-      ) : filteredItems.length === 0 ? (
+      ) : sortedItems.length === 0 ? (
         <p className="empty">
           {items.length === 0
             ? "조건에 맞는 물건이 없습니다. 「지금 수집」을 눌러 온비드에서 데이터를 가져오세요."
@@ -254,11 +361,14 @@ export default function PropertyList() {
             <ListMap
               markers={markers}
               highlightedId={highlightedId}
-              onMarkerClick={(id) => setHighlightedId(id)}
+              onMarkerClick={(id) => {
+                setHighlightedId(id);
+                setScrollTargetId(id);
+              }}
             />
           </aside>
-          <div className="card-list">
-            {filteredItems.map((p, idx) => {
+          <div className="card-list" ref={cardListRef}>
+            {sortedItems.map((p, idx) => {
               const isActive = p.id != null && p.id === highlightedId;
               const visibleNotes = (p.filter_notes || []).filter((t) => !isRedundantTag(t));
               const hasCaution = visibleNotes.some(isCautionTag);
@@ -266,6 +376,7 @@ export default function PropertyList() {
               return (
                 <article
                   key={p.id ?? p.cltr_no}
+                  data-card-id={p.id ?? undefined}
                   role="button"
                   tabIndex={0}
                   className={`card ${hasCaution ? "warn" : ""} ${

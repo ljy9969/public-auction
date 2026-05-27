@@ -70,6 +70,8 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     ("image_url", "TEXT"),
     ("image_urls", "TEXT"),  # JSON array
     ("atch_file_lst_no", "INTEGER"),
+    # 면적정보 표의 '건물' 행 지분 여부 (True=건물지분, False=단독, None=상세 미파싱)
+    ("building_shared", "INTEGER"),
     # 국토부 실거래가 기반 시세 통계
     ("market_median_price", "INTEGER"),
     ("market_min_price", "INTEGER"),
@@ -156,6 +158,11 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
         "appraisal_price": prop.get("appraisal_price"),
         "area_build_m2": prop.get("area_build_m2"),
         "share_yn": prop.get("share_yn"),
+        "building_shared": (
+            1 if prop.get("building_shared") is True
+            else 0 if prop.get("building_shared") is False
+            else None
+        ),
         "fail_count": prop.get("fail_count"),
         "bid_start": prop.get("bid_start"),
         "bid_end": prop.get("bid_end"),

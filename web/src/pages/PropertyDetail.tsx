@@ -70,11 +70,11 @@ function RawDictSection({ title, data }: { title: string; data: Record<string, s
   const entries = Object.entries(data || {}).filter(([, v]) => v);
   if (entries.length === 0) return null;
   return (
-    <section className="detail-section">
+    <section className="detail-section raw-dict-section">
       <h3 className="section-title">{title}</h3>
-      <dl className="info-table">
+      <dl className="info-table raw-dict">
         {entries.map(([k, v]) => (
-          <div key={k} className="info-row">
+          <div key={k} className="info-row raw-dict-row">
             <dt>{k}</dt>
             <dd>{v}</dd>
           </div>

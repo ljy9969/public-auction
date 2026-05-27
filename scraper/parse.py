@@ -92,7 +92,7 @@ def parse_list_row(row: dict[str, Any]) -> dict[str, Any]:
         "appraisal_price": _int(row.get("cltrApslEvlAvgAmt")),
         "area_build_m2": _float(row.get("bldSqms")),
         "share_yn": share_yn,
-        "fail_count": _int(row.get("usbdCnt")),
+        "fail_count": _int(row.get("uscbdCnt") or row.get("usbdCnt")),
         "bid_start": row.get("pbctBegnDtm"),
         "bid_end": row.get("pbctLastDdlnDt") or row.get("pbctDdlnDt"),
         "status": row.get("pbancPbctCltrStatNm"),
@@ -109,14 +109,17 @@ def parse_list_row(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def _parse_area_info(soup: BeautifulSoup) -> list[dict[str, str]]:
-    """Find the 면적정보 table and return per-row {용도, 면적, 지분, 비고}."""
+    """면적정보 표 파싱. PC table + 모바일 ul.op_mobile_tbl01 둘 다 지원.
+
+    반환 행 키: {용도, 면적, 지분, 비고}
+    """
+    # PC: <table> with headers 용도/면적/지분/비고
     rows_out: list[dict[str, str]] = []
     for table in soup.select("table"):
         first_tr = table.select_one("tr")
         if not first_tr:
             continue
         headers = [c.get_text(" ", strip=True) for c in first_tr.find_all(["th", "td"])]
-        # 면적정보 테이블의 핵심 컬럼이 모두 있어야 함
         if not ({"용도", "면적", "지분"}.issubset(set(headers))):
             continue
         idx = {name: headers.index(name) for name in ("용도", "면적", "지분") if name in headers}
@@ -125,14 +128,38 @@ def _parse_area_info(soup: BeautifulSoup) -> list[dict[str, str]]:
             cells = [c.get_text(" ", strip=True) for c in tr.find_all(["th", "td"])]
             if len(cells) < max(idx.values()) + 1:
                 continue
-            row = {
+            rows_out.append({
                 "용도": cells[idx["용도"]],
                 "면적": cells[idx["면적"]],
                 "지분": cells[idx["지분"]],
                 "비고": cells[bigo_idx] if bigo_idx is not None and bigo_idx < len(cells) else "",
+            })
+        if rows_out:
+            return rows_out
+
+    # 모바일: <div class="op_mobile_tbl01"> <ul> <li class="col_item"> <div>...</div> </li> </ul>
+    # 각 li.col_item가 한 행, 그 안의 div가 컬럼. div 안의 span 텍스트가 값.
+    for ul in soup.select(".op_mobile_tbl01 ul"):
+        items = ul.select("li.col_item")
+        if not items:
+            continue
+        for li in items:
+            divs = li.find_all("div", recursive=False) or li.find_all("div")
+            if len(divs) < 3:
+                continue
+            cells = [d.get_text(" ", strip=True) for d in divs]
+            # 컬럼 순서: 용도 / 면적 / 지분 / 비고 (4개)
+            row = {
+                "용도": cells[0] if len(cells) > 0 else "",
+                "면적": cells[1] if len(cells) > 1 else "",
+                "지분": cells[2] if len(cells) > 2 else "",
+                "비고": cells[3] if len(cells) > 3 else "",
             }
-            rows_out.append(row)
-        break
+            if row["용도"] or row["면적"]:
+                rows_out.append(row)
+        if rows_out:
+            return rows_out
+
     return rows_out
 
 

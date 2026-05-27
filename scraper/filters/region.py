@@ -101,15 +101,35 @@ def matches_gangnam_dong(addr: str, whitelist: list[str]) -> bool:
     return any(dong in addr for dong in whitelist)
 
 
+def _is_officetel_or_mixed(raw_or_prop: dict[str, Any]) -> bool:
+    cat = (
+        raw_or_prop.get("ctgrFullNm")
+        or raw_or_prop.get("ctgrNm")
+        or raw_or_prop.get("category")
+        or ""
+    )
+    return ("오피스텔" in cat) or ("용도복합" in cat)
+
+
 def in_target_region(raw_or_prop: dict[str, Any], *, require_gangnam_radius: bool = True) -> bool:
-    """주거/오피스텔은 엄격(송파/강남+선릉3km).
-    지분/도로/토지는 수도권+재개발 핫스팟까지 확장."""
+    """카테고리별 분기:
+      오피스텔/용도복합        → 항상 송파/강남 화이트리스트 + 선릉 3km (mode 무관)
+      그 외 (주거/주거지분/도로) → mode=seoul_all 이면 서울 전체, songpa_gangnam 이면 엄격
+    """
     criteria = load_criteria()
     regions = criteria["regions"]
+    mode = regions.get("mode", "songpa_gangnam")
     addr = property_address(raw_or_prop)
 
     if not addr:
         return False
+
+    # 오피스텔/용도복합은 항상 송파/강남+선릉 엄격
+    if _is_officetel_or_mixed(raw_or_prop):
+        return _check_songpa_gangnam_strict(raw_or_prop, addr, regions, require_gangnam_radius)
+
+    if mode == "seoul_all":
+        return ("서울특별시" in addr) or addr.startswith("서울 ")
 
     # 지분/도로/토지 — 수도권 광역 허용 (입문자 소액 투자 대상)
     if _is_share_or_land(raw_or_prop):
@@ -119,23 +139,22 @@ def in_target_region(raw_or_prop: dict[str, Any], *, require_gangnam_radius: boo
         # 그 안에서 재개발 핫스팟 또는 송파/강남/서초만 통과
         return in_metro_redev_area(addr)
 
-    # 주거/오피스텔 — 기존 엄격 룰
+    # mode=songpa_gangnam에서 주거/오피스텔 매물은 엄격 룰
+    return _check_songpa_gangnam_strict(raw_or_prop, addr, regions, require_gangnam_radius)
+
+
+def _check_songpa_gangnam_strict(
+    raw_or_prop: dict[str, Any],
+    addr: str,
+    regions: dict[str, Any],
+    require_gangnam_radius: bool,
+) -> bool:
+    """송파 7동 + 강남 화이트리스트 + 선릉 3km 검증."""
     if any(
         x in addr
         for x in (
-            "원주",
-            "부산",
-            "대구",
-            "광주",
-            "대전",
-            "울산",
-            "강원",
-            "경기",
-            "충청",
-            "전라",
-            "경상",
-            "제주",
-            "인천",
+            "원주", "부산", "대구", "광주", "대전", "울산",
+            "강원", "경기", "충청", "전라", "경상", "제주", "인천",
         )
     ):
         return False
@@ -161,6 +180,7 @@ def in_target_region(raw_or_prop: dict[str, Any], *, require_gangnam_radius: boo
     if not coords:
         from scraper.filters.geo import resolve_coords
 
+        criteria = load_criteria()
         prop = raw_or_prop if "address_jibun" in raw_or_prop else {"address_jibun": addr, "title": addr}
         coords = resolve_coords(prop, criteria)
 

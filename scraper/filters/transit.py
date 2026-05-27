@@ -154,7 +154,12 @@ def _transit_destination(criteria: dict[str, Any]) -> tuple[float, float]:
 
 def apply_transit_filter(prop: dict[str, Any]) -> dict[str, Any]:
     criteria = load_criteria()
-    max_min = criteria["post_filters"]["max_transit_minutes"]
+    max_min = criteria["post_filters"].get("max_transit_minutes")
+    cat = prop.get("category") or ""
+    is_officetel_mixed = ("오피스텔" in cat) or ("용도복합" in cat)
+    # mode=seoul_all + 오피스텔/용도복합 아닌 매물 → 시간 제한 skip (정보는 그대로 기록)
+    if criteria["regions"].get("mode") == "seoul_all" and not is_officetel_mixed:
+        max_min = None
     notes: list[str] = list(prop.get("filter_notes") or [])
     dest_lat, dest_lng = _transit_destination(criteria)
 
@@ -190,7 +195,7 @@ def apply_transit_filter(prop: dict[str, Any]) -> dict[str, Any]:
         criteria["regions"].get("transit_destination", {}).get("address") or "선릉로 433"
     )
 
-    if minutes > max_min:
+    if max_min is not None and minutes > max_min:
         prop["passes_filters"] = False
         notes.append(f"transit: {minutes}min > {max_min}min")
     else:

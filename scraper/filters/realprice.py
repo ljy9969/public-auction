@@ -148,13 +148,13 @@ def _match(prop: dict[str, Any], trade: dict[str, Any], area_tol: float = 0.10) 
     """
     score = 0
     addr = prop.get("address_jibun") or ""
-    umd = trade.get("umdNm") or ""
+    umd = str(trade.get("umdNm") or "")
     if umd and umd in addr:
         score += 3
 
     # 단지명 — 공백/특수문자 제거 후 substring 비교
-    bld_raw = (prop.get("building_name") or "").strip()
-    cand_raw = (
+    bld_raw = str(prop.get("building_name") or "").strip()
+    cand_raw = str(
         trade.get("offiNm") or trade.get("aptNm") or trade.get("mhouseNm") or ""
     ).strip()
     if not bld_raw:
