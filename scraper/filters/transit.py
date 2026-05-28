@@ -147,9 +147,27 @@ def heuristic_transit_minutes(prop_lat: float, prop_lng: float) -> int:
     return best
 
 
-def _transit_destination(criteria: dict[str, Any]) -> tuple[float, float]:
-    dest = criteria["regions"].get("transit_destination") or criteria["regions"]["seolleung"]
-    return float(dest["lat"]), float(dest["lng"])
+def _transit_destination(criteria: dict[str, Any], prop: dict[str, Any] | None = None) -> tuple[float, float, str]:
+    """직장 좌표 + 라벨. 언니(쪠, 영등포구 OR 서대문역 8km) 매물은 서대문역 기준, 그 외(나/쪈)는 선릉.
+
+    geo 단계가 먼저 실행되어 distance_sister_km를 채워두므로 그 값으로 8km 판정.
+    """
+    regions = criteria["regions"]
+    p = prop or {}
+    addr = p.get("address_jibun") or p.get("title") or ""
+    sister = regions.get("sister_zone") or {}
+    st = sister.get("transit") or {}
+    in_yd = sister.get("gu", "영등포구") in addr
+    dist_sister = p.get("distance_sister_km")
+    within = (
+        dist_sister is not None
+        and st.get("radius_km")
+        and float(dist_sister) <= float(st["radius_km"])
+    )
+    if (in_yd or within) and st.get("lat"):
+        return float(st["lat"]), float(st["lng"]), st.get("address", "서대문역")
+    dest = regions.get("transit_destination") or regions["seolleung"]
+    return float(dest["lat"]), float(dest["lng"]), dest.get("address", "선릉로 433")
 
 
 def apply_transit_filter(prop: dict[str, Any]) -> dict[str, Any]:
@@ -161,7 +179,7 @@ def apply_transit_filter(prop: dict[str, Any]) -> dict[str, Any]:
     if criteria["regions"].get("mode") == "seoul_all" and not is_officetel_mixed:
         max_min = None
     notes: list[str] = list(prop.get("filter_notes") or [])
-    dest_lat, dest_lng = _transit_destination(criteria)
+    dest_lat, dest_lng, dest_label = _transit_destination(criteria, prop)
 
     coords = resolve_coords(prop, criteria)
     if not coords:
@@ -191,9 +209,7 @@ def apply_transit_filter(prop: dict[str, Any]) -> dict[str, Any]:
     prop["transit_mode"] = mode
     prop["transit_estimated"] = mode in ("heuristic", "car")
     prop["transit_summary"] = summary
-    prop["transit_destination"] = (
-        criteria["regions"].get("transit_destination", {}).get("address") or "선릉로 433"
-    )
+    prop["transit_destination"] = dest_label
 
     if max_min is not None and minutes > max_min:
         prop["passes_filters"] = False

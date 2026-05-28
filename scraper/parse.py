@@ -171,14 +171,56 @@ def _is_share_marked(value: str) -> bool:
 
 
 def _building_shared(area_rows: list[dict[str, str]]) -> bool | None:
-    """True if 건물 row indicates shared ownership; None if no 건물 row found."""
+    """True if 건물 row가 '실제 지분'(비율 < 100%)을 나타냄. None이면 건물 행 없음.
+
+    주의: '1분의1 지분'(100%)은 단독 소유이므로 지분이 아님 → False.
+    """
     found = False
     for r in area_rows:
         if "건물" in r["용도"]:
             found = True
-            if _is_share_marked(r["지분"]) or _is_share_marked(r["비고"]):
-                return True
+            ratio = _parse_share_fraction(r["비고"]) or _parse_share_fraction(r["지분"])
+            if ratio is not None:
+                if ratio < 1.0:
+                    return True   # 실제 지분 (예: 9/10)
+                # ratio >= 1.0 → 단독 (1분의1) — 지분 아님, 계속 확인
+            elif _is_share_marked(r["지분"]) or _is_share_marked(r["비고"]):
+                return True       # 비율 못 구했지만 지분 표기 있음
     return False if found else None
+
+
+def _parse_share_fraction(text: str) -> float | None:
+    """지분 비율(0~1) 추출.
+
+    예: '지분(총면적 43.85 10분의9 지분)' → 9/10 = 0.9
+        '지분(총면적 195 1950분의298.35 지분)' → 298.35/1950 = 0.153
+        '지분 2/7' → 2/7 = 0.286
+    """
+    if not text:
+        return None
+    # 한국식: 'N분의M' → M/N (분모가 앞)
+    m = re.search(r"([\d.]+)\s*분의\s*([\d.]+)", text)
+    if m:
+        denom, numer = float(m.group(1)), float(m.group(2))
+        if denom > 0:
+            return numer / denom
+    # 서양식: 'M/N' → M/N
+    m = re.search(r"(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)", text)
+    if m:
+        numer, denom = float(m.group(1)), float(m.group(2))
+        if denom > 0:
+            return numer / denom
+    return None
+
+
+def _building_share_ratio(area_rows: list[dict[str, str]]) -> float | None:
+    """건물 행의 지분 비율(0~1). 100%(단독) 또는 지분 표기 없으면 None."""
+    for r in area_rows:
+        if "건물" in r["용도"]:
+            ratio = _parse_share_fraction(r["비고"]) or _parse_share_fraction(r["지분"])
+            if ratio is not None and ratio < 1.0:
+                return round(ratio, 4)
+    return None
 
 
 def parse_detail_html(html: str) -> dict[str, Any]:
@@ -204,6 +246,7 @@ def parse_detail_html(html: str) -> dict[str, Any]:
 
     area_rows = _parse_area_info(soup)
     building_shared = _building_shared(area_rows)
+    building_share_ratio = _building_share_ratio(area_rows)
     # 후방 호환: share_yn은 '건물 지분'에 한정해 Y/N 부여
     if building_shared is True:
         share_yn = "Y"
@@ -222,6 +265,7 @@ def parse_detail_html(html: str) -> dict[str, Any]:
         "schedule_json": schedule or None,
         "share_yn": share_yn,
         "building_shared": building_shared,
+        "building_share_ratio": building_share_ratio,
         "area_info": area_rows or None,
         "area_build_m2": bld,
         "elevator_yn": elevator_yn,

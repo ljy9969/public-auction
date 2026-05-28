@@ -187,15 +187,30 @@ def apply_geo_filters(prop: dict[str, Any]) -> dict[str, Any]:
     gangnam_ok = matches_gangnam_dong(addr, regions["gangnam_whitelist"])
     gangnam_radius_ok = gangnam_ok and dist_km is not None and dist_km <= seolleung["radius_km"]
 
-    region_ok = songpa_ok or gangnam_radius_ok
+    # 언니(쪠) 영역 — 영등포구 OR 서대문역 8km (둘 중 하나, outer join)
+    sister = regions.get("sister_zone") or {}
+    sister_gu = sister.get("gu", "영등포구")
+    in_yeongdeungpo = sister_gu in addr
+    within_sister_radius = False
+    st = sister.get("transit") or {}
+    if coords and st.get("lat") and st.get("lng"):
+        sdist = haversine_km(coords[0], coords[1], float(st["lat"]), float(st["lng"]))
+        prop["distance_sister_km"] = round(sdist, 2)
+        if st.get("radius_km"):
+            within_sister_radius = sdist <= float(st["radius_km"])
+    sister_ok = in_yeongdeungpo or within_sister_radius
+
+    region_ok = songpa_ok or gangnam_radius_ok or sister_ok
     if not region_ok:
         prop["passes_filters"] = False
-        notes.append("region: outside Songpa 5-dong / Gangnam 3km whitelist")
+        notes.append("region: outside Songpa/Gangnam(쪈) / Yeongdeungpo(쪠) zones")
     else:
         if songpa_ok:
-            notes.append("region: Songpa dong match")
+            notes.append("region: Songpa dong match (쪈)")
         if gangnam_radius_ok:
-            notes.append(f"region: Gangnam within {seolleung['radius_km']}km of Seolleung")
+            notes.append(f"region: Gangnam within {seolleung['radius_km']}km of Seolleung (쪈)")
+        if sister_ok:
+            notes.append("region: Yeongdeungpo zone (쪠)")
         if prop.get("geo_source") == "dong_centroid":
             notes.append("geo: approximate (dong centroid)")
 

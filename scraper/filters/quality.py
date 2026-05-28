@@ -17,6 +17,12 @@ def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
     pf = criteria["post_filters"]
     notes: list[str] = list(prop.get("filter_notes") or [])
     is_land = _is_land_or_road(prop)
+    # 지분 매물(건물지분/토지지분) — 면적 하한 면제 (소액 지분 투자 포함)
+    is_share = (
+        is_land
+        or prop.get("share_yn") == "Y"
+        or prop.get("building_shared") is True
+    )
 
     # Active bids only (rough: status not closed)
     status = (prop.get("status") or "").strip()
@@ -24,20 +30,13 @@ def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
         prop["passes_filters"] = False
         notes.append(f"quality: closed status ({status})")
 
-    # Land/road exclusion — DISABLED when land is the target (소액 입문 토지 투자)
-    # 도로·토지·농지 지분은 소액 입문에 핵심 매물이므로 통과
-    # (책: '실전 부동산 경매' — 토지 지분 + 도로 부속토지 입문자 권장 종목)
-
-    if not is_land:
-        # Building area only matters for 건물 매물
+    # 면적 하한은 '단독 건물'에만 적용 — 지분/토지/도로는 면적 무관 (소액 지분 핵심)
+    if not is_share:
         bld = prop.get("area_build_m2")
         min_bld = pf.get("min_bld_area_m2", 23)
         if bld is not None and bld > 0 and bld < min_bld:
             prop["passes_filters"] = False
             notes.append(f"quality: building {bld}㎡ < {min_bld}㎡")
-
-        # 건물 지분은 차단하지 않음 — UI '주거 지분' 탭으로 자동 분류 (share_yn=Y)
-        # (이전엔 차단했지만, 사용자 요청으로 지분 매물도 보이도록 변경)
 
     title = prop.get("title") or ""
     for kw in pf.get("exclude_share_keywords", []):
@@ -61,29 +60,44 @@ def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
             notes.append(f"quality: category not in allowed list ({category})")
 
     # 유찰 cap — 매물 종류별 분기
-    #   단독 건물:           max_fail_count        (기본 4 — 5회 이상 제외)
-    #   지분/토지/도로:      max_fail_count_share  (기본 10 — 11회 이상 제외)
-    is_share = (
-        is_land
-        or prop.get("share_yn") == "Y"
-        or prop.get("building_shared") is True
-    )
-    max_fail_default = pf.get("max_fail_count")
-    max_fail_share = pf.get("max_fail_count_share", max_fail_default)
-    max_fail = max_fail_share if is_share else max_fail_default
+    #   토지/도로:    max_fail_count_land   (기본 5 — 6회 이상 제외)
+    #   주거 지분:    max_fail_count_share  (기본 10 — 11회 이상 제외)
+    #   단독 건물:    max_fail_count        (기본 4 — 5회 이상 제외)
+    _share_building = prop.get("share_yn") == "Y" or prop.get("building_shared") is True
+    if is_land:
+        max_fail = pf.get("max_fail_count_land", 5)
+        fail_label = "land"
+    elif _share_building:
+        max_fail = pf.get("max_fail_count_share", 10)
+        fail_label = "share"
+    else:
+        max_fail = pf.get("max_fail_count")
+        fail_label = "default"
     if max_fail is not None:
         fail = prop.get("fail_count")
         if fail is not None and fail > max_fail:
             prop["passes_filters"] = False
-            label = "share/land" if is_share else "default"
-            notes.append(f"quality: fail count {fail} > {max_fail} ({label})")
+            notes.append(f"quality: fail count {fail} > {max_fail} ({fail_label})")
 
-    # Max price re-check
+    # Max price re-check — 최저가 비공개(None/0)면 감정가로 판단 (초고가 매물 제외)
+    #   토지/도로: max_min_price_land (1천만) / 주거 지분: max_min_price_share (5천만) / 단독: max_min_price (3억)
     min_price = prop.get("min_price")
-    max_price = pf.get("max_min_price", 300_000_000)
-    if min_price is not None and min_price > max_price:
+    appr = prop.get("appraisal_price")
+    is_share_building = prop.get("share_yn") == "Y" or prop.get("building_shared") is True
+    if is_land:
+        max_price = pf.get("max_min_price_land", 10_000_000)
+        kind = "land"
+    elif is_share_building:
+        max_price = pf.get("max_min_price_share", 50_000_000)
+        kind = "share"
+    else:
+        max_price = pf.get("max_min_price", 300_000_000)
+        kind = "default"
+    effective_price = min_price if (min_price is not None and min_price > 0) else appr
+    if effective_price is not None and effective_price > max_price:
         prop["passes_filters"] = False
-        notes.append(f"quality: min bid > {max_price // 1_000_000}M")
+        basis = "min bid" if (min_price is not None and min_price > 0) else "appraisal"
+        notes.append(f"quality: {basis} {int(effective_price) // 1_000_000}M > {max_price // 1_000_000}M ({kind})")
 
     # Bid end in future
     bid_end = prop.get("bid_end")

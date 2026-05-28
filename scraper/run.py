@@ -37,20 +37,18 @@ def _matches_list_criteria(
         return False
     if raw.get("cptnMthodCd") != "0001":
         return False
+    # 최저가 비공개(None/0)면 감정가로 판단 — 초고가 매물(예: 922억 대지) 제외
     price = raw.get("lowstBidPrc")
-    if price is not None and float(price) > max_min_price:
+    appr = raw.get("cltrApslEvlAvgAmt")
+    effective_price = price if (price and float(price) > 0) else appr
+    if effective_price is not None and float(effective_price) > max_min_price:
         return False
     cat = (raw.get("ctgrFullNm") or raw.get("ctgrNm") or "")
     is_land = any(k in cat for k in ("도로", "토지", "전 /", "답 /", "과수원", "임야", "대지"))
 
-    if not is_land:
-        bld = raw.get("bldSqms") or 0
-        if float(bld) > 0 and float(bld) < min_bld_area:
-            return False
-    # 토지 지분(예: 도로 부속토지)은 입문자 권장 매물이므로 제목의 "지분매각" 키워드 허용
-    title = (raw.get("onbidCltrNm") or "")
-    if not is_land and any(kw in title for kw in ("지분매각", "지분처분", "공유지분")):
-        return False
+    # 면적 하한은 list 단계에서 적용하지 않음 — 지분 매물(면적 작음)을 놓치지 않기 위해
+    # detail fetch 후 quality에서 '단독 건물'에만 23㎡ 적용 (지분/토지는 면제)
+    _ = min_bld_area  # noqa: F841 (호출 호환 유지)
     if max_fail_count is not None:
         fail = raw.get("uscbdCnt") or raw.get("usbdCnt")
         if fail is not None and int(fail) > max_fail_count:

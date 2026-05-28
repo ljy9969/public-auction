@@ -124,9 +124,11 @@ def in_target_region(raw_or_prop: dict[str, Any], *, require_gangnam_radius: boo
     if not addr:
         return False
 
-    # 오피스텔/용도복합은 항상 송파/강남+선릉 엄격
+    # 오피스텔/용도복합 — '나(쪈, 송파·강남+선릉)' 또는 '언니(쪠, 영등포구)' 둘 중 하나면 통과
     if _is_officetel_or_mixed(raw_or_prop):
-        return _check_songpa_gangnam_strict(raw_or_prop, addr, regions, require_gangnam_radius)
+        if _check_songpa_gangnam_strict(raw_or_prop, addr, regions, require_gangnam_radius):
+            return True
+        return _check_sister_zone(raw_or_prop, addr, regions)
 
     if mode == "seoul_all":
         return ("서울특별시" in addr) or addr.startswith("서울 ")
@@ -141,6 +143,31 @@ def in_target_region(raw_or_prop: dict[str, Any], *, require_gangnam_radius: boo
 
     # mode=songpa_gangnam에서 주거/오피스텔 매물은 엄격 룰
     return _check_songpa_gangnam_strict(raw_or_prop, addr, regions, require_gangnam_radius)
+
+
+def _check_sister_zone(raw_or_prop: dict[str, Any], addr: str, regions: dict[str, Any]) -> bool:
+    """언니(쪠) 영역 — 영등포구 OR 서대문역 8km (둘 중 하나)."""
+    sister = regions.get("sister_zone") or {}
+    gu = sister.get("gu", "영등포구")
+    if gu in addr:
+        return True
+    st = sister.get("transit") or {}
+    if st.get("lat") and st.get("lng") and st.get("radius_km"):
+        from scraper.filters.geo import resolve_coords
+
+        prop = raw_or_prop if "address_jibun" in raw_or_prop else {"address_jibun": addr, "title": addr}
+        coords = resolve_coords(prop, load_criteria())
+        if coords:
+            d = haversine_km(coords[0], coords[1], float(st["lat"]), float(st["lng"]))
+            return d <= float(st["radius_km"])
+    return False
+
+
+def is_sister_zone(prop: dict[str, Any]) -> bool:
+    """매물이 언니(쪠) 영역(영등포구 OR 서대문역 8km) 소속인지."""
+    regions = load_criteria()["regions"]
+    addr = property_address(prop)
+    return _check_sister_zone(prop, addr, regions)
 
 
 def _check_songpa_gangnam_strict(

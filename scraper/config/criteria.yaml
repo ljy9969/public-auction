@@ -63,13 +63,26 @@ regions:
     address: "서울 강남구 선릉로 433"
     lat: 37.5045
     lng: 127.0489
+  # 언니(쪠) 영역 — 영등포구 전체 + 서대문역 8km(대중교통 편도 30분 이내)
+  # 오피스텔/용도복합 매물은 '나(쪈, 송파·강남)' 또는 '언니(쪠, 영등포)' 둘 중 하나에 속하면 통과
+  sister_zone:
+    gu: 영등포구
+    transit:
+      address: "서울 서대문구 서대문역"
+      lat: 37.5659
+      lng: 126.9668
+      radius_km: 8.0
+      max_minutes: 30
 
 post_filters:
   max_transit_minutes: 30        # mode=songpa_gangnam 일 때만 의미
   max_fail_count: 4              # 단독 건물: 유찰 5회 이상 제외
-  max_fail_count_share: 10       # 지분/토지/도로: 유찰 11회 이상 제외 (지분은 유찰 잦음)
-  max_min_price: 300000000
-  min_bld_area_m2: 23            # 건물면적 23㎡ 이상
+  max_fail_count_share: 10       # 주거 지분: 유찰 11회 이상 제외 (지분은 유찰 잦음)
+  max_fail_count_land: 5         # 토지/도로: 유찰 6회 이상 제외
+  max_min_price: 300000000       # 단독 건물 최저가 상한 (3억)
+  max_min_price_share: 50000000  # 주거 지분 최저가 상한 (5천만 — 소액 지분 투자)
+  max_min_price_land: 10000000   # 토지/도로 최저가 상한 (1천만 — 책: 도로/맹지 300~1000만)
+  min_bld_area_m2: 23            # 단독 건물면적 하한 (지분은 면제)
   exclude_land_only: true
   require_elevator: true
   # 주거용건물 세부 화이트리스트 — 수집 시점에는 비워두고 UI 필터에서 사용자가 선택

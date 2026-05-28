@@ -40,6 +40,28 @@ copy web\.env.example web\.env
 
 ## 실행
 
+### 한 번에 기동 (권장) — `start-all.ps1`
+
+매물 수집 + 백필 + 백엔드·프론트·Cloudflare 터널을 **백그라운드(숨김)로 한 번에** 기동:
+
+```powershell
+# 수집(scraper.run) + 백필(backfill_all) + 서버 3종 백그라운드 기동
+powershell -ExecutionPolicy Bypass -File .\start-all.ps1
+
+# 수집 건너뛰고 서버만 (이미 DB 채워져 있을 때)
+powershell -ExecutionPolicy Bypass -File .\start-all.ps1 -SkipScrape
+
+# 종료 (3개 서비스 + 자식 프로세스 트리 모두 kill)
+powershell -ExecutionPolicy Bypass -File .\stop-all.ps1
+```
+
+- 실행 후 콘솔에 외부 접속 URL(`*.trycloudflare.com`) 자동 표시 + 클립보드 복사
+- 로그: `.backend.log` / `.frontend.log` / `.cloudflared.log`
+- PID: `.run-pids.txt` (stop-all.ps1이 이걸 읽어 종료)
+- cloudflared는 `%USERPROFILE%\cloudflared.exe`에 설치돼 있어야 함
+
+### 수동 기동 (단계별)
+
 ```powershell
 # (선택) 기존 DB 초기화
 .\.venv\Scripts\python.exe -m scripts.reset_db
@@ -182,7 +204,9 @@ docs/                 API notes + TODO
 
 ## 외부에서 접속 (Cloudflare Tunnel)
 
-로컬 dev 서버를 외부 URL로 노출하려면 [cloudflared](https://github.com/cloudflare/cloudflared/releases/latest)를 설치 후:
+> **가장 쉬운 방법**: `start-all.ps1` 실행 — 서버 3종 + 터널을 백그라운드로 띄우고 URL을 자동 출력/클립보드 복사 ([실행](#한-번에-기동-권장--start-allps1) 참고).
+
+수동으로 하려면, 로컬 dev 서버를 외부 URL로 노출하려면 [cloudflared](https://github.com/cloudflare/cloudflared/releases/latest)를 설치 후:
 
 ```powershell
 # 임시 URL (TryCloudflare, 도메인 불필요)

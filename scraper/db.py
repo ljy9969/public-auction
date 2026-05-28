@@ -72,6 +72,8 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     ("atch_file_lst_no", "INTEGER"),
     # 면적정보 표의 '건물' 행 지분 여부 (True=건물지분, False=단독, None=상세 미파싱)
     ("building_shared", "INTEGER"),
+    ("building_share_ratio", "REAL"),  # 건물 지분 비율 (0~1)
+    ("distance_sister_km", "REAL"),    # 서대문역까지 직선거리 (언니/쪠 영역 판정)
     # 국토부 실거래가 기반 시세 통계
     ("market_median_price", "INTEGER"),
     ("market_min_price", "INTEGER"),
@@ -163,6 +165,7 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
             else 0 if prop.get("building_shared") is False
             else None
         ),
+        "building_share_ratio": prop.get("building_share_ratio"),
         "fail_count": prop.get("fail_count"),
         "bid_start": prop.get("bid_start"),
         "bid_end": prop.get("bid_end"),
@@ -173,6 +176,7 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
         "transit_minutes": prop.get("transit_minutes"),
         "transit_estimated": 1 if prop.get("transit_estimated") else 0,
         "distance_seolleung_km": prop.get("distance_seolleung_km"),
+        "distance_sister_km": prop.get("distance_sister_km"),
         "geo_lat": prop.get("geo_lat"),
         "geo_lng": prop.get("geo_lng"),
         "source_url": prop.get("source_url"),

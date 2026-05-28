@@ -12,6 +12,8 @@ export interface Property {
   appraisal_price: number | null;
   area_build_m2: number | null;
   share_yn: string | null;
+  building_shared: boolean | null;
+  building_share_ratio: number | null;
   fail_count: number | null;
   bid_start: string | null;
   bid_end: string | null;
@@ -23,6 +25,7 @@ export interface Property {
   schedule_json: Record<string, string> | null;
   transit_minutes: number | null;
   distance_seolleung_km: number | null;
+  distance_sister_km: number | null;
   geo_lat?: number | null;
   geo_lng?: number | null;
   transit_estimated: boolean;
@@ -147,14 +150,26 @@ export function bidDeposit(minPrice: number | null | undefined): number | null {
   return Math.round(minPrice * 0.1);
 }
 
-export type PropertyTab = "주거" | "용도복합·오피스텔" | "주거 지분" | "도로";
+export type PropertyTab =
+  | "용도복합·오피스텔 쪈"
+  | "용도복합·오피스텔 쪠"
+  | "주거"
+  | "주거 지분"
+  | "토지";
 
 export const PROPERTY_TABS: PropertyTab[] = [
-  "용도복합·오피스텔",
+  "용도복합·오피스텔 쪈",
+  "용도복합·오피스텔 쪠",
   "주거",
   "주거 지분",
-  "도로",
+  "토지",
 ];
+
+/** 지분 비율(0~1) → "90.0%" (없거나 100%면 null) */
+export function formatSharePct(ratio: number | null | undefined): string | null {
+  if (ratio == null || ratio <= 0 || ratio >= 1) return null;
+  return `${(ratio * 100).toFixed(1)}%`;
+}
 
 /** 매물 → 4개 탭 분류 (없으면 null) */
 export function propertyTab(p: Property): PropertyTab | null {
@@ -169,10 +184,15 @@ export function propertyTab(p: Property): PropertyTab | null {
     haystack.includes("임야") ||
     haystack.includes("대지")
   ) {
-    return "도로";
+    return "토지";
   }
   if (cat.includes("용도복합") || cat.includes("오피스텔")) {
-    return "용도복합·오피스텔";
+    // 언니(쪠) = 영등포구 OR 서대문역 8km, 그 외(송파·강남) = 나(쪈)
+    const addr = p.address_jibun || p.region_line || "";
+    const sister =
+      addr.includes("영등포구") ||
+      (p.distance_sister_km != null && p.distance_sister_km <= 8);
+    return sister ? "용도복합·오피스텔 쪠" : "용도복합·오피스텔 쪈";
   }
   if (cat.includes("주거")) {
     if (p.share_yn === "Y") return "주거 지분";
@@ -221,23 +241,34 @@ export function formatDateTime(v: string | Date | null | undefined): string {
 
 /** 필터 메모(영문)를 한국어로 변환. 모르는 라벨은 원문 반환. */
 export function translateTag(tag: string): string {
+  // (쪈)/(쪠) zone suffix 분리 후 본문만 번역, suffix는 그대로 유지
+  let zoneSuffix = "";
+  const zm = tag.match(/\s*\((쪈|쪠)\)\s*$/);
+  let core = tag;
+  if (zm) {
+    zoneSuffix = ` (${zm[1]})`;
+    core = tag.replace(/\s*\((쪈|쪠)\)\s*$/, "");
+  }
+
   const exact: Record<string, string> = {
     "elevator: yes": "엘리베이터 있음",
     "elevator: no": "엘리베이터 없음",
     "caution: elevator unknown": "엘리베이터 정보 없음",
     "region: Songpa dong match": "송파동 일치",
+    "region: Yeongdeungpo zone": "영등포 지역",
     "region: outside Songpa 5-dong / Gangnam 3km whitelist": "지역 외 (송파/강남 3km)",
+    "region: outside Songpa/Gangnam(쪈) / Yeongdeungpo(쪠) zones": "지역 외 (쪈/쪠)",
     "geo: approximate (dong centroid)": "위치 추정 (동 중심)",
     "quality: land-only": "토지만 (제외)",
     "quality: bid ended": "입찰 마감",
     "quality: building share (제외)": "건물 지분 (제외)",
     "quality: share unresolved (detail unavailable)": "지분 미확인",
   };
-  if (exact[tag]) return exact[tag];
+  if (exact[core]) return exact[core] + zoneSuffix;
 
   let m: RegExpMatchArray | null;
-  m = tag.match(/^region: Gangnam within ([\d.]+)km of Seolleung$/);
-  if (m) return `강남 (선릉 ${m[1]}km 이내)`;
+  m = core.match(/^region: Gangnam within ([\d.]+)km of Seolleung$/);
+  if (m) return `강남 (선릉 ${m[1]}km 이내)${zoneSuffix}`;
 
   m = tag.match(/^transit: (\d+)min to .+ \(est\.\)$/);
   if (m) return `직장까지 약 ${m[1]}분 (추정)`;

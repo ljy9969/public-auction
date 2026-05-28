@@ -16,8 +16,10 @@ import {
   formatDateTime,
   formatPrice,
   formatPriceFull,
+  formatSharePct,
   formatStatus,
   isRedundantTag,
+  propertyTab,
   parseFloor,
   tagCategory,
   translateTag,
@@ -127,6 +129,8 @@ export default function PropertyDetail() {
   const discount = discountPercent(prop.min_price, prop.appraisal_price);
   const statusKlass = statusVariant(prop.status);
   const floor = parseFloor(prop.title, prop.floor_total);
+  const isSisterZone = propertyTab(prop) === "용도복합·오피스텔 쪠";
+  const isMeZone = propertyTab(prop) === "용도복합·오피스텔 쪈";
 
   return (
     <div className="detail-page">
@@ -252,7 +256,20 @@ export default function PropertyDetail() {
                   ) : null,
                 },
                 { label: "입찰방식", value: prop.bid_method },
-                { label: "지분 여부", value: prop.share_yn === "Y" ? "지분" : prop.share_yn === "N" ? "단독" : null },
+                {
+                  label: "지분 여부",
+                  value:
+                    prop.share_yn === "Y"
+                      ? (() => {
+                          const pct = formatSharePct(prop.building_share_ratio);
+                          return pct
+                            ? `지분 (총 면적의 ${pct})`
+                            : "지분";
+                        })()
+                      : prop.share_yn === "N"
+                      ? "단독"
+                      : null,
+                },
                 {
                   label: "물건관리번호",
                   value: prop.cltr_mnmt_no || null,
@@ -311,7 +328,7 @@ export default function PropertyDetail() {
                   label: "직장까지",
                   value:
                     prop.transit_minutes != null
-                      ? `${transitModeLabel(prop.transit_mode)} 약 ${prop.transit_minutes}분 소요${prop.transit_estimated ? " (추정)" : ""}`
+                      ? `${isSisterZone ? "서대문역 " : isMeZone ? "선릉역 " : ""}${transitModeLabel(prop.transit_mode)} 약 ${prop.transit_minutes}분 소요${prop.transit_estimated ? " (추정)" : ""}`
                       : null,
                 },
                 {
@@ -320,7 +337,17 @@ export default function PropertyDetail() {
                 },
                 {
                   label: "직선거리",
-                  value: prop.distance_seolleung_km != null ? `${prop.distance_seolleung_km} km` : null,
+                  value: isSisterZone
+                    ? prop.distance_sister_km != null
+                      ? `서대문역 ${prop.distance_sister_km} km`
+                      : null
+                    : isMeZone
+                    ? prop.distance_seolleung_km != null
+                      ? `선릉역 ${prop.distance_seolleung_km} km`
+                      : null
+                    : prop.distance_seolleung_km != null
+                    ? `${prop.distance_seolleung_km} km`
+                    : null,
                 },
               ]}
             />

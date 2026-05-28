@@ -21,6 +21,8 @@ class PropertyBase(BaseModel):
     appraisal_price: int | None = None
     area_build_m2: float | None = None
     share_yn: str | None = None
+    building_shared: bool | None = None
+    building_share_ratio: float | None = None
     fail_count: int | None = None
     bid_start: str | None = None
     bid_end: str | None = None
@@ -28,6 +30,7 @@ class PropertyBase(BaseModel):
     transit_minutes: int | None = None
     transit_estimated: bool = False
     distance_seolleung_km: float | None = None
+    distance_sister_km: float | None = None
     geo_lat: float | None = None
     geo_lng: float | None = None
     source_url: str | None = None

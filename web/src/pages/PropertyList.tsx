@@ -11,6 +11,7 @@ import {
   formatDateTime,
   formatPrice,
   formatPriceFull,
+  formatSharePct,
   isCautionTag,
   isRedundantTag,
   parseFloor,
@@ -29,7 +30,7 @@ export default function PropertyList() {
   const [loading, setLoading] = useState(true);
   const [maxFail, setMaxFail] = useState(3);
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
-  const [tab, setTab] = useState<PropertyTab>("주거");
+  const [tab, setTab] = useState<PropertyTab>("용도복합·오피스텔 쪈");
   // 추가 필터 (클라이언트 사이드)
   const [favOnly, setFavOnly] = useState(false);
   const [regionFilter, setRegionFilter] = useState<"all" | "gangnam" | "songpa">("all");
@@ -37,7 +38,7 @@ export default function PropertyList() {
   const [ageMax, setAgeMax] = useState<"all" | "5" | "10" | "20">("all");
   const [floorFilter, setFloorFilter] = useState<"all" | "저층" | "중층" | "고층">("all");
   const [subCategory, setSubCategory] = useState<string>("all");
-  const [sortKey, setSortKey] = useState<"default" | "price" | "area" | "transit" | "bidStart">("default");
+  const [sortKey, setSortKey] = useState<"default" | "price" | "area" | "transit" | "bidStart" | "fail">("default");
   const [sortAsc, setSortAsc] = useState(true);
   const cardListRef = useRef<HTMLDivElement | null>(null);
   const [scrollTargetId, setScrollTargetId] = useState<number | null>(null);
@@ -108,10 +109,11 @@ export default function PropertyList() {
 
   const tabCounts = useMemo(() => {
     const m: Record<PropertyTab, number> = {
+      "용도복합·오피스텔 쪈": 0,
+      "용도복합·오피스텔 쪠": 0,
       "주거": 0,
-      "용도복합·오피스텔": 0,
       "주거 지분": 0,
-      "도로": 0,
+      "토지": 0,
     };
     for (const p of items) {
       const t = propertyTab(p);
@@ -161,6 +163,7 @@ export default function PropertyList() {
     const getter = (p: Property): number | null => {
       if (sortKey === "price") return p.min_price ?? null;
       if (sortKey === "area") return p.area_build_m2 ?? null;
+      if (sortKey === "fail") return p.fail_count ?? 0;
       if (sortKey === "bidStart") {
         if (!p.bid_start) return null;
         const d = new Date(p.bid_start.replace(" ", "T"));
@@ -218,18 +221,25 @@ export default function PropertyList() {
   return (
     <>
       <nav className="property-tabs" role="tablist">
-        {PROPERTY_TABS.map((t) => (
-          <button
-            key={t}
-            role="tab"
-            aria-selected={tab === t}
-            className={`property-tab ${tab === t ? "active" : ""}`}
-            onClick={() => setTab(t)}
-          >
-            {t}
-            <span className="property-tab-count">{tabCounts[t]}</span>
-          </button>
-        ))}
+        {PROPERTY_TABS.map((t) => {
+          const zoneClass = t.includes("쪈")
+            ? "tab-zone-me"
+            : t.includes("쪠")
+            ? "tab-zone-sister"
+            : "";
+          return (
+            <button
+              key={t}
+              role="tab"
+              aria-selected={tab === t}
+              className={`property-tab ${zoneClass} ${tab === t ? "active" : ""}`}
+              onClick={() => setTab(t)}
+            >
+              {t}
+              <span className="property-tab-count">{tabCounts[t]}</span>
+            </button>
+          );
+        })}
       </nav>
 
       <div className="filters filter-bar">
@@ -307,6 +317,7 @@ export default function PropertyList() {
             ["area", "건물면적"],
             ["transit", "직장까지"],
             ["bidStart", "입찰 시작"],
+            ["fail", "유찰횟수"],
           ] as const).map(([key, label]) => (
             <button
               key={key}
@@ -323,28 +334,31 @@ export default function PropertyList() {
             </button>
           ))}
         </div>
-        <label className="fail-filter">
-          <span>유찰 ≤</span>
-          <input
-            type="number"
-            min={0}
-            max={10}
-            value={maxFail}
-            onChange={(e) => setMaxFail(Number(e.target.value))}
-            style={{ width: 56 }}
-          />
-        </label>
-        {anyFilterActive && (
-          <button type="button" className="filter-reset" onClick={resetFilters}>
-            초기화
-          </button>
-        )}
-        <span className="filter-count">
-          총 {sortedItems.length}건
-          {sortedItems.length !== items.length && (
-            <span style={{ color: "#94a3b8" }}> / {items.length}</span>
+        <div className="filter-break" />
+        <div className="filter-right-group">
+          {anyFilterActive && (
+            <button type="button" className="filter-reset" onClick={resetFilters}>
+              초기화
+            </button>
           )}
-        </span>
+          <label className="fail-filter">
+            <span>유찰 ≤</span>
+            <input
+              type="number"
+              min={0}
+              max={10}
+              value={maxFail}
+              onChange={(e) => setMaxFail(Number(e.target.value))}
+              style={{ width: 56 }}
+            />
+          </label>
+          <span className="filter-count">
+            총 {sortedItems.length}건
+            {sortedItems.length !== items.length && (
+              <span style={{ color: "#94a3b8" }}> / {items.length}</span>
+            )}
+          </span>
+        </div>
       </div>
 
       {loading ? (
@@ -412,7 +426,14 @@ export default function PropertyList() {
                   </header>
                   <dl className="card-table">
                     <dt>용도</dt>
-                    <dd>{p.category || "-"}</dd>
+                    <dd>
+                      {p.category || "-"}
+                      {p.share_yn === "Y" && formatSharePct(p.building_share_ratio) && (
+                        <span className="share-pill">
+                          지분 {formatSharePct(p.building_share_ratio)}
+                        </span>
+                      )}
+                    </dd>
                     <dt>최저가</dt>
                     <dd>
                       {formatPriceFull(p.min_price)}
@@ -470,6 +491,11 @@ export default function PropertyList() {
                       <>
                         <dt>직장까지</dt>
                         <dd>
+                          {propertyTab(p) === "용도복합·오피스텔 쪠" ? (
+                            <span className="dest-label sister">서대문역 </span>
+                          ) : propertyTab(p) === "용도복합·오피스텔 쪈" ? (
+                            <span className="dest-label me">선릉역 </span>
+                          ) : null}
                           {transitModeLabel(p.transit_mode)} 약 {p.transit_minutes}분 소요
                           {p.transit_estimated ? " (추정)" : ""}
                           {p.transit_summary && (

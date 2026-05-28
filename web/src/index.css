@@ -764,6 +764,37 @@ button.secondary {
   font-weight: 700;
 }
 
+.share-pill {
+  display: inline-block;
+  margin-left: 0.4rem;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #9333ea;
+  background: #f3e8ff;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+.dest-label {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  margin-right: 0.3rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+/* 쪈(나) = 선릉역 연보라 / 쪠(언니) = 서대문역 하늘색 */
+.dest-label.me {
+  color: #6d28d9;
+  background: #ede9fe;
+}
+.dest-label.sister {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
 .market-range-chart {
   width: 100%;
   height: auto;
@@ -965,6 +996,21 @@ button.secondary {
   gap: 0.5rem;
 }
 
+/* 필터바 강제 줄바꿈 — 유찰 입력 + 총 건수를 정렬 버튼 아래 줄로 */
+.filter-break {
+  flex-basis: 100%;
+  height: 0;
+  margin: 0;
+}
+
+/* 둘째 줄 오른쪽 그룹: [초기화] [유찰 ≤ N] [총 N건] 한 덩어리로 우측 정렬 */
+.filter-right-group {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
 .property-tabs {
   display: flex;
   gap: 0.4rem;
@@ -997,6 +1043,30 @@ button.secondary {
   color: #fff;
   border-color: #2563eb;
   font-weight: 600;
+}
+
+/* 오피스텔 영역 구분 — 나(쪈) 연보라 / 언니(쪠) 하늘색 (파스텔, 목적지 라벨과 통일) */
+.property-tab.tab-zone-me {
+  border-left: 3px solid #c4b5fd;
+}
+.property-tab.tab-zone-me.active {
+  background: #ede9fe;
+  border-color: #c4b5fd;
+  color: #6d28d9;
+}
+.property-tab.tab-zone-sister {
+  border-left: 3px solid #7dd3fc;
+}
+.property-tab.tab-zone-sister.active {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0369a1;
+}
+/* 파스텔 배경이므로 활성 탭 카운트도 어두운 톤으로 */
+.property-tab.tab-zone-me.active .property-tab-count,
+.property-tab.tab-zone-sister.active .property-tab-count {
+  background: rgba(15, 23, 42, 0.1);
+  color: inherit;
 }
 
 .property-tab-count {
@@ -1074,7 +1144,7 @@ button.secondary {
   gap: 0.3rem;
   padding: 0 0.4rem;
   border-left: 1px solid #e2e8f0;
-  margin-left: 0.2rem;
+  margin-left: auto;   /* 오른쪽 끝으로 붙여 남는 공간 제거 */
 }
 
 .filter-sort-label {
@@ -1153,7 +1223,6 @@ button.secondary {
 }
 
 .filter-count {
-  margin-left: auto;
   font-size: 0.875rem;
   color: #64748b;
   font-weight: 500;
