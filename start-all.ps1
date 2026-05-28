@@ -23,7 +23,7 @@ if (-not $SkipScrape) {
         return
     }
     Write-Host '[0/3] Scraping listings (this takes a few minutes)...' -ForegroundColor Cyan
-    & $python -m scraper.run --max-pages 3
+    & $python -m scraper.run --max-pages 10
     Write-Host '[0/3] Backfilling building registry + ODsay transit...' -ForegroundColor Cyan
     & $python -m scripts.backfill_all
 } else {

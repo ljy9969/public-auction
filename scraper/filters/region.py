@@ -111,6 +111,17 @@ def _is_officetel_or_mixed(raw_or_prop: dict[str, Any]) -> bool:
     return ("오피스텔" in cat) or ("용도복합" in cat)
 
 
+def _is_land(raw_or_prop: dict[str, Any]) -> bool:
+    """토지/도로 카테고리 (지분 건물 제외) — 전국 허용 대상."""
+    cat = (
+        raw_or_prop.get("ctgrFullNm")
+        or raw_or_prop.get("ctgrNm")
+        or raw_or_prop.get("category")
+        or ""
+    )
+    return "토지" in cat
+
+
 def in_target_region(raw_or_prop: dict[str, Any], *, require_gangnam_radius: bool = True) -> bool:
     """카테고리별 분기:
       오피스텔/용도복합        → 항상 송파/강남 화이트리스트 + 선릉 3km (mode 무관)
@@ -129,6 +140,10 @@ def in_target_region(raw_or_prop: dict[str, Any], *, require_gangnam_radius: boo
         if _check_songpa_gangnam_strict(raw_or_prop, addr, regions, require_gangnam_radius):
             return True
         return _check_sister_zone(raw_or_prop, addr, regions)
+
+    # 토지/도로 — 전국 허용 (소액 토지 지분·도로는 지방에 집중, 서울엔 거의 없음)
+    if _is_land(raw_or_prop):
+        return True
 
     if mode == "seoul_all":
         return ("서울특별시" in addr) or addr.startswith("서울 ")
