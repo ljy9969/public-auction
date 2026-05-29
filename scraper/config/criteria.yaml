@@ -21,9 +21,9 @@ form:
   srch_sort_type: ASC
   srch_word_type: "0001"
   bid_period_days: 90
-  # 유찰횟수 검색 단계 cap — 지분(10회)까지 포함해서 가져오고, 후처리에서 단독은 4회로 다시 cap
+  # 유찰횟수 검색 단계 cap — 0~5 (모든 용도 유찰 5회 이하로 통일, 검색부터 좁힘)
   srch_usbd_nft_bgng: 0
-  srch_usbd_nft_end: 10
+  srch_usbd_nft_end: 5
   # 용도 코드 — 수집 시점에는 모두 포함 (주거 + 용도복합·오피스텔 + 토지)
   #   UI 탭(주거 / 용도복합·오피스텔 / 주거지분 / 도로)에서 분류
   srch_prpt_types:
@@ -76,17 +76,39 @@ regions:
 
 post_filters:
   max_transit_minutes: 30        # mode=songpa_gangnam 일 때만 의미
-  max_fail_count: 4              # 단독 건물: 유찰 5회 이상 제외
-  max_fail_count_share: 10       # 주거 지분: 유찰 11회 이상 제외 (지분은 유찰 잦음)
-  max_fail_count_land: 5         # 토지/도로: 유찰 6회 이상 제외
+  max_fail_count: 5              # 모든 용도 유찰 5회 이하 (6회 이상 제외)
   max_min_price: 300000000       # 단독 건물 최저가 상한 (3억)
   max_min_price_share: 50000000  # 주거 지분 최저가 상한 (5천만 — 소액 지분 투자)
   max_min_price_land: 10000000   # 토지/도로 최저가 상한 (1천만 — 책: 도로/맹지 300~1000만)
+  # 토지 세부 용도 화이트리스트 — 이 14종만 통과 (학교용지/종교용지/철도용지 등 제외)
+  land_allowed_categories:
+    - 대지 # 입문자 추천 ~
+    - 전
+    - 답
+    - 임야
+    - 잡종지
+    - 창고용지
+    - 주차장
+    - 주택부지
+    - 기타토지
+    - 공장용지 # 조건부 추천 ~
+    - 과수원
+    - 목장용지
+    - 초지
+    - 도로
   min_bld_area_m2: 23            # 단독 건물면적 하한 (지분은 면제)
   exclude_land_only: true
   require_elevator: true
-  # 주거용건물 세부 화이트리스트 — 수집 시점에는 비워두고 UI 필터에서 사용자가 선택
-  allowed_categories: []
+  # 주거용건물 세부 7종 화이트리스트 — 이 7종만 통과 (다가구/다중/연립/기타주거용 등 제외)
+  #   오피스텔·용도복합·토지는 이 검사 우회 (별도 분류)
+  allowed_categories:
+    - 아파트
+    - 주상복합
+    - 단독주택
+    - 도시형생활주택
+    - 다세대주택
+    - 빌라
+    - 전원주택
   # 제목에 명시적 지분 표기가 있는 경우만 (예: '지분매각', '○○○ 지분')
   exclude_share_keywords:
     - 지분매각

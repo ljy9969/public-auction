@@ -90,7 +90,7 @@ def run_scrape(
         min_bld = float(pf.get("min_bld_area_m2", 23))
         max_min_price = float(pf.get("max_min_price", 300_000_000))
         # list 단계는 느슨하게 (지분 매물도 일단 통과) — 정확한 분기는 quality.py에서 처리
-        max_fail_count = pf.get("max_fail_count_share") or pf.get("max_fail_count")
+        max_fail_count = pf.get("max_fail_count")
         for query, raw in iter_all_queries(session, max_pages_per_query=pages_cap):
             if not in_target_region(raw):
                 skipped += 1

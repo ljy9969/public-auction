@@ -1,10 +1,14 @@
 """Quality post-filters from plan §3."""
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from typing import Any
 
 from scraper.session import load_criteria
+
+# '제지하층', '제 지하층', '지하 1층' 등 — '지하철'은 매칭 안 됨(층 글자 필요)
+_BASEMENT_RE = re.compile(r"지하\s*\d*\s*층")
 
 
 def _is_land_or_road(prop: dict[str, Any]) -> bool:
@@ -23,6 +27,19 @@ def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
         or prop.get("share_yn") == "Y"
         or prop.get("building_shared") is True
     )
+
+    # 지하층 매물 제외 — 제목 또는 상세(위치/이용현황/주위환경)에 '지하층' 표기
+    title = prop.get("title") or ""
+    if _BASEMENT_RE.search(title):
+        prop["passes_filters"] = False
+        notes.append("quality: 지하층 (제외)")
+    else:
+        detail = prop.get("detail_json") or {}
+        for k, v in detail.items():
+            if any(kw in k for kw in ("위치", "이용", "현황", "주위")) and _BASEMENT_RE.search(str(v)):
+                prop["passes_filters"] = False
+                notes.append("quality: 지하층 (위치/현황, 제외)")
+                break
 
     # Active bids only (rough: status not closed)
     status = (prop.get("status") or "").strip()
@@ -52,32 +69,28 @@ def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
             notes.append(f"quality: category excluded ({excluded})")
             break
 
-    # 주거용건물 세부 7종 화이트리스트 (토지는 우회)
+    # 주거용건물 세부 7종 화이트리스트 — 주거용건물 카테고리에만 적용 (오피스텔/용도복합/토지는 우회)
     allowed = pf.get("allowed_categories") or []
-    if allowed and not is_land:
+    if allowed and "주거용건물" in category:
         if not any(ac in category for ac in allowed):
             prop["passes_filters"] = False
             notes.append(f"quality: category not in allowed list ({category})")
 
-    # 유찰 cap — 매물 종류별 분기
-    #   토지/도로:    max_fail_count_land   (기본 5 — 6회 이상 제외)
-    #   주거 지분:    max_fail_count_share  (기본 10 — 11회 이상 제외)
-    #   단독 건물:    max_fail_count        (기본 4 — 5회 이상 제외)
-    _share_building = prop.get("share_yn") == "Y" or prop.get("building_shared") is True
-    if is_land:
-        max_fail = pf.get("max_fail_count_land", 5)
-        fail_label = "land"
-    elif _share_building:
-        max_fail = pf.get("max_fail_count_share", 10)
-        fail_label = "share"
-    else:
-        max_fail = pf.get("max_fail_count")
-        fail_label = "default"
+    # 토지 세부 14종 화이트리스트 (학교용지/종교용지/철도용지 등 제외)
+    land_allowed = pf.get("land_allowed_categories") or []
+    if land_allowed and is_land:
+        sub = category.split("/")[-1].strip() if "/" in category else category
+        if not any(la in sub for la in land_allowed):
+            prop["passes_filters"] = False
+            notes.append(f"quality: 토지 용도 제외 ({sub})")
+
+    # 유찰 cap — 모든 용도 통일 (max_fail_count, 기본 5 — 6회 이상 제외)
+    max_fail = pf.get("max_fail_count")
     if max_fail is not None:
         fail = prop.get("fail_count")
         if fail is not None and fail > max_fail:
             prop["passes_filters"] = False
-            notes.append(f"quality: fail count {fail} > {max_fail} ({fail_label})")
+            notes.append(f"quality: fail count {fail} > {max_fail}")
 
     # Max price re-check — 최저가 비공개(None/0)면 감정가로 판단 (초고가 매물 제외)
     #   토지/도로: max_min_price_land (1천만) / 주거 지분: max_min_price_share (5천만) / 단독: max_min_price (3억)
