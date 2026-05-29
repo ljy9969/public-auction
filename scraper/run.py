@@ -56,7 +56,8 @@ def _matches_list_criteria(
     if exclude_categories:
         if any(ex and ex in cat for ex in exclude_categories):
             return False
-    if allowed_categories and not is_land:
+    # 7종 화이트리스트는 '주거용건물' 카테고리에만 — 오피스텔/용도복합/토지는 우회
+    if allowed_categories and "주거용건물" in cat:
         if not any(ac in cat for ac in allowed_categories):
             return False
     return True

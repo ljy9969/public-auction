@@ -5,7 +5,7 @@ onbid:
   search_path: /op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/mvmnCltrCdtnSrchClg.do
   list_path: /op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/srchCltrCdtn.do
   detail_path: /op/cltrpbancinf/cltr/cltrdtl/CltrDtlController/mvmnCltrDtl.do
-  page_unit: 30
+  page_unit: 100               # 페이지당 100건 (max-pages 10 → 1000건까지, 누락 최소화)
   request_delay_sec: 1.5
 
 form:
