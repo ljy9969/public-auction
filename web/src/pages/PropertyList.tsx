@@ -38,6 +38,7 @@ export default function PropertyList() {
   const [ageMax, setAgeMax] = useState<"all" | "5" | "10" | "20">("all");
   const [floorFilter, setFloorFilter] = useState<"all" | "저층" | "중층" | "고층">("all");
   const [subCategory, setSubCategory] = useState<string>("all");
+  const [tenantRisk, setTenantRisk] = useState<"all" | "yes" | "no">("all");
   const [sortKey, setSortKey] = useState<"default" | "price" | "area" | "transit" | "bidStart" | "fail">("default");
   const [sortAsc, setSortAsc] = useState(true);
   const cardListRef = useRef<HTMLDivElement | null>(null);
@@ -115,7 +116,14 @@ export default function PropertyList() {
       "주거 지분": 0,
       "토지": 0,
     };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     for (const p of items) {
+      // 입찰 시작 지난 매물은 목록에서 숨기므로 탭 카운트에서도 제외 (목록과 일치)
+      if (p.bid_start) {
+        const start = new Date(p.bid_start.replace(" ", "T"));
+        if (!isNaN(start.getTime()) && start < today) continue;
+      }
       const t = propertyTab(p);
       if (t) m[t] += 1;
     }
@@ -154,9 +162,14 @@ export default function PropertyList() {
       if (subCategory !== "all") {
         if (!(p.category || "").includes(subCategory)) return false;
       }
+      if (tenantRisk !== "all") {
+        const hasRisk = (p.filter_notes || []).some((t) => t.includes("임차인 인수"));
+        if (tenantRisk === "yes" && !hasRisk) return false;
+        if (tenantRisk === "no" && hasRisk) return false;
+      }
       return true;
     });
-  }, [items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, subCategory, fav]);
+  }, [items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, fav]);
 
   const sortedItems: Property[] = useMemo(() => {
     if (sortKey === "default") return filteredItems;
@@ -206,6 +219,7 @@ export default function PropertyList() {
     setAgeMax("all");
     setFloorFilter("all");
     setSubCategory("all");
+    setTenantRisk("all");
     setSortKey("default");
     setSortAsc(true);
   };
@@ -216,12 +230,16 @@ export default function PropertyList() {
     ageMax !== "all" ||
     floorFilter !== "all" ||
     subCategory !== "all" ||
+    tenantRisk !== "all" ||
     sortKey !== "default";
 
   return (
     <>
       <nav className="property-tabs" role="tablist">
         {PROPERTY_TABS.map((t) => {
+          const isOffice = t.startsWith("용도복합·오피스텔");
+          const zone = isOffice ? t.slice(-1) : null; // "쪈" or "쪠"
+          const baseLabel = isOffice ? "용도복합·오피스텔" : t;
           const zoneClass = t.includes("쪈")
             ? "tab-zone-me"
             : t.includes("쪠")
@@ -235,7 +253,8 @@ export default function PropertyList() {
               className={`property-tab ${zoneClass} ${tab === t ? "active" : ""}`}
               onClick={() => setTab(t)}
             >
-              {t}
+              {baseLabel}
+              {zone && <span className="zone-badge">{zone}</span>}
               <span className="property-tab-count">{tabCounts[t]}</span>
             </button>
           );
@@ -310,6 +329,18 @@ export default function PropertyList() {
             ))}
           </select>
         </label>
+        <label className="filter-select">
+          <span>임차인 인수</span>
+          <select
+            value={tenantRisk}
+            onChange={(e) => setTenantRisk(e.target.value as typeof tenantRisk)}
+          >
+            <option value="all">전체</option>
+            <option value="no">위험 없음</option>
+            <option value="yes">위험 있음</option>
+          </select>
+        </label>
+        <div className="filter-break" />
         <div className="filter-sort" role="group" aria-label="정렬">
           <span className="filter-sort-label">정렬</span>
           {([
@@ -334,7 +365,6 @@ export default function PropertyList() {
             </button>
           ))}
         </div>
-        <div className="filter-break" />
         <div className="filter-right-group">
           {anyFilterActive && (
             <button type="button" className="filter-reset" onClick={resetFilters}>

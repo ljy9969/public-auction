@@ -223,6 +223,28 @@ def _building_share_ratio(area_rows: list[dict[str, str]]) -> float | None:
     return None
 
 
+# 온비드 detail 페이지의 '소유권 이전비용 계산기' 위젯 등 — 권리관계/상세정보가 아닌 UI 노이즈
+_NOISE_KEYWORDS = (
+    "삭제메시지",
+    "계산하기",
+    "초기화",
+    "기준시가표준액",
+    "소유권 이전비용",
+    "소유권 이전 등기비용",
+    "국민주택채권 매입기준표",
+    "매입기준표 참고",
+    "바로가기",
+)
+
+
+def _is_noise(label: str, value: str) -> bool:
+    text = f"{label} {value}"
+    if any(k in text for k in _NOISE_KEYWORDS):
+        return True
+    # 계산기 폼이 한 셀에 통째로 들어온 비정상적으로 긴 값
+    return len(value) > 400
+
+
 def parse_detail_html(html: str) -> dict[str, Any]:
     soup = BeautifulSoup(html, "lxml")
     detail: dict[str, str] = {}
@@ -237,6 +259,8 @@ def parse_detail_html(html: str) -> dict[str, Any]:
             label = cells[0].get_text(strip=True)
             value = cells[1].get_text(" ", strip=True)
             if not label:
+                continue
+            if _is_noise(label, value):
                 continue
             detail[label] = value
             if any(k in label for k in ("근저당", "가압류", "권리", "임차")):

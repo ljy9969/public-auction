@@ -22,10 +22,17 @@ if (-not $SkipScrape) {
         Write-Host "python venv not found at $python" -ForegroundColor Red
         return
     }
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
     Write-Host '[0/3] Scraping listings (this takes a few minutes)...' -ForegroundColor Cyan
     & $python -m scraper.run --max-pages 10
     Write-Host '[0/3] Backfilling building registry + ODsay transit...' -ForegroundColor Cyan
     & $python -m scripts.backfill_all
+    Write-Host '[0/3] Backfilling 국토부 실거래가 시세/임대수익률...' -ForegroundColor Cyan
+    & $python -m scripts.backfill_realprice
+    $sw.Stop()
+    $dur = '{0}분 {1}초' -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
+    Write-Host "[0/3] 수집+백필 완료 ($dur) — Discord 알림 전송" -ForegroundColor Cyan
+    & $python -m scripts.notify_discord $dur
 } else {
     Write-Host '[0/3] Skipping scrape (-SkipScrape)' -ForegroundColor DarkGray
 }

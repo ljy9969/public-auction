@@ -37,11 +37,11 @@ def _matches_list_criteria(
         return False
     if raw.get("cptnMthodCd") != "0001":
         return False
-    # 최저가 비공개(None/0)면 감정가로 판단 — 초고가 매물(예: 922억 대지) 제외
+    # 최저가 비공개(None/0)면 감정가로 판단 — 둘 다 비공개면 제외, 초고가(922억 대지)도 제외
     price = raw.get("lowstBidPrc")
     appr = raw.get("cltrApslEvlAvgAmt")
     effective_price = price if (price and float(price) > 0) else appr
-    if effective_price is not None and float(effective_price) > max_min_price:
+    if effective_price is None or float(effective_price) > max_min_price:
         return False
     cat = (raw.get("ctgrFullNm") or raw.get("ctgrNm") or "")
     is_land = any(k in cat for k in ("도로", "토지", "전 /", "답 /", "과수원", "임야", "대지"))

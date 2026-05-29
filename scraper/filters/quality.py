@@ -94,7 +94,11 @@ def apply_quality_filters(prop: dict[str, Any]) -> dict[str, Any]:
         max_price = pf.get("max_min_price", 300_000_000)
         kind = "default"
     effective_price = min_price if (min_price is not None and min_price > 0) else appr
-    if effective_price is not None and effective_price > max_price:
+    if effective_price is None:
+        # 최저가·감정가 둘 다 비공개 → 가격 판단 불가, 제외
+        prop["passes_filters"] = False
+        notes.append("quality: price undisclosed (가격 비공개 제외)")
+    elif effective_price > max_price:
         prop["passes_filters"] = False
         basis = "min bid" if (min_price is not None and min_price > 0) else "appraisal"
         notes.append(f"quality: {basis} {int(effective_price) // 1_000_000}M > {max_price // 1_000_000}M ({kind})")
