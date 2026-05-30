@@ -11,11 +11,13 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scraper.analyze_rights import analyze_rights
 from scraper.db import delete_failed_properties, finish_run, start_run, upsert_property
 from scraper.detail import fetch_detail_html
 from scraper.filters import apply_all_post_filters
 from scraper.filters.region import in_target_region
 from scraper.parse import parse_detail_html, parse_list_row
+from scraper.predict_price import predict_price
 from scraper.search import iter_all_queries
 from scraper.session import create_session, load_criteria
 
@@ -128,6 +130,23 @@ def run_scrape(
                     prop.get("filter_notes"),
                 )
                 continue
+
+            # #9 권리분석 자동 판정 (휴리스틱)
+            try:
+                prop["rights_analysis"] = analyze_rights(prop)
+            except Exception:
+                logger.debug("rights analysis failed for %s", prop.get("cltr_no"))
+
+            # #10 낙찰가 예측 (통계 휴리스틱)
+            try:
+                pred = predict_price(prop)
+                if pred:
+                    prop["predicted_price_low"] = pred["low"]
+                    prop["predicted_price_median"] = pred["median"]
+                    prop["predicted_price_high"] = pred["high"]
+                    prop["predicted_price_basis"] = pred["basis"]
+            except Exception:
+                logger.debug("price prediction failed for %s", prop.get("cltr_no"))
 
             upsert_property(prop)
             saved += 1

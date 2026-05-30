@@ -63,6 +63,11 @@ class PropertyBase(BaseModel):
     rental_match_kind: str | None = None
     rental_endpoint_label: str | None = None
     rental_samples: list[dict[str, Any]] | None = None
+    rights_analysis: dict[str, Any] | None = None
+    predicted_price_low: int | None = None
+    predicted_price_median: int | None = None
+    predicted_price_high: int | None = None
+    predicted_price_basis: str | None = None
 
 
 class PropertyDetail(PropertyBase):

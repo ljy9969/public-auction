@@ -59,6 +59,26 @@ export interface Property {
   rental_match_kind: string | null;
   rental_endpoint_label: string | null;
   rental_samples: RentalSample[] | null;
+  rights_analysis: RightsAnalysis | null;
+  predicted_price_low: number | null;
+  predicted_price_median: number | null;
+  predicted_price_high: number | null;
+  predicted_price_basis: string | null;
+}
+
+export interface RightsAnalysisFlag {
+  kind: string;
+  label: string;
+}
+
+export interface RightsAnalysis {
+  risk_level: "low" | "medium" | "high";
+  risk_label: string;
+  summary: string;
+  flags: RightsAnalysisFlag[];
+  base_rights_found?: boolean;
+  tenant_count: number;
+  disclaimer: string;
 }
 
 export interface RentalSample {

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import BidSimulator from "../components/BidSimulator";
 import MarketRangeChart from "../components/MarketRangeChart";
 import PhotoGallery from "../components/PhotoGallery";
 import PropertyMap from "../components/PropertyMap";
@@ -320,6 +321,28 @@ export default function PropertyDetail() {
             />
           </section>
 
+          {prop.rights_analysis && (
+            <section className={`detail-section rights-analysis risk-${prop.rights_analysis.risk_level}`}>
+              <h3 className="section-title">
+                권리분석 (자동 판정)
+                <span className={`risk-pill risk-${prop.rights_analysis.risk_level}`}>
+                  {prop.rights_analysis.risk_label}
+                </span>
+              </h3>
+              <p className="rights-summary">{prop.rights_analysis.summary}</p>
+              {prop.rights_analysis.flags.length > 0 && (
+                <ul className="rights-flags">
+                  {prop.rights_analysis.flags.map((f) => (
+                    <li key={f.label} className={`flag flag-${f.kind}`}>
+                      {f.label}
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="section-disclaimer">{prop.rights_analysis.disclaimer}</p>
+            </section>
+          )}
+
           <section className="detail-section">
             <h3 className="section-title">직장 접근성</h3>
             <InfoTable
@@ -633,6 +656,67 @@ export default function PropertyDetail() {
               })()}
             </section>
           )}
+
+          {prop.predicted_price_median != null && (() => {
+            const med = prop.predicted_price_median!;
+            const low = prop.predicted_price_low ?? med;
+            const high = prop.predicted_price_high ?? med;
+            const min = prop.min_price ?? 0;
+            const vsMin = min > 0 ? ((med - min) / min) * 100 : null;
+            let judgmentLabel: string | null = null;
+            let judgmentClass = "judgment-mid";
+            if (vsMin != null) {
+              if (med < min * 0.97) {
+                judgmentLabel = `현재 최저가보다 ${Math.abs(vsMin).toFixed(1)}% 낮음 (다음 회차 대기 고려)`;
+                judgmentClass = "judgment-low";
+              } else if (med > min * 1.10) {
+                judgmentLabel = `현재 최저가보다 ${vsMin.toFixed(1)}% 높음 (입찰 경쟁 강할 가능성)`;
+                judgmentClass = "judgment-high";
+              } else {
+                judgmentLabel = "최저가 ≈ 예상 낙찰가 (적정 구간)";
+                judgmentClass = "judgment-mid";
+              }
+            }
+            return (
+              <section className="detail-section predicted-price">
+                <h3 className="section-title">
+                  예상 낙찰가
+                  <button
+                    type="button"
+                    className="info-tip"
+                    aria-label="산출식 보기"
+                    tabIndex={0}
+                  >
+                    i
+                    <span className="info-tip-content">
+                      감정가 × 카테고리별 잔존가율(서울 아파트 85% / 빌라 70% / 토지 58% 등) ×
+                      유찰 1회당 -5%p, 시세가 있으면 50% 가중 평균. AI 아닌 통계 휴리스틱.
+                    </span>
+                  </button>
+                </h3>
+                <p className="section-hint">{prop.predicted_price_basis}</p>
+                <div className="predicted-range">
+                  <div className="predicted-stat">
+                    <span className="market-stat-label">하한 (low)</span>
+                    <span className="market-stat-value">{formatPrice(low)}</span>
+                  </div>
+                  <div className="predicted-stat">
+                    <span className="market-stat-label">중앙값 (median)</span>
+                    <span className="market-stat-value market-stat-strong">{formatPrice(med)}</span>
+                  </div>
+                  <div className="predicted-stat">
+                    <span className="market-stat-label">상한 (high)</span>
+                    <span className="market-stat-value">{formatPrice(high)}</span>
+                  </div>
+                </div>
+                {judgmentLabel && (
+                  <p className={`predicted-judgment ${judgmentClass}`}>{judgmentLabel}</p>
+                )}
+              </section>
+            );
+          })()}
+
+          <BidSimulator prop={prop} />
 
           {(() => {
             const visibleNotes = (prop.filter_notes || []).filter(

@@ -1597,8 +1597,57 @@ button.secondary {
   .list-map-pane {
     height: 260px;
   }
+
+  /* 필터 바 — 2열 그리드로 가지런하게 (셀마다 라벨+드롭다운 한 묶음 폭 균일) */
   .filter-bar {
-    padding: 0.55rem 0.65rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 0.5rem;
+    padding: 0.6rem 0.65rem;
+    align-items: stretch;
+  }
+  .filter-bar .filter-check,
+  .filter-bar .filter-chip,
+  .filter-bar .filter-select {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
+  }
+  .filter-bar .filter-select select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  /* 강제 줄바꿈은 grid가 처리하므로 제거 */
+  .filter-bar .filter-break {
+    display: none;
+  }
+  /* 우측 그룹(초기화·유찰입력·총건수)을 전폭 한 줄로 — 오른쪽 정렬 */
+  .filter-bar .filter-right-group {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  /* 정렬 영역 — 전폭 한 줄, 버튼은 가로 스크롤 없이 균일 분배 */
+  .filter-bar .filter-sort {
+    grid-column: 1 / -1;
+    margin-left: 0;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    padding: 0;
+    justify-content: flex-start;
+  }
+  .filter-bar .filter-sort-label {
+    flex: 0 0 100%;
+    margin-bottom: 0.1rem;
+  }
+  .filter-bar .filter-sort-btn {
+    flex: 1 1 calc(33.333% - 0.35rem);
+    min-width: 0;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 0.35rem 0.4rem;
   }
 }
 
@@ -1684,4 +1733,174 @@ button.secondary {
 
 .card.active .card-idx {
   background: #ef4444;
+}
+
+/* ===== #9 권리분석 자동 판정 섹션 ===== */
+.rights-analysis {
+  border-left: 4px solid #cbd5e1;
+  padding-left: 1rem;
+}
+.rights-analysis.risk-low {
+  border-left-color: #22c55e;
+}
+.rights-analysis.risk-medium {
+  border-left-color: #f59e0b;
+}
+.rights-analysis.risk-high {
+  border-left-color: #ef4444;
+}
+.risk-pill {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-radius: 999px;
+}
+.risk-pill.risk-low {
+  background: #dcfce7;
+  color: #15803d;
+}
+.risk-pill.risk-medium {
+  background: #fef3c7;
+  color: #b45309;
+}
+.risk-pill.risk-high {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.rights-summary {
+  margin: 0.4rem 0 0.6rem;
+  color: #0f172a;
+  font-size: 0.95rem;
+}
+.rights-flags {
+  list-style: none;
+  margin: 0 0 0.6rem;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.rights-flags .flag {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+.rights-flags .flag-takeover_risk {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.rights-flags .flag-tenant_present {
+  background: #fef3c7;
+  color: #b45309;
+}
+.section-disclaimer {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+/* ===== #10 낙찰가 예측 섹션 ===== */
+.predicted-price .predicted-range {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin: 0.6rem 0;
+}
+.predicted-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.7rem 0.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+.predicted-stat .market-stat-strong {
+  color: #1d4ed8;
+  font-weight: 700;
+}
+.predicted-judgment {
+  margin: 0.3rem 0 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+}
+.predicted-judgment.judgment-low {
+  background: #fef3c7;
+  color: #b45309;
+}
+.predicted-judgment.judgment-mid {
+  background: #dcfce7;
+  color: #15803d;
+}
+.predicted-judgment.judgment-high {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ===== #8 모의입찰 시뮬레이터 ===== */
+.bid-simulator .bid-sim-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  margin: 0.6rem 0 0.8rem;
+}
+.bid-simulator label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+.bid-simulator input[type="number"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+.bid-simulator input[type="number"]:focus {
+  outline: 2px solid #93c5fd;
+  outline-offset: -1px;
+}
+.bid-simulator small {
+  font-size: 0.75rem;
+}
+.bid-simulator small.bid-warn {
+  color: #b91c1c;
+}
+.bid-simulator small.bid-good {
+  color: #15803d;
+}
+.bid-simulator small.bid-info {
+  color: #64748b;
+}
+.bid-sim-result .bid-sim-total dt {
+  font-weight: 700;
+  color: #0f172a;
+}
+.bid-sim-result .bid-sim-total dd {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+}
+.bid-sim-result .bid-sim-total strong {
+  font-size: 1.1rem;
+  color: #1d4ed8;
+}
+
+@media (max-width: 600px) {
+  .predicted-price .predicted-range {
+    grid-template-columns: 1fr;
+  }
+  .bid-simulator .bid-sim-inputs {
+    grid-template-columns: 1fr;
+  }
 }

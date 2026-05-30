@@ -92,6 +92,13 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     ("rental_match_kind", "TEXT"),
     ("rental_endpoint_label", "TEXT"),
     ("rental_samples", "TEXT"),  # JSON
+    # #9 권리분석 자동 판정 (휴리스틱) — analyze_rights.py
+    ("rights_analysis", "TEXT"),  # JSON: {risk_level, summary, flags, ...}
+    # #10 낙찰가 예측 휴리스틱 — predict_price.py
+    ("predicted_price_low", "INTEGER"),
+    ("predicted_price_median", "INTEGER"),
+    ("predicted_price_high", "INTEGER"),
+    ("predicted_price_basis", "TEXT"),
 ]
 
 
@@ -220,6 +227,14 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
             json.dumps(prop.get("rental_samples"), ensure_ascii=False)
             if prop.get("rental_samples") else None
         ),
+        "rights_analysis": (
+            json.dumps(prop.get("rights_analysis"), ensure_ascii=False)
+            if prop.get("rights_analysis") else None
+        ),
+        "predicted_price_low": prop.get("predicted_price_low"),
+        "predicted_price_median": prop.get("predicted_price_median"),
+        "predicted_price_high": prop.get("predicted_price_high"),
+        "predicted_price_basis": prop.get("predicted_price_basis"),
     }
     cols = ", ".join(fields.keys())
     placeholders = ", ".join("?" * len(fields))
@@ -272,7 +287,7 @@ def count_properties(passes_only: bool = True, db_path: Path | None = None) -> i
 
 def _row_to_dict(row: sqlite3.Row) -> dict[str, Any]:
     d = dict(row)
-    for key in ("detail_json", "rights_json", "schedule_json", "filter_notes", "market_samples", "rental_samples", "image_urls"):
+    for key in ("detail_json", "rights_json", "schedule_json", "filter_notes", "market_samples", "rental_samples", "image_urls", "rights_analysis"):
         if d.get(key):
             try:
                 d[key] = json.loads(d[key])
