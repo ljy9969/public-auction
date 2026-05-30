@@ -1570,17 +1570,36 @@ button.secondary {
   align-items: start;
 }
 
-@media (max-width: 900px) {
-  .list-with-map {
-    grid-template-columns: 1fr;
-  }
-}
-
 .list-map-pane {
   position: sticky;
   top: 1rem;
   height: calc(100vh - 9rem);
   min-height: 480px;
+}
+
+/* 태블릿/모바일 — 2열 그리드의 최소폭(1040px+)이 안 들어가는 구간부터 1열로 무너뜨리고
+   sticky 지도를 정적/짧은 높이로 풀어 카드 영역을 가리지 않도록 함 */
+@media (max-width: 1080px) {
+  .list-with-map {
+    grid-template-columns: 1fr;
+  }
+  .list-map-pane {
+    position: static;
+    height: 320px;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 1rem 0.75rem;
+  }
+  .list-map-pane {
+    height: 260px;
+  }
+  .filter-bar {
+    padding: 0.55rem 0.65rem;
+  }
 }
 
 .list-map {
