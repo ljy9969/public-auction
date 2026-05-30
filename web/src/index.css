@@ -1808,6 +1808,66 @@ button.secondary {
   line-height: 1.45;
 }
 
+/* ===== 권리관계 발췌 (원본 dict 정제 — 노이즈 제거 + 한 줄 칩) ===== */
+.rights-raw-section .rights-raw-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.rights-raw-card {
+  display: grid;
+  grid-template-columns: 5rem 1fr;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border-left: 3px solid #cbd5e1;
+}
+.rights-raw-card.rights-kind-임차인,
+.rights-raw-card.rights-kind-임차권 {
+  border-left-color: #f59e0b;
+}
+.rights-raw-card.rights-kind-전세권 {
+  border-left-color: #f59e0b;
+}
+.rights-raw-card.rights-kind-근저당,
+.rights-raw-card.rights-kind-저당권,
+.rights-raw-card.rights-kind-가압류 {
+  border-left-color: #94a3b8;
+}
+.rights-raw-card.rights-kind-가처분,
+.rights-raw-card.rights-kind-유치권 {
+  border-left-color: #ef4444;
+}
+.rights-raw-kind {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.rights-raw-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.rights-raw-chip {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  color: #334155;
+  font-family: ui-monospace, "Cascadia Code", Menlo, monospace;
+  letter-spacing: 0.02em;
+}
+
+@media (max-width: 600px) {
+  .rights-raw-card {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}
+
 /* ===== #10 낙찰가 예측 섹션 ===== */
 .predicted-price .predicted-range {
   display: grid;

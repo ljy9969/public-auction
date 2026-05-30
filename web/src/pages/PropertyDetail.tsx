@@ -88,6 +88,75 @@ function RawDictSection({ title, data }: { title: string; data: Record<string, s
   );
 }
 
+const _RIGHTS_KIND_LABELS: Record<string, string> = {
+  임차인: "임차인",
+  임차권: "임차권등기",
+  전세권: "전세권",
+  근저당: "근저당",
+  저당권: "저당권",
+  가압류: "가압류",
+  가처분: "가처분",
+  유치권: "유치권",
+};
+
+function _classifyRightsKind(label: string): string | null {
+  for (const key of Object.keys(_RIGHTS_KIND_LABELS)) {
+    if (label.includes(key)) return key;
+  }
+  return null;
+}
+
+function _splitTenantValues(value: string): string[] {
+  return value
+    .split(/[,/、·]\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function RightsSection({ data }: { data: Record<string, string> }) {
+  // 라벨 길이 ≤30, 값 길이 ≤200, 키워드 매칭되는 항목만 통과
+  // (소유권 이전비용 계산기 위젯 노이즈는 라벨이 수백자라 자동 제외)
+  const rows = Object.entries(data || {})
+    .filter(([k, v]) => k.length <= 30 && (v ?? "").length <= 200 && v)
+    .map(([k, v]) => ({ kind: _classifyRightsKind(k), label: k.trim(), value: v.trim() }))
+    .filter((r) => r.kind != null);
+
+  if (rows.length === 0) return null;
+
+  // 같은 종류끼리 묶어 한 카드씩 — 임차인 3명이 따로 행이면 한 줄로 합침
+  const grouped = new Map<string, string[]>();
+  for (const r of rows) {
+    const k = r.kind!;
+    if (!grouped.has(k)) grouped.set(k, []);
+    for (const v of _splitTenantValues(r.value)) {
+      grouped.get(k)!.push(v);
+    }
+  }
+
+  return (
+    <section className="detail-section rights-raw-section">
+      <h3 className="section-title">권리관계 (등기·임차 발췌)</h3>
+      <p className="section-hint">
+        온비드 원문에서 추출한 권리 항목. 자세한 자동 판정은 상단 「권리분석」 섹션을 참고하세요.
+      </p>
+      <div className="rights-raw-grid">
+        {Array.from(grouped.entries()).map(([kind, values]) => (
+          <div key={kind} className={`rights-raw-card rights-kind-${kind}`}>
+            <div className="rights-raw-kind">{_RIGHTS_KIND_LABELS[kind] ?? kind}</div>
+            <div className="rights-raw-values">
+              {Array.from(new Set(values)).map((v) => (
+                <span key={v} className="rights-raw-chip">
+                  {v}
+                </span>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function _dongOf(addr: string | null | undefined): string | null {
   if (!addr) return null;
   const m = addr.match(/([가-힣0-9]+동)\b/);
@@ -776,7 +845,7 @@ export default function PropertyDetail() {
       )}
 
       <RawDictSection title="입찰 일정 (온비드 원본)" data={schedule as Record<string, string>} />
-      <RawDictSection title="권리관계" data={rights as Record<string, string>} />
+      <RightsSection data={rights as Record<string, string>} />
       <RawDictSection title="상세 정보 (온비드 원본)" data={detail as Record<string, string>} />
     </div>
   );
