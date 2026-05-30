@@ -68,6 +68,7 @@ class PropertyBase(BaseModel):
     predicted_price_median: int | None = None
     predicted_price_high: int | None = None
     predicted_price_basis: str | None = None
+    asset_type: str | None = None
 
 
 class PropertyDetail(PropertyBase):

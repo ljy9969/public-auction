@@ -99,6 +99,8 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     ("predicted_price_median", "INTEGER"),
     ("predicted_price_high", "INTEGER"),
     ("predicted_price_basis", "TEXT"),
+    # 재산유형 (예: 압류재산, 유입재산 등) — scrnPrptDvsnNm
+    ("asset_type", "TEXT"),
 ]
 
 
@@ -235,6 +237,7 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
         "predicted_price_median": prop.get("predicted_price_median"),
         "predicted_price_high": prop.get("predicted_price_high"),
         "predicted_price_basis": prop.get("predicted_price_basis"),
+        "asset_type": prop.get("asset_type"),
     }
     cols = ", ".join(fields.keys())
     placeholders = ", ".join("?" * len(fields))

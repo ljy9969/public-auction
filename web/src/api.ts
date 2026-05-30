@@ -64,6 +64,7 @@ export interface Property {
   predicted_price_median: number | null;
   predicted_price_high: number | null;
   predicted_price_basis: string | null;
+  asset_type: string | null;
 }
 
 export interface RightsAnalysisFlag {
@@ -151,6 +152,14 @@ export interface StatsSummary {
 export async function fetchStats(): Promise<StatsSummary> {
   const res = await fetch("/api/stats/summary");
   if (!res.ok) throw new Error("Failed to load stats");
+  return res.json();
+}
+
+export async function lookupProperty(
+  query: string
+): Promise<{ found: boolean; id?: number; query: string }> {
+  const res = await fetch(`/api/properties/lookup?q=${encodeURIComponent(query)}`);
+  if (!res.ok) throw new Error("Lookup failed");
   return res.json();
 }
 

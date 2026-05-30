@@ -77,6 +77,35 @@ def list_properties(
     return [PropertyListItem(**_public_fields(r)) for r in rows]
 
 
+@app.get("/api/properties/lookup")
+def lookup_property(q: str) -> dict[str, Any]:
+    """사건번호/물건관리번호로 매물 직조회 (#7).
+
+    q: cltr_no (예 2026-04174-001) 또는 cltr_mnmt_no 부분 일치.
+    매물 발견 시 {found: true, id: int} 반환, 미발견은 {found: false}.
+    """
+    needle = (q or "").strip()
+    if not needle:
+        raise HTTPException(status_code=400, detail="query empty")
+    conn = scraper_db.get_connection()
+    row = conn.execute(
+        """
+        SELECT id FROM properties
+        WHERE cltr_no = ?
+           OR cltr_mnmt_no = ?
+           OR cltr_no LIKE ?
+           OR cltr_mnmt_no LIKE ?
+        ORDER BY (CASE WHEN cltr_no = ? OR cltr_mnmt_no = ? THEN 0 ELSE 1 END), scraped_at DESC
+        LIMIT 1
+        """,
+        (needle, needle, f"%{needle}%", f"%{needle}%", needle, needle),
+    ).fetchone()
+    conn.close()
+    if row is None:
+        return {"found": False, "query": needle}
+    return {"found": True, "id": int(row["id"]), "query": needle}
+
+
 @app.get("/api/properties/{prop_id}", response_model=PropertyDetail)
 def get_property(prop_id: int) -> PropertyDetail:
     row = scraper_db.get_property(prop_id)

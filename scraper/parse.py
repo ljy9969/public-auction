@@ -100,6 +100,7 @@ def parse_list_row(row: dict[str, Any]) -> dict[str, Any]:
         "region_line": region,
         "source_url": public_source_url(row),
         "cltr_mnmt_no": row.get("scrnIndctCltrMngNo") or row.get("cltrMnmtNo"),
+        "asset_type": (row.get("scrnPrptDvsnNm") or "").strip() or None,
         "image_url": _cltr_image_url(row),
         "image_urls": _cltr_image_urls(row, max_count=5),
         "atch_file_lst_no": row.get("atchFileLstNo"),

@@ -33,6 +33,7 @@ def _matches_list_criteria(
     max_min_price: float = 300_000_000,
     max_fail_count: int | None = None,
     allowed_categories: tuple[str, ...] = (),
+    allowed_asset_types: tuple[str, ...] = (),
 ) -> bool:
     """Onbid list-row checks before detail fetch."""
     if raw.get("dspsMthodCd") != "0001":
@@ -62,6 +63,11 @@ def _matches_list_criteria(
     if allowed_categories and "주거용건물" in cat:
         if not any(ac in cat for ac in allowed_categories):
             return False
+    # 재산유형 화이트리스트 — scrnPrptDvsnNm (예: 압류재산/유입재산/공유재산 등)
+    if allowed_asset_types:
+        asset = (raw.get("scrnPrptDvsnNm") or "").strip()
+        if asset and not any(at == asset for at in allowed_asset_types):
+            return False
     return True
 
 
@@ -90,6 +96,7 @@ def run_scrape(
         pf = criteria.get("post_filters", {})
         exclude_cats = tuple(pf.get("exclude_categories", []) or ())
         allowed_cats = tuple(pf.get("allowed_categories", []) or ())
+        allowed_asset_types = tuple(pf.get("allowed_asset_types", []) or ())
         min_bld = float(pf.get("min_bld_area_m2", 23))
         max_min_price = float(pf.get("max_min_price", 300_000_000))
         # list 단계는 느슨하게 (지분 매물도 일단 통과) — 정확한 분기는 quality.py에서 처리
@@ -105,6 +112,7 @@ def run_scrape(
                 max_min_price=max_min_price,
                 max_fail_count=max_fail_count,
                 allowed_categories=allowed_cats,
+                allowed_asset_types=allowed_asset_types,
             ):
                 skipped += 1
                 continue

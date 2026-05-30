@@ -28,6 +28,7 @@ import {
   type Property,
 } from "../api";
 import { useFavorites } from "../favorites";
+import { recordView } from "../viewTracker";
 
 function discountPercent(min: number | null | undefined, appr: number | null | undefined): string | null {
   if (!min || !appr || appr <= 0) return null;
@@ -102,6 +103,7 @@ export default function PropertyDetail() {
 
   useEffect(() => {
     if (!id) return;
+    recordView(Number(id));
     fetchProperty(Number(id))
       .then(setProp)
       .catch(console.error)
