@@ -69,6 +69,8 @@ a:hover {
   font-size: 0.85rem;
   font-weight: 500;
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: background 0.15s;
 }
 
@@ -91,6 +93,8 @@ a:hover {
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: background 0.15s;
 }
 
@@ -2428,8 +2432,48 @@ button.secondary {
   color: #64748b;
 }
 
+/* ===== 모바일 헤더 정리 ===== */
+@media (max-width: 720px) {
+  .app-header {
+    padding: 0.6rem 0.85rem;
+    gap: 0.5rem;
+  }
+  .app-header h1 {
+    font-size: 1.05rem;
+    flex: 1 1 auto;
+  }
+  .app-header nav {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 0.35rem 0.4rem;
+  }
+  /* 사건/물건관리번호 검색 — 두번째 줄 전폭 */
+  .app-header .header-lookup {
+    order: 2;
+    flex: 1 1 100%;
+    width: 100%;
+  }
+  .app-header .header-lookup input[type="search"] {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+  /* 마지막 갱신 — 모바일에선 너무 좁아 안 보임, 헤더에서 숨김 (PropertyList에 lastUpdated 별도) */
+  .header-meta {
+    display: none;
+  }
+  /* 액션 버튼 + 칩들은 첫 줄에 가지런히 */
+  .app-header .header-btn,
+  .app-header .header-chip {
+    order: 1;
+    padding: 0.32rem 0.75rem;
+    font-size: 0.78rem;
+  }
+}
+
 @media (max-width: 600px) {
   .header-lookup input[type="search"] {
-    width: 7.5rem;
+    width: 100%;
   }
 }
