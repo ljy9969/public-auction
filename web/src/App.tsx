@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, Route, Routes, useLocation } from "react-router-dom";
+import CalendarView from "./pages/CalendarView";
 import PropertyList from "./pages/PropertyList";
 import PropertyDetail from "./pages/PropertyDetail";
+import StatsDashboard from "./pages/StatsDashboard";
 import { fetchScrapeStatus, formatDateTime, triggerScrape } from "./api";
 
 export default function App() {
@@ -48,6 +50,16 @@ export default function App() {
           >
             {scraping ? "수집 중…" : "지금 수집"}
           </button>
+          {pathname !== "/calendar" && (
+            <Link to="/calendar" className="header-chip">
+              📅 캘린더
+            </Link>
+          )}
+          {pathname !== "/stats" && (
+            <Link to="/stats" className="header-chip">
+              📊 통계
+            </Link>
+          )}
           {pathname !== "/" && (
             <Link to="/" className="header-chip">
               ← 목록
@@ -59,6 +71,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<PropertyList />} />
           <Route path="/properties/:id" element={<PropertyDetail />} />
+          <Route path="/stats" element={<StatsDashboard />} />
+          <Route path="/calendar" element={<CalendarView />} />
         </Routes>
       </main>
     </>

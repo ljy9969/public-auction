@@ -123,6 +123,37 @@ export async function fetchProperty(id: number): Promise<Property> {
   return res.json();
 }
 
+export interface StatsSummary {
+  total_count: number;
+  overall_avg_discount_pct: number | null;
+  overall_median_discount_pct: number | null;
+  overall_avg_predicted_ratio_pct: number | null;
+  by_category: {
+    category: string;
+    count: number;
+    avg_discount_pct: number | null;
+    median_discount_pct: number | null;
+    avg_predicted_ratio_pct: number | null;
+  }[];
+  by_fail_count: {
+    fail_count: number;
+    count: number;
+    avg_discount_pct: number | null;
+    median_discount_pct: number | null;
+  }[];
+  by_region: { region: string; count: number }[];
+  bid_end_timeline: { date: string; count: number }[];
+  price_distribution: { bucket: string; count: number }[];
+  risk_distribution: { level: string; count: number }[];
+  data_note: string;
+}
+
+export async function fetchStats(): Promise<StatsSummary> {
+  const res = await fetch("/api/stats/summary");
+  if (!res.ok) throw new Error("Failed to load stats");
+  return res.json();
+}
+
 export async function triggerScrape(maxPages?: number): Promise<{
   started: boolean;
   message: string;

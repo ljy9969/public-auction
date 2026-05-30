@@ -21,6 +21,7 @@ from shared.schemas.property import (
     ScrapeStatus,
     ScrapeTriggerResponse,
 )
+from api import stats as stats_module
 from scraper import db as scraper_db
 from scraper.run import run_scrape
 
@@ -82,6 +83,11 @@ def get_property(prop_id: int) -> PropertyDetail:
     if not row:
         raise HTTPException(status_code=404, detail="Property not found")
     return PropertyDetail(**_public_fields(row))
+
+
+@app.get("/api/stats/summary")
+def stats_summary() -> dict[str, Any]:
+    return stats_module.compute_stats()
 
 
 @app.post("/api/scrape", response_model=ScrapeTriggerResponse)
