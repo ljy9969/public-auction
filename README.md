@@ -61,6 +61,27 @@ powershell -ExecutionPolicy Bypass -File .\stop-all.ps1
 - PID: `.run-pids.txt` (stop-all.ps1이 이걸 읽어 종료)
 - cloudflared는 `%USERPROFILE%\cloudflared.exe`에 설치돼 있어야 함
 
+### 매일 자동 갱신 (Task Scheduler)
+
+매일 08:00에 매물 수집 + 백필(건축물대장·Kakao·ODsay·실거래가·권리분석·낙찰가 예측) + Discord 알림(요약 + D-day 임박)을 자동 실행.
+
+```powershell
+# 등록 (최초 1회)
+powershell -ExecutionPolicy Bypass -File .\install-daily-task.ps1
+
+# 즉시 1회 트리거
+schtasks /run /tn OnbidDailyScrape
+
+# 일시 중지
+schtasks /change /tn OnbidDailyScrape /disable
+
+# 제거
+schtasks /delete /tn OnbidDailyScrape /f
+```
+
+- 작업 본체: [`daily-scrape.ps1`](daily-scrape.ps1) — `daily-scrape.log`에 진행 기록
+- ASCII 영문 메시지만 사용 (PowerShell 5.1 cp949 호환)
+
 ### 수동 기동 (단계별)
 
 ```powershell
