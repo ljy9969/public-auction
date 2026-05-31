@@ -193,16 +193,19 @@ function kbLinkUrl(prop: Property): string {
   return `https://kbland.kr/search/search?searchKeyword=${encodeURIComponent(q)}`;
 }
 
-/** 네이버 부동산 검색어 — 단지명 우선.
- * 도로명만 보내면 매물유형 기본 필터(아파트/재건축/분양권)에 막혀 오피스텔 등 안 보임.
- * 단지명으로 검색해야 단지 카드로 바로 진입(예 '능현(선릉대우디오빌3차)'). (2026-05 피드백)
+/** 네이버 부동산 링크 URL — 좌표 기반 모바일 지도 우선.
+ * - 단지명 검색은 정확히 일치해야 결과 나옴 (예 'I-SPACE 잠실2' 미매칭으로 0건, 2026-06 피드백)
+ * - 좌표 있으면 m.land.naver.com/map/{lat}:{lng}:17 형식으로 지도 위치 직접 노출
+ * - 좌표 없으면 단지명/도로명 검색 URL fallback
  */
-function naverSearchQuery(prop: Property): string {
+function naverLinkUrl(prop: Property): string {
+  if (prop.geo_lat != null && prop.geo_lng != null) {
+    return `https://m.land.naver.com/map/${prop.geo_lat}:${prop.geo_lng}:17`;
+  }
   const name = (prop.building_name ?? "").trim();
-  if (name) return name;
   const road = _cleanRoad(prop.address_road);
-  if (road) return road;
-  return prop.title || "";
+  const q = name || road || prop.title || "";
+  return `https://m.land.naver.com/search/result/${encodeURIComponent(q)}`;
 }
 
 export default function PropertyDetail() {
@@ -640,11 +643,11 @@ export default function PropertyDetail() {
             )}
             {(() => {
               const kbUrl = kbLinkUrl(prop);
-              const naverQ = naverSearchQuery(prop);
+              const naverUrl = naverLinkUrl(prop);
               const descName = prop.building_name
                 ? `「${prop.building_name}」`
                 : _cleanRoad(prop.address_road) || "단지";
-              const kbByCoord = prop.geo_lat != null && prop.geo_lng != null;
+              const byCoord = prop.geo_lat != null && prop.geo_lng != null;
               return (
                 <div className="market-links">
                   <a
@@ -653,25 +656,31 @@ export default function PropertyDetail() {
                     rel="noreferrer"
                     className="market-link kb"
                     title={
-                      kbByCoord
+                      byCoord
                         ? `지도 좌표: ${prop.geo_lat},${prop.geo_lng}`
                         : "검색창에서 직접 단지명/도로명 입력해야 할 수 있음"
                     }
                   >
                     <span className="market-name">KB부동산</span>
                     <span className="market-desc">
-                      {kbByCoord ? "지도 위치로 이동" : `${descName} 검색`}
+                      {byCoord ? "지도 위치로 이동" : `${descName} 검색`}
                     </span>
                   </a>
                   <a
-                    href={`https://m.land.naver.com/search/result/${encodeURIComponent(naverQ)}`}
+                    href={naverUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="market-link naver"
-                    title={`검색어: ${naverQ}`}
+                    title={
+                      byCoord
+                        ? `지도 좌표: ${prop.geo_lat},${prop.geo_lng}`
+                        : "단지명/도로명 검색 — 매물유형 필터 확인 필요"
+                    }
                   >
                     <span className="market-name">네이버 부동산</span>
-                    <span className="market-desc">{descName} 매물 검색</span>
+                    <span className="market-desc">
+                      {byCoord ? "지도 위치로 이동" : `${descName} 매물 검색`}
+                    </span>
                   </a>
                 </div>
               );
