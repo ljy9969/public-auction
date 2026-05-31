@@ -163,17 +163,29 @@ function _dongOf(addr: string | null | undefined): string | null {
   return m ? m[1] : null;
 }
 
-/** 도로명 주소에서 괄호 동 표기 제거 — 검색 정확도 향상.
- * "서울특별시 강남구 선릉로89길 16 (역삼동)" → "서울특별시 강남구 선릉로89길 16"
+/** 도로명 주소 정제 — 검색 정확도 향상.
+ * - 끝 괄호 동 표기 제거: "선릉로89길 16 (역삼동)" → "선릉로89길 16"
+ * - 앞 시·도 접두 제거: "서울특별시 강남구 ..." → "강남구 ..."
+ *   (KB부동산은 시·도 포함 시 미스매치, 2026-05 사용자 피드백)
  */
+const _SIDO_PREFIX_RE =
+  /^(서울특별시|부산광역시|대구광역시|인천광역시|광주광역시|대전광역시|울산광역시|세종특별자치시|경기도|강원특별자치도|강원도|충청북도|충북|충청남도|충남|전북특별자치도|전라북도|전북|전라남도|전남|경상북도|경북|경상남도|경남|제주특별자치도|제주도)\s+/;
+
 function _cleanRoad(road: string | null | undefined): string {
   if (!road) return "";
-  return road.replace(/\s*\([^)]*\)\s*$/, "").trim();
+  return road
+    .replace(/\s*\([^)]*\)\s*$/, "")
+    .replace(_SIDO_PREFIX_RE, "")
+    .trim();
 }
 
 /** KB·네이버 등 외부 시세 사이트용 검색어.
  * - 지번 주소는 검색 정확도가 낮아 사용 금지 (2026-05 사용자 피드백)
  * - 단지명 결합 시 네이버 부동산이 결과 0건 반환 → 도로명만 사용 (2026-05 사용자 피드백)
+ * - KB는 시·도 접두('서울특별시') 포함 시 미스매치 → 자치구부터 (2026-05 사용자 피드백)
+ *
+ * 주의: 네이버 부동산은 매물유형 기본 필터가 '아파트/재건축/분양권'이라
+ * 오피스텔 등은 페이지 진입 후 필터를 사용자가 변경해야 결과가 보인다.
  */
 function externalSearchQuery(prop: Property): string {
   const road = _cleanRoad(prop.address_road);
@@ -636,7 +648,7 @@ export default function PropertyDetail() {
                     target="_blank"
                     rel="noreferrer"
                     className="market-link naver"
-                    title={`검색어: ${q}`}
+                    title={`검색어: ${q}\n매물유형 필터(기본=아파트/재건축/분양권)를 확인하세요`}
                   >
                     <span className="market-name">네이버 부동산</span>
                     <span className="market-desc">{descName} 매물 검색</span>
