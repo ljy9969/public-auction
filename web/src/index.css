@@ -778,6 +778,45 @@ button.secondary {
   font-weight: 700;
 }
 
+.market-samples-table tr.row-exact-match {
+  background: rgba(37, 99, 235, 0.04);
+}
+
+/* 시세/임대 표 범례 — 색·굵게의 의미를 표 아래에 명시 */
+.market-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  color: #475569;
+}
+.market-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.legend-swatch {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+}
+.legend-swatch.swatch-min {
+  background: #15803d;
+}
+.legend-swatch.swatch-max {
+  background: #b91c1c;
+}
+.legend-bold {
+  color: #0f172a;
+  font-weight: 700;
+}
+
 .share-pill {
   display: inline-block;
   margin-left: 0.4rem;

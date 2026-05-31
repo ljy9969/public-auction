@@ -552,18 +552,38 @@ export default function PropertyDetail() {
                             ]
                               .filter(Boolean)
                               .join(" ");
+                            const titleParts: string[] = [];
+                            if (isMin) titleParts.push("이 기간 매매 최저가");
+                            if (isMax) titleParts.push("이 기간 매매 최고가");
+                            if (exactMatch) titleParts.push("같은 단지·면적·층 일치");
+                            const titleStr = titleParts.join(" · ") || undefined;
                             return (
-                              <tr key={i}>
+                              <tr key={i} className={exactMatch ? "row-exact-match" : ""}>
                                 <td>{s.name || "-"}</td>
                                 <td>{formatArea(s.area_m2)}</td>
                                 <td>{s.floor != null ? `${s.floor}층` : "-"}</td>
-                                <td className={classes}>{formatPrice(s.deal_amount)}</td>
+                                <td className={classes} title={titleStr}>
+                                  {formatPrice(s.deal_amount)}
+                                </td>
                                 <td>{formatDate(s.deal_date)}</td>
                               </tr>
                             );
                           })}
                         </tbody>
                       </table>
+                      <div className="market-legend">
+                        <span className="market-legend-item">
+                          <span className="legend-swatch swatch-min" /> 이 기간 최저가
+                        </span>
+                        <span className="market-legend-item">
+                          <span className="legend-swatch swatch-max" /> 이 기간 최고가
+                        </span>
+                        {distinctive && (
+                          <span className="market-legend-item">
+                            <strong className="legend-bold">굵게</strong> 같은 단지·면적·층 일치
+                          </span>
+                        )}
+                      </div>
                     </div>
                   );
                 })()}
@@ -707,12 +727,17 @@ export default function PropertyDetail() {
                           ]
                             .filter(Boolean)
                             .join(" ");
+                          const titleParts: string[] = [];
+                          if (isMin) titleParts.push("이 기간 월세 최저");
+                          if (isMax) titleParts.push("이 기간 월세 최고");
+                          if (exactMatch) titleParts.push("같은 단지·면적·층 일치");
+                          const titleStr = titleParts.join(" · ") || undefined;
                           return (
-                            <tr key={i}>
+                            <tr key={i} className={exactMatch ? "row-exact-match" : ""}>
                               <td>{s.name || "-"}</td>
                               <td>{s.area_m2 ? `${s.area_m2}㎡` : "-"}</td>
                               <td>{s.floor != null ? `${s.floor}층` : "-"}</td>
-                              <td className={classes}>
+                              <td className={classes} title={titleStr}>
                                 {(s.deposit / 10000).toLocaleString()} /{" "}
                                 {(s.monthly / 10000).toLocaleString()}만
                               </td>
@@ -722,6 +747,19 @@ export default function PropertyDetail() {
                         })}
                       </tbody>
                     </table>
+                    <div className="market-legend">
+                      <span className="market-legend-item">
+                        <span className="legend-swatch swatch-min" /> 이 기간 월세 최저
+                      </span>
+                      <span className="market-legend-item">
+                        <span className="legend-swatch swatch-max" /> 이 기간 월세 최고
+                      </span>
+                      {distinctive && (
+                        <span className="market-legend-item">
+                          <strong className="legend-bold">굵게</strong> 같은 단지·면적·층 일치
+                        </span>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
