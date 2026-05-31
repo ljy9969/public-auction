@@ -632,7 +632,7 @@ export default function PropertyDetail() {
                     title={`검색어: ${q}`}
                   >
                     <span className="market-name">KB부동산</span>
-                    <span className="market-desc">{descName} 검색 (도로명 기반)</span>
+                    <span className="market-desc">{descName} 검색</span>
                   </a>
                   <a
                     href={`https://m.land.naver.com/search/result/${encodeURIComponent(q)}`}
@@ -642,7 +642,7 @@ export default function PropertyDetail() {
                     title={`검색어: ${q}`}
                   >
                     <span className="market-name">네이버 부동산</span>
-                    <span className="market-desc">{descName} 매물 검색 (도로명 기반)</span>
+                    <span className="market-desc">{descName} 매물 검색</span>
                   </a>
                 </div>
               );
