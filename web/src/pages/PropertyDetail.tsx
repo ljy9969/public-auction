@@ -179,18 +179,25 @@ function _cleanRoad(road: string | null | undefined): string {
     .trim();
 }
 
-/** KB·네이버 등 외부 시세 사이트용 검색어.
- * - 지번 주소는 검색 정확도가 낮아 사용 금지 (2026-05 사용자 피드백)
- * - 단지명 결합 시 네이버 부동산이 결과 0건 반환 → 도로명만 사용 (2026-05 사용자 피드백)
- * - KB는 시·도 접두('서울특별시') 포함 시 미스매치 → 자치구부터 (2026-05 사용자 피드백)
- *
- * 주의: 네이버 부동산은 매물유형 기본 필터가 '아파트/재건축/분양권'이라
- * 오피스텔 등은 페이지 진입 후 필터를 사용자가 변경해야 결과가 보인다.
+/** KB부동산 검색어 — 도로명 주소(시·도 제거).
+ * 지번/시·도 포함은 단지 매칭 실패. 단지명 결합은 검색 폭을 좁혀 0건 가능. (2026-05 피드백)
  */
-function externalSearchQuery(prop: Property): string {
+function kbSearchQuery(prop: Property): string {
   const road = _cleanRoad(prop.address_road);
   if (road) return road;
   return (prop.building_name ?? "").trim() || prop.title || "";
+}
+
+/** 네이버 부동산 검색어 — 단지명 우선.
+ * 도로명만 보내면 매물유형 기본 필터(아파트/재건축/분양권)에 막혀 오피스텔 등 안 보임.
+ * 단지명으로 검색해야 단지 카드로 바로 진입(예 '능현(선릉대우디오빌3차)'). (2026-05 피드백)
+ */
+function naverSearchQuery(prop: Property): string {
+  const name = (prop.building_name ?? "").trim();
+  if (name) return name;
+  const road = _cleanRoad(prop.address_road);
+  if (road) return road;
+  return prop.title || "";
 }
 
 export default function PropertyDetail() {
@@ -627,28 +634,29 @@ export default function PropertyDetail() {
               </p>
             )}
             {(() => {
-              const q = externalSearchQuery(prop);
+              const kbQ = kbSearchQuery(prop);
+              const naverQ = naverSearchQuery(prop);
               const descName = prop.building_name
                 ? `「${prop.building_name}」`
                 : _cleanRoad(prop.address_road) || "단지";
               return (
                 <div className="market-links">
                   <a
-                    href={`https://kbland.kr/search/search?searchKeyword=${encodeURIComponent(q)}`}
+                    href={`https://kbland.kr/search/search?searchKeyword=${encodeURIComponent(kbQ)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="market-link kb"
-                    title={`검색어: ${q}`}
+                    title={`검색어: ${kbQ}`}
                   >
                     <span className="market-name">KB부동산</span>
                     <span className="market-desc">{descName} 검색</span>
                   </a>
                   <a
-                    href={`https://m.land.naver.com/search/result/${encodeURIComponent(q)}`}
+                    href={`https://m.land.naver.com/search/result/${encodeURIComponent(naverQ)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="market-link naver"
-                    title={`검색어: ${q}\n매물유형 필터(기본=아파트/재건축/분양권)를 확인하세요`}
+                    title={`검색어: ${naverQ}`}
                   >
                     <span className="market-name">네이버 부동산</span>
                     <span className="market-desc">{descName} 매물 검색</span>
