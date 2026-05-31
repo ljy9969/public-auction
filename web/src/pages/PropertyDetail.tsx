@@ -163,6 +163,27 @@ function _dongOf(addr: string | null | undefined): string | null {
   return m ? m[1] : null;
 }
 
+/** 도로명 주소에서 괄호 동 표기 제거 — 검색 정확도 향상.
+ * "서울특별시 강남구 선릉로89길 16 (역삼동)" → "서울특별시 강남구 선릉로89길 16"
+ */
+function _cleanRoad(road: string | null | undefined): string {
+  if (!road) return "";
+  return road.replace(/\s*\([^)]*\)\s*$/, "").trim();
+}
+
+/** KB·네이버 등 외부 시세 사이트용 검색어.
+ * 지번 주소는 검색 정확도가 낮아 사용 금지(2026-05 사용자 피드백).
+ * 우선순위: 도로명+단지명 결합 → 도로명 → 단지명 → 제목
+ */
+function externalSearchQuery(prop: Property): string {
+  const road = _cleanRoad(prop.address_road);
+  const name = (prop.building_name ?? "").trim();
+  if (road && name) return `${road} ${name}`;
+  if (road) return road;
+  if (name) return name;
+  return prop.title ?? "";
+}
+
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const [prop, setProp] = useState<Property | null>(null);
@@ -596,34 +617,36 @@ export default function PropertyDetail() {
                 시세 데이터 미수집 — <code>python -m scripts.backfill_realprice</code> 실행 후 표시됩니다.
               </p>
             )}
-            <div className="market-links">
-              <a
-                href={`https://kbland.kr/search/search?searchKeyword=${encodeURIComponent(
-                  prop.building_name || prop.address_jibun || prop.title
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="market-link kb"
-              >
-                <span className="market-name">KB부동산</span>
-                <span className="market-desc">
-                  {prop.building_name ? `「${prop.building_name}」 단지 검색` : "단지 검색"}
-                </span>
-              </a>
-              <a
-                href={`https://m.land.naver.com/search/result/${encodeURIComponent(
-                  prop.building_name || prop.address_jibun || prop.title
-                )}`}
-                target="_blank"
-                rel="noreferrer"
-                className="market-link naver"
-              >
-                <span className="market-name">네이버 부동산</span>
-                <span className="market-desc">
-                  {prop.building_name ? `「${prop.building_name}」 매물 검색` : "매물 검색"}
-                </span>
-              </a>
-            </div>
+            {(() => {
+              const q = externalSearchQuery(prop);
+              const descName = prop.building_name
+                ? `「${prop.building_name}」`
+                : _cleanRoad(prop.address_road) || "단지";
+              return (
+                <div className="market-links">
+                  <a
+                    href={`https://kbland.kr/search/search?searchKeyword=${encodeURIComponent(q)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="market-link kb"
+                    title={`검색어: ${q}`}
+                  >
+                    <span className="market-name">KB부동산</span>
+                    <span className="market-desc">{descName} 검색 (도로명 기반)</span>
+                  </a>
+                  <a
+                    href={`https://m.land.naver.com/search/result/${encodeURIComponent(q)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="market-link naver"
+                    title={`검색어: ${q}`}
+                  >
+                    <span className="market-name">네이버 부동산</span>
+                    <span className="market-desc">{descName} 매물 검색 (도로명 기반)</span>
+                  </a>
+                </div>
+              );
+            })()}
           </section>
 
           {prop.rental_yield_percent != null && (
