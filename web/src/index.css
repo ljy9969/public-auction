@@ -42,6 +42,16 @@ a:hover {
   color: #0f172a;
 }
 
+.app-header h1 .header-home {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s, opacity 0.15s;
+}
+.app-header h1 .header-home:hover {
+  color: #2563eb;
+}
+
 .app-header nav {
   display: inline-flex;
   align-items: center;

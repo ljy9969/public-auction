@@ -63,7 +63,11 @@ export default function App() {
   return (
     <>
       <header className="app-header">
-        <h1>온비드 공매 - 맞춤 물건</h1>
+        <h1>
+          <Link to="/" className="header-home" aria-label="목록으로 돌아가기">
+            온비드 공매 - 맞춤 물건
+          </Link>
+        </h1>
         <nav>
           <form onSubmit={onLookup} className="header-lookup" role="search">
             <input
