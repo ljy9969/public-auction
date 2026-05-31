@@ -179,13 +179,18 @@ function _cleanRoad(road: string | null | undefined): string {
     .trim();
 }
 
-/** KB부동산 검색어 — 도로명 주소(시·도 제거).
- * 지번/시·도 포함은 단지 매칭 실패. 단지명 결합은 검색 폭을 좁혀 0건 가능. (2026-05 피드백)
+/** KB부동산 링크 URL — 좌표 기반 지도 우선, 좌표 없으면 검색.
+ * - KB는 SPA(Vue)라 URL 파라미터로 검색창 자동 채우기가 동작하지 않음 (2026-06 피드백)
+ *   → 좌표가 있으면 `kbland.kr/map?xy=lat,lng,17`로 위치만 띄우고 사용자가 마커 클릭
+ * - 좌표 없으면 기존 search URL을 fallback으로 두지만 검색창 빈 채로 열릴 수 있음
  */
-function kbSearchQuery(prop: Property): string {
+function kbLinkUrl(prop: Property): string {
+  if (prop.geo_lat != null && prop.geo_lng != null) {
+    return `https://kbland.kr/map?xy=${prop.geo_lat},${prop.geo_lng},17`;
+  }
   const road = _cleanRoad(prop.address_road);
-  if (road) return road;
-  return (prop.building_name ?? "").trim() || prop.title || "";
+  const q = road || (prop.building_name ?? "").trim() || prop.title || "";
+  return `https://kbland.kr/search/search?searchKeyword=${encodeURIComponent(q)}`;
 }
 
 /** 네이버 부동산 검색어 — 단지명 우선.
@@ -634,22 +639,29 @@ export default function PropertyDetail() {
               </p>
             )}
             {(() => {
-              const kbQ = kbSearchQuery(prop);
+              const kbUrl = kbLinkUrl(prop);
               const naverQ = naverSearchQuery(prop);
               const descName = prop.building_name
                 ? `「${prop.building_name}」`
                 : _cleanRoad(prop.address_road) || "단지";
+              const kbByCoord = prop.geo_lat != null && prop.geo_lng != null;
               return (
                 <div className="market-links">
                   <a
-                    href={`https://kbland.kr/search/search?searchKeyword=${encodeURIComponent(kbQ)}`}
+                    href={kbUrl}
                     target="_blank"
                     rel="noreferrer"
                     className="market-link kb"
-                    title={`검색어: ${kbQ}`}
+                    title={
+                      kbByCoord
+                        ? `지도 좌표: ${prop.geo_lat},${prop.geo_lng}`
+                        : "검색창에서 직접 단지명/도로명 입력해야 할 수 있음"
+                    }
                   >
                     <span className="market-name">KB부동산</span>
-                    <span className="market-desc">{descName} 검색</span>
+                    <span className="market-desc">
+                      {kbByCoord ? "지도 위치로 이동" : `${descName} 검색`}
+                    </span>
                   </a>
                   <a
                     href={`https://m.land.naver.com/search/result/${encodeURIComponent(naverQ)}`}
