@@ -172,16 +172,13 @@ function _cleanRoad(road: string | null | undefined): string {
 }
 
 /** KB·네이버 등 외부 시세 사이트용 검색어.
- * 지번 주소는 검색 정확도가 낮아 사용 금지(2026-05 사용자 피드백).
- * 우선순위: 도로명+단지명 결합 → 도로명 → 단지명 → 제목
+ * - 지번 주소는 검색 정확도가 낮아 사용 금지 (2026-05 사용자 피드백)
+ * - 단지명 결합 시 네이버 부동산이 결과 0건 반환 → 도로명만 사용 (2026-05 사용자 피드백)
  */
 function externalSearchQuery(prop: Property): string {
   const road = _cleanRoad(prop.address_road);
-  const name = (prop.building_name ?? "").trim();
-  if (road && name) return `${road} ${name}`;
   if (road) return road;
-  if (name) return name;
-  return prop.title ?? "";
+  return (prop.building_name ?? "").trim() || prop.title || "";
 }
 
 export default function PropertyDetail() {
