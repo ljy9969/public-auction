@@ -18,15 +18,13 @@ function Write-Log($msg) {
     Add-Content -Path $log -Value $line -Encoding UTF8
 }
 
-function Run-Step($label, $args) {
-    Write-Log $label
-    $stepOut = & $python @args 2>&1
-    $stepOut | ForEach-Object { Add-Content -Path $log -Value $_ -Encoding UTF8 }
+function Append-Output($items) {
+    if ($items) {
+        $items | ForEach-Object { Add-Content -Path $log -Value $_ -Encoding UTF8 }
+    }
     if ($LASTEXITCODE -ne 0) {
         Write-Log "  WARN: exit $LASTEXITCODE (step continues, see lines above)"
-        return $false
     }
-    return $true
 }
 
 Write-Log '=== Daily refresh start ==='
@@ -39,14 +37,28 @@ if (-not (Test-Path $python)) {
 
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
-Run-Step '[1/5] Scrape listings (max-pages 10)' @('-m', 'scraper.run', '--max-pages', '10') | Out-Null
-Run-Step '[2/5] Backfill building registry + Kakao geo + ODsay transit' @('-m', 'scripts.backfill_all') | Out-Null
-Run-Step '[3/5] Backfill MOLIT real-estate prices / rental yield' @('-m', 'scripts.backfill_realprice') | Out-Null
-Run-Step '[4/5] Backfill rights analysis + price prediction' @('-m', 'scripts.backfill_analysis') | Out-Null
+# Steps inlined intentionally — helper function with array param triggers PowerShell
+# array-unwind semantics that dropped all but the first arg (see git history of this file).
+
+Write-Log '[1/5] Scrape listings (max-pages 10)'
+Append-Output (& $python -m scraper.run --max-pages 10 2>&1)
+
+Write-Log '[2/5] Backfill building registry + Kakao geo + ODsay transit'
+Append-Output (& $python -m scripts.backfill_all 2>&1)
+
+Write-Log '[3/5] Backfill MOLIT real-estate prices / rental yield'
+Append-Output (& $python -m scripts.backfill_realprice 2>&1)
+
+Write-Log '[4/5] Backfill rights analysis + price prediction'
+Append-Output (& $python -m scripts.backfill_analysis 2>&1)
 
 $sw.Stop()
 $dur = '{0}m {1}s' -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
-Run-Step "[5/5] Discord notify (duration $dur)" @('-m', 'scripts.notify_discord', $dur) | Out-Null
-Run-Step '[bonus] D-day reminder push (7-day horizon)' @('-m', 'scripts.notify_dday', '--days', '7') | Out-Null
+
+Write-Log "[5/5] Discord notify (duration $dur)"
+Append-Output (& $python -m scripts.notify_discord $dur 2>&1)
+
+Write-Log '[bonus] D-day reminder push (7-day horizon)'
+Append-Output (& $python -m scripts.notify_dday --days 7 2>&1)
 
 Write-Log "=== Daily refresh done ($dur) ==="
