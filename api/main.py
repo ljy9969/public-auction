@@ -171,28 +171,37 @@ def _parse_iso(s: str | None) -> datetime | None:
 
 @app.get("/api/scrape/status", response_model=ScrapeStatus)
 def scrape_status() -> ScrapeStatus:
-    finished_at = _scrape_state.get("finished_at")
-    started_at = _scrape_state.get("started_at")
-    last_run_id = _scrape_state.get("last_run_id")
-    count = _scrape_state.get("count", 0)
-    error = _scrape_state.get("error")
-    # In-memory 비어있고 진행 중도 아니면 DB 마지막 run으로 보강
-    if not _scrape_state["running"] and finished_at is None:
-        last = _latest_db_run()
-        if last:
-            finished_at = _parse_iso(last.get("finished_at"))
-            started_at = _parse_iso(last.get("started_at"))
-            last_run_id = last.get("id")
-            count = last.get("count", 0) or 0
-            error = last.get("error")
+    # 진행 중일 때만 in-memory가 진실(라이브 진행 상황).
+    # 아니면 DB(search_runs)가 진실 — daily-scrape.ps1 같은 별도 프로세스 수집도 반영.
+    if _scrape_state["running"]:
+        return ScrapeStatus(
+            running=True,
+            last_run_id=_scrape_state.get("last_run_id"),
+            started_at=_scrape_state.get("started_at"),
+            finished_at=_scrape_state.get("finished_at"),
+            message=_scrape_state.get("message"),
+            count=_scrape_state.get("count", 0),
+            error=_scrape_state.get("error"),
+        )
+    last = _latest_db_run()
+    if last:
+        return ScrapeStatus(
+            running=False,
+            last_run_id=last.get("id"),
+            started_at=_parse_iso(last.get("started_at")),
+            finished_at=_parse_iso(last.get("finished_at")),
+            message=_scrape_state.get("message"),
+            count=last.get("count", 0) or 0,
+            error=last.get("error"),
+        )
     return ScrapeStatus(
-        running=_scrape_state["running"],
-        last_run_id=last_run_id,
-        started_at=started_at,
-        finished_at=finished_at,
+        running=False,
+        last_run_id=_scrape_state.get("last_run_id"),
+        started_at=_scrape_state.get("started_at"),
+        finished_at=_scrape_state.get("finished_at"),
         message=_scrape_state.get("message"),
-        count=count,
-        error=error,
+        count=_scrape_state.get("count", 0),
+        error=_scrape_state.get("error"),
     )
 
 
