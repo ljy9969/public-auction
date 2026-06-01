@@ -47,9 +47,52 @@ a:hover {
   text-decoration: none;
   cursor: pointer;
   transition: color 0.15s, opacity 0.15s;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
 }
 .app-header h1 .header-home:hover {
   color: #2563eb;
+}
+
+/* 미니멀 워드마크 — 로어케이스 + 미디엄 weight + tracking 살짝 좁힘 */
+.brand-mark .brand-name {
+  font-family: ui-sans-serif, -apple-system, "Inter", "SF Pro Text", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #0f172a;
+}
+.brand-mark .brand-dot {
+  color: #cbd5e1;
+  font-weight: 300;
+  font-size: 1.1rem;
+}
+.brand-mark .brand-tagline {
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+@media (max-width: 720px) {
+  .brand-mark .brand-name {
+    font-size: 1.1rem;
+  }
+  .brand-mark .brand-tagline {
+    font-size: 0.75rem;
+  }
+}
+@media (max-width: 420px) {
+  .brand-mark .brand-tagline {
+    display: none;
+  }
+  .brand-mark .brand-dot {
+    display: none;
+  }
 }
 
 .app-header nav {

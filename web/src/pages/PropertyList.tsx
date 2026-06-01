@@ -119,10 +119,11 @@ export default function PropertyList() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     for (const p of items) {
-      // 입찰 시작 지난 매물은 목록에서 숨기므로 탭 카운트에서도 제외 (목록과 일치)
-      if (p.bid_start) {
-        const start = new Date(p.bid_start.replace(" ", "T"));
-        if (!isNaN(start.getTime()) && start < today) continue;
+      // 입찰 마감 지난 매물은 응찰 불가 — 탭 카운트에서도 제외
+      // (마감 전까지는 응찰 가능하므로 시작 시점만 지난 매물은 그대로 노출)
+      if (p.bid_end) {
+        const end = new Date(p.bid_end.replace(" ", "T"));
+        if (!isNaN(end.getTime()) && end < today) continue;
       }
       const t = propertyTab(p);
       if (t) m[t] += 1;
@@ -135,10 +136,11 @@ export default function PropertyList() {
     today.setHours(0, 0, 0, 0);
     return items.filter((p) => {
       if (propertyTab(p) !== tab) return false;
-      // 입찰 시작이 이미 지난 매물 제외
-      if (p.bid_start) {
-        const start = new Date(p.bid_start.replace(" ", "T"));
-        if (!isNaN(start.getTime()) && start < today) return false;
+      // 입찰 마감이 이미 지난 매물 제외 (응찰 불가)
+      // 시작은 지났지만 마감 전이면 응찰 가능 → 그대로 노출
+      if (p.bid_end) {
+        const end = new Date(p.bid_end.replace(" ", "T"));
+        if (!isNaN(end.getTime()) && end < today) return false;
       }
       if (favOnly && (p.id == null || !fav.has(p.id))) return false;
       if (regionFilter !== "all") {
@@ -239,7 +241,7 @@ export default function PropertyList() {
         {PROPERTY_TABS.map((t) => {
           const isOffice = t.startsWith("용도복합·오피스텔");
           const zone = isOffice ? t.slice(-1) : null; // "쪈" or "쪠"
-          const baseLabel = isOffice ? "용도복합·오피스텔" : t;
+          const baseLabel = isOffice ? "오피스텔" : t;
           const zoneClass = t.includes("쪈")
             ? "tab-zone-me"
             : t.includes("쪠")
