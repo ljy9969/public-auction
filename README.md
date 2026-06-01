@@ -1,6 +1,8 @@
-# Onbid 공매 — 맞춤 물건 브라우저
+# BidPick · 공매 큐레이션
 
-[온비드 조건검색](https://www.onbid.co.kr/op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/mvmnCltrCdtnSrchClg.do) 기반 Playwright 스크래퍼 + 송파/강남 선릉역 인근 후처리 필터 + React UI + FastAPI 백엔드.
+[온비드 조건검색](https://www.onbid.co.kr/op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/mvmnCltrCdtnSrchClg.do) 기반 Playwright 스크래퍼 + 송파/강남 선릉역·영등포/서대문역 후처리 필터 + React UI + FastAPI 백엔드.
+
+> 브랜드: 헤더 워드마크 `BidPick · 공매 큐레이션` (그라데이션 slate→blue). 모바일 ≤420px에서 tagline·dot 자동 숨김.
 
 매물 1건당:
 - **건축물대장**으로 지상층수·엘리베이터·사용승인일·도로명주소
@@ -63,24 +65,30 @@ powershell -ExecutionPolicy Bypass -File .\stop-all.ps1
 
 ### 매일 자동 갱신 (Task Scheduler)
 
-매일 08:00에 매물 수집 + 백필(건축물대장·Kakao·ODsay·실거래가·권리분석·낙찰가 예측) + Discord 알림(요약 + D-day 임박)을 자동 실행.
+매일 08:00에 [`daily-scrape.ps1`](daily-scrape.ps1) 1회 실행:
+
+1. 수집 (`scraper.run --max-pages 10`)
+2. Backfill_all (Kakao geo + 건축물대장 + ODsay)
+3. Backfill_realprice (국토부 실거래가)
+4. Backfill_analysis (권리분석 + 낙찰가 예측)
+4.5. **sweep_filters --apply --delete** — 강화된 필터에 안 맞는 잔존 행(drift) 자동 삭제
+5. Discord 요약 알림
++ D-day 임박 매물 푸시(`notify_dday --days 7`)
 
 ```powershell
 # 등록 (최초 1회)
 powershell -ExecutionPolicy Bypass -File .\install-daily-task.ps1
 
-# 즉시 1회 트리거
+# 즉시 1회 트리거 / 일시 중지 / 제거
 schtasks /run /tn OnbidDailyScrape
-
-# 일시 중지
 schtasks /change /tn OnbidDailyScrape /disable
-
-# 제거
 schtasks /delete /tn OnbidDailyScrape /f
 ```
 
-- 작업 본체: [`daily-scrape.ps1`](daily-scrape.ps1) — `daily-scrape.log`에 진행 기록
+- 작업 본체: [`daily-scrape.ps1`](daily-scrape.ps1) — 진행/오류는 `.daily-scrape.log`에 누적
 - ASCII 영문 메시지만 사용 (PowerShell 5.1 cp949 호환)
+- 작업 시작 시 `Set-Location $root` 필수 — Task Scheduler 기본 CWD는 `C:\Windows\System32`라 `python -m scraper.run`이 패키지를 못 찾음 (메모리: feedback-bat-ascii-only 침묵 실패 패턴)
+- 단계 호출은 인라인 — PowerShell 함수에 `@(...)` 배열을 직접 넘기면 unwind로 첫 원소만 바인딩되는 함정 회피 (자세한 디버깅 메모는 git 히스토리 참고)
 
 ### 수동 기동 (단계별)
 
@@ -128,7 +136,8 @@ http://localhost:5173 — Vite dev 서버가 `/api` → port 8000 프록시.
 - **유찰 cap**: 모든 용도 **≤5회** 통일
 - **가격 cap**: 단독 건물 ≤3억 / 주거 지분 ≤5천만 / 토지·도로 ≤1천만. **최저가·감정가 둘 다 비공개면 제외**
 - **지하층 제외**: 제목 또는 상세(위치/이용현황)에 '지하층' 표기 시 제외 (정규식으로 '지하철' 오매칭 회피)
-- **Post-filter**: 입찰 마감 제외, 입찰 시작 지난 매물 UI 숨김, 상가용및업무용 제외
+- **Drift 방지 sweep**: 필터를 강화한 후 기존 `passes_filters=1` 행이 잔존하지 않도록, [`scripts/sweep_filters.py`](scripts/sweep_filters.py)가 quality.py만 재적용해 fail 행 마킹·삭제. daily-scrape 4.5단계로 매일 실행
+- **Post-filter**: 입찰 **마감** 지난 매물 제외 (마감 전이면 시작이 지났어도 응찰 가능 → 노출), 상가용및업무용 제외
 - **지분 비율**: 면적정보 표 비고에서 추출 (10분의9 → 90%, 1분의1은 단독). `building_share_ratio` 컬럼
 - **지오코딩**: Kakao address → Kakao keyword → Nominatim → 동 중심 폴백
 - **상세 페이지 fetch**: 검색 페이지의 `fn_goCltrDetail()` JS 함수를 `page.evaluate`로 호출 — POST submit으로 detail HTML(792KB+) 정상 수신 후 면적정보 표 파싱 (PC table + 모바일 `.op_mobile_tbl01 ul li.col_item` 양쪽 지원)
@@ -137,12 +146,16 @@ http://localhost:5173 — Vite dev 서버가 `/api` → port 8000 프록시.
 ## 주요 UI 기능 (목록 / 상세 페이지)
 
 ### 목록 페이지
-- **탭 5개** — 용도복합·오피스텔 **쪈**(송파·강남) / **쪠**(영등포·서대문역) / 주거 / 주거 지분 / 토지. 쪈/쪠는 원형 배지로 구분 (쪈 연보라·쪠 하늘색), 기본 탭은 쪈
+- **탭 5개** — 오피스텔 **쪈**(송파·강남) / **쪠**(영등포·서대문역) / 주거 / 주거 지분 / 토지. 쪈/쪠는 원형 배지로 구분 (쪈 연보라·쪠 하늘색), 기본 탭은 쪈
 - **좌측 sticky 지도** (Naver Maps) — 매물별 번호 마커, 카드 hover 시 빨강·확대 활성화, **마커 클릭 시 우측 카드로 부드러운 스크롤**
+  - **모바일 ≤1080px**: 2열 그리드 풀고 sticky 해제 + 지도 높이 320px(폰 260px)로 압축
+- **헤더 워드마크** = 홈 링크 (`Link to "/"`)
+- **헤더 검색바** — 사건번호/물건관리번호 직조회 (`/api/properties/lookup`, 부분/완전 일치). 발견 시 자동 상세 이동
 - **카드 표** — 용도(+지분%) / 최저가 / 감정가 / 건물면적(평) / 층수 / 건물 연식 / 입찰일 (D-day) / 직장까지(오피스텔은 목적지 라벨: 쪈 선릉역·쪠 서대문역)
-- **필터 바 (2줄)** — 1줄: 즐겨찾기 / 지역 / 최저가 / 연식 / 층수 / 용도 상세 / **임차인 인수**(위험 유·무) + 유찰 ≤ N · 총 건수(우측). 2줄: 정렬 토글(우측)
+- **필터 바** — 즐겨찾기 / 지역 / 최저가 / 연식 / 층수 / 용도 상세 / **임차인 인수**(위험 유·무) + 유찰 ≤ N · 총 건수
+  - **모바일 ≤600px**: 2열 그리드로 가지런하게, 정렬 영역 전폭 + 버튼 3-col flex (단어 잘림 해소)
 - **정렬 토글** — 최저가 / 건물면적 / 직장까지 / 입찰 시작 / 유찰횟수 (각각 오름·내림 토글, 화살표 표시)
-- **자동 제외** — 입찰 시작이 이미 지난 매물(D+1 이상)은 목록·탭 카운트에서 숨김
+- **자동 제외** — 입찰 **마감**이 이미 지난 매물(응찰 불가)은 목록·탭 카운트에서 숨김
 - **카드 우측 별 ★** — 즐겨찾기 토글 (localStorage, 카드 클릭 navigation과 분리)
 - **태그 색상 구분** — 강남(파랑) / 송파(보라) / 엘리베이터 있음(녹색) / caution(노랑), 초기화 버튼 연한 빨강
 
@@ -154,9 +167,15 @@ http://localhost:5173 — Vite dev 서버가 `/api` → port 8000 프록시.
 - **기본 정보** — 소재지(지번/도로명), 용도, 건물면적(평), 층수, 사용승인일(+연식+카테고리 칩), 입찰방식, 지분 여부, 물건관리번호
 - **입찰 일정** — 입찰 시작/마감 (D-day 칩 부착), 상태, 유찰, **입찰 보증금** (최저가 10% 자동 계산)
 - **직장 접근성** — 대중교통/도보 시간, 환승 경로 요약 ("버스 341" / "지하철 2호선 → 분당선 (환승 1회)"), 직선거리
-- **시세 검증** — 국토부 실거래가 기반 중앙값·최저~최고, 우리 매물 vs 시세 ±% (저렴/근접/상회), SVG 가로 막대 차트, 거래 샘플 표(당해연도 전체 스크롤·최저 녹색/최고 빨강·**같은 단지+면적+층 매칭은 bold**)
+- **시세 검증** — 국토부 실거래가 기반 중앙값·최저~최고, 우리 매물 vs 시세 ±% (저렴/근접/상회), SVG 가로 막대 차트, 거래 샘플 표(당해연도 전체 스크롤·최저 녹색/최고 빨강·**같은 단지+면적+층 매칭은 bold**). 셀 호버 툴팁 + 표 하단 범례(swatch + 굵게 예시)
+- **권리분석 자동 판정** — risk_level(안전/주의/위험) + flags(임차인·유치권·법정지상권·분묘기지권·NPL 등) + 면책. 단지·면적·층 매칭으로 등기부 직접 fetch 차단을 우회
+- **모의입찰 시뮬레이션** — 입찰가 입력 → 보증금/잔금/취득세/등기비/명도비/총비용 자동 계산. 카테고리별 취득세율(주거 1.1% / 비주거 4.6%), 인수 위험 시 명도비 평당 100만
+- **예상 낙찰가** — 카테고리별 평균 낙찰가율 × 유찰 1회당 -5%p × 시세 가중평균. low/median/high + 최저가 대비 판정
 - **예상 임대 수익률** — 오피스텔 전월세 12개월, 월세 중앙값 × 12 ÷ (매수가 − 평균 보증금), 5%↑ 녹색 / 3~5% 호박 / 3%↓ 빨강
-- **외부 시세 링크** — KB부동산·네이버 부동산 단지/매물 검색 (`building_name` prefill)
+- **권리관계 발췌** — 임차인/임차권/근저당/가압류/유치권/가처분 등을 노이즈(소유권 이전비용 계산기 위젯) 자동 제거 후 카드+칩 레이아웃으로
+- **외부 시세 링크** — KB부동산·네이버 부동산 모두 **좌표 기반 모바일 지도 URL** 우선 (단지명/도로명 검색 폴백)
+  - KB: `kbland.kr/map?xy={lat},{lng},17` (SPA라 search?searchKeyword=...는 검색창 빈 채로 열림)
+  - 네이버: `m.land.naver.com/map/{lat}:{lng}:17` (단지명 검색은 정확 매칭 필요·매물유형 기본 필터에 막힘)
 - **유사 매물** — 같은 법정동 다른 매물 (최대 6개)
 - **온비드 원문 보기** — 검색 페이지에 물건관리번호 prefill (직접 mvmnCltrDtl.do 접근은 차단되어 우회)
 
@@ -203,8 +222,28 @@ scripts/
   backfill_all.py     세 가지 한꺼번에
   backfill_realprice.py 국토부 실거래가(시세) 백필
   backfill_analysis.py  권리분석·낙찰가 예측 백필 (#9/#10)
+  sweep_filters.py    Drift 방지 — 강화된 quality.py로 기존 행 재평가
   notify_discord.py   재수집 완료 Discord 웹훅 알림
   notify_dday.py      입찰 D-day 임박 매물 Discord 알림 (#3)
+api/
+  main.py             FastAPI REST
+  stats.py            현 매물 기반 통계 집계 (/api/stats/summary)
+scraper/
+  analyze_rights.py   권리분석 휴리스틱 (#9)
+  predict_price.py    낙찰가 예측 (#10)
+web/src/
+  App.tsx             라우팅 + 헤더(BidPick 워드마크·검색바·탭 칩)
+  pages/
+    PropertyList.tsx  목록 (탭 5개 + 필터 바 + 지도)
+    PropertyDetail.tsx 상세 (KPI + 권리분석 + 모의입찰 + 시세 + 임대)
+    CalendarView.tsx  입찰 캘린더 (#3)
+    StatsDashboard.tsx 통계 대시보드 (#4)
+    CuratedView.tsx   추천/큐레이션 6 테마 + 인기 매물 (#6)
+  components/
+    BidSimulator.tsx  모의입찰 위젯 (#8)
+  viewTracker.ts      localStorage 조회수 트래킹 (#6)
+daily-scrape.ps1      매일 08:00 Task Scheduler 본체
+install-daily-task.ps1 schtasks /create 등록 스크립트
 data/onbid.db         SQLite
 docs/                 API notes + TODO
 ```
@@ -215,9 +254,11 @@ docs/                 API notes + TODO
 |--------|------|-------------|
 | GET | `/api/health` | Health check |
 | GET | `/api/properties?passes_only=true` | 매물 목록 |
-| GET | `/api/properties/{id}` | 매물 상세 |
+| GET | `/api/properties/{id}` | 매물 상세 (rights_analysis, predicted_price_* 포함) |
+| GET | `/api/properties/lookup?q={번호}` | cltr_no / cltr_mnmt_no 직조회 (헤더 검색바) |
+| GET | `/api/stats/summary` | 통계 대시보드 데이터 (카테고리·유찰·지역·가격대·시계열·권리 위험) |
 | POST | `/api/scrape?max_pages=3` | 백그라운드 수집 시작 |
-| GET | `/api/scrape/status` | 수집 진행 상태 |
+| GET | `/api/scrape/status` | 수집 진행 상태 — **진행 중이 아니면 DB `search_runs` 우선** (daily-scrape.ps1 같은 별도 프로세스 수집도 반영) |
 
 ## 외부 API 키 발급
 
@@ -259,6 +300,9 @@ cloudflared tunnel run auction-app
 
 - **온비드 상세 페이지 직접 GET 차단** — `mvmnCltrDtl.do`는 외부 직접 접근 시 에러 페이지(2558 byte) 반환. **검색 페이지의 `fn_goCltrDetail()` JS 함수를 `page.evaluate`로 호출하면 POST submit으로 정상 페이지(792KB+) 수신 가능** ([scraper/detail.py](scraper/detail.py)).
 - **온비드 검색폼 일부 필터가 서버에서 무시됨** — `srchArrayRgn`(지역), `srchShrYn`(지분 여부), `srch_prpt_types` 세부 카테고리는 서버 응답에 적용 X. 우회: 25개 자치구 키워드 반복 호출 + post-filter로 카테고리/지분 분류.
+- **권리분석 row-by-row 자동 판정 불가** — 등기부등본 직접 fetch 차단으로 날짜 기반 말소/인수 row-level 계산은 미지원. 키워드 휴리스틱 + risk_level로 한정.
+- **실 낙찰가 시계열 미수집** — 통계 대시보드는 현재 매물 기반 할인율/예측 낙찰가율로 산출. 온비드 낙찰결과 별도 수집 시 시계열 확장 가능.
+- **네이버 부동산 매물유형 필터** — URL 파라미터(`realEstateTypes`)가 base64 인코딩 JSON이라 외부에서 신뢰성 있게 구성 불가. 좌표 기반 지도 URL로 우회 (`m.land.naver.com/map/{lat}:{lng}:17`).
 - Naver Maps Client ID 미설정 시 OSM iframe 폴백.
 - 외부 API 키 미설정 시 각각 휴리스틱 폴백:
   - Kakao 키 없음 → Nominatim → 동 중심 폴백
