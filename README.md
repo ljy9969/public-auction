@@ -173,9 +173,9 @@ http://localhost:5173 — Vite dev 서버가 `/api` → port 8000 프록시.
 - **예상 낙찰가** — 카테고리별 평균 낙찰가율 × 유찰 1회당 -5%p × 시세 가중평균. low/median/high + 최저가 대비 판정
 - **예상 임대 수익률** — 오피스텔 전월세 12개월, 월세 중앙값 × 12 ÷ (매수가 − 평균 보증금), 5%↑ 녹색 / 3~5% 호박 / 3%↓ 빨강
 - **권리관계 발췌** — 임차인/임차권/근저당/가압류/유치권/가처분 등을 노이즈(소유권 이전비용 계산기 위젯) 자동 제거 후 카드+칩 레이아웃으로
-- **외부 시세 링크** — KB부동산·네이버 부동산 모두 **좌표 기반 모바일 지도 URL** 우선 (단지명/도로명 검색 폴백)
-  - KB: `kbland.kr/map?xy={lat},{lng},17` (SPA라 search?searchKeyword=...는 검색창 빈 채로 열림)
-  - 네이버: `m.land.naver.com/map/{lat}:{lng}:17` (단지명 검색은 정확 매칭 필요·매물유형 기본 필터에 막힘)
+- **외부 시세 링크**
+  - KB: 좌표 기반 지도 URL `kbland.kr/map?xy={lat},{lng},17` (SPA라 `search?searchKeyword=...`는 검색창 빈 채로 열림)
+  - 네이버: 검색 URL `m.land.naver.com/search/result/{단지명 or 도로명}` — 좌표 URL(`m.land.naver.com/map/{lat}:{lng}:17`)은 **404**, `fin.land.naver.com/map?layer=...`는 base64 인코딩 JSON이라 외부 구성 불가. 단지명 매칭되면 단지 카드 직진(필터 우회), 미매칭은 매물유형 필터 사용자 조정 필요
 - **유사 매물** — 같은 법정동 다른 매물 (최대 6개)
 - **온비드 원문 보기** — 검색 페이지에 물건관리번호 prefill (직접 mvmnCltrDtl.do 접근은 차단되어 우회)
 

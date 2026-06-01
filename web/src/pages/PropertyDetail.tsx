@@ -193,15 +193,12 @@ function kbLinkUrl(prop: Property): string {
   return `https://kbland.kr/search/search?searchKeyword=${encodeURIComponent(q)}`;
 }
 
-/** 네이버 부동산 링크 URL — 좌표 기반 모바일 지도 우선.
- * - 단지명 검색은 정확히 일치해야 결과 나옴 (예 'I-SPACE 잠실2' 미매칭으로 0건, 2026-06 피드백)
- * - 좌표 있으면 m.land.naver.com/map/{lat}:{lng}:17 형식으로 지도 위치 직접 노출
- * - 좌표 없으면 단지명/도로명 검색 URL fallback
+/** 네이버 부동산 링크 URL — 검색 기반.
+ * - 좌표 URL(m.land.naver.com/map/{lat}:{lng}:17)은 404 반환 (2026-06 사용자 검증)
+ * - fin.land.naver.com/map?layer=...는 base64 인코딩 JSON이라 외부 구성 불가
+ * - 단지명 매칭되면 단지 카드 직접 진입(필터 우회), 미매칭이면 도로명 검색 (매물유형 필터는 사용자가 조정)
  */
 function naverLinkUrl(prop: Property): string {
-  if (prop.geo_lat != null && prop.geo_lng != null) {
-    return `https://m.land.naver.com/map/${prop.geo_lat}:${prop.geo_lng}:17`;
-  }
   const name = (prop.building_name ?? "").trim();
   const road = _cleanRoad(prop.address_road);
   const q = name || road || prop.title || "";
@@ -647,7 +644,7 @@ export default function PropertyDetail() {
               const descName = prop.building_name
                 ? `「${prop.building_name}」`
                 : _cleanRoad(prop.address_road) || "단지";
-              const byCoord = prop.geo_lat != null && prop.geo_lng != null;
+              const kbByCoord = prop.geo_lat != null && prop.geo_lng != null;
               return (
                 <div className="market-links">
                   <a
@@ -656,14 +653,14 @@ export default function PropertyDetail() {
                     rel="noreferrer"
                     className="market-link kb"
                     title={
-                      byCoord
+                      kbByCoord
                         ? `지도 좌표: ${prop.geo_lat},${prop.geo_lng}`
                         : "검색창에서 직접 단지명/도로명 입력해야 할 수 있음"
                     }
                   >
                     <span className="market-name">KB부동산</span>
                     <span className="market-desc">
-                      {byCoord ? "지도 위치로 이동" : `${descName} 검색`}
+                      {kbByCoord ? "지도 위치로 이동" : `${descName} 검색`}
                     </span>
                   </a>
                   <a
@@ -671,16 +668,10 @@ export default function PropertyDetail() {
                     target="_blank"
                     rel="noreferrer"
                     className="market-link naver"
-                    title={
-                      byCoord
-                        ? `지도 좌표: ${prop.geo_lat},${prop.geo_lng}`
-                        : "단지명/도로명 검색 — 매물유형 필터 확인 필요"
-                    }
+                    title={`검색: ${prop.building_name || _cleanRoad(prop.address_road)}\n단지명 매칭되면 단지 카드 직진, 미매칭은 매물유형 필터 확인 필요`}
                   >
                     <span className="market-name">네이버 부동산</span>
-                    <span className="market-desc">
-                      {byCoord ? "지도 위치로 이동" : `${descName} 매물 검색`}
-                    </span>
+                    <span className="market-desc">{descName} 매물 검색</span>
                   </a>
                 </div>
               );
