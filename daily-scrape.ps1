@@ -52,6 +52,9 @@ Append-Output (& $python -m scripts.backfill_realprice 2>&1)
 Write-Log '[4/5] Backfill rights analysis + price prediction'
 Append-Output (& $python -m scripts.backfill_analysis 2>&1)
 
+Write-Log '[4.5/5] Sweep filters — drop drift rows (stricter criteria.yaml)'
+Append-Output (& $python -m scripts.sweep_filters --apply --delete 2>&1)
+
 $sw.Stop()
 $dur = '{0}m {1}s' -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
 
