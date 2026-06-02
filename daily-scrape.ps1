@@ -40,6 +40,9 @@ $sw = [System.Diagnostics.Stopwatch]::StartNew()
 # Steps inlined intentionally — helper function with array param triggers PowerShell
 # array-unwind semantics that dropped all but the first arg (see git history of this file).
 
+Write-Log '[0/5] Discord notify (start)'
+Append-Output (& $python -m scripts.notify_discord --start 2>&1)
+
 Write-Log '[1/5] Scrape listings (max-pages 10)'
 Append-Output (& $python -m scraper.run --max-pages 10 2>&1)
 

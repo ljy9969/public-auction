@@ -1,7 +1,9 @@
-"""수집/백필 완료 후 Discord 웹훅으로 결과 요약 전송.
+"""수집/백필 시작·완료 Discord 웹훅 알림.
 
 사용법:
-    python -m scripts.notify_discord "21분 13초"   # 소요 시간 인자(선택)
+    python -m scripts.notify_discord --start                 # 수집 시작 알림
+    python -m scripts.notify_discord "21분 13초"            # 완료 + 소요 시간
+    python -m scripts.notify_discord                         # 완료 (소요 시간 미표시)
 DISCORD_WEBHOOK 미설정 시 조용히 종료.
 """
 from __future__ import annotations
@@ -9,6 +11,7 @@ from __future__ import annotations
 import os
 import sqlite3
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import httpx
@@ -19,6 +22,15 @@ load_dotenv(ROOT / ".env")
 
 WEBHOOK = os.environ.get("DISCORD_WEBHOOK", "").strip()
 DB_PATH = ROOT / os.environ.get("ONBID_DB_PATH", "data/onbid.db")
+
+
+def _start_message() -> str:
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    return (
+        f"🚀 **온비드 공매 통합 재수집 시작** ({now})\n"
+        "5단계 (수집·건축물대장/Kakao/ODsay·시세·권리분석/낙찰가·sweep) "
+        "진행 중 — 완료 시 결과 요약 알림"
+    )
 
 
 def _summary(duration: str | None) -> str:
@@ -49,12 +61,19 @@ def main() -> None:
     if not WEBHOOK:
         print("DISCORD_WEBHOOK 미설정 — 알림 건너뜀")
         return
-    duration = sys.argv[1] if len(sys.argv) > 1 else None
+    args = sys.argv[1:]
+    if args and args[0] == "--start":
+        content = _start_message()
+        label = "시작"
+    else:
+        duration = args[0] if args else None
+        content = _summary(duration)
+        label = "완료"
     try:
-        resp = httpx.post(WEBHOOK, json={"content": _summary(duration)}, timeout=20)
-        print(f"Discord 알림 전송: HTTP {resp.status_code}")
+        resp = httpx.post(WEBHOOK, json={"content": content}, timeout=20)
+        print(f"Discord {label} 알림 전송: HTTP {resp.status_code}")
     except Exception as exc:
-        print(f"Discord 알림 실패: {exc!r}")
+        print(f"Discord {label} 알림 실패: {exc!r}")
 
 
 if __name__ == "__main__":
