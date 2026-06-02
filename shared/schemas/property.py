@@ -69,6 +69,11 @@ class PropertyBase(BaseModel):
     predicted_price_high: int | None = None
     predicted_price_basis: str | None = None
     asset_type: str | None = None
+    source: str = "onbid"
+    court_case_no: str | None = None
+    court_office_cd: str | None = None
+    court_office_nm: str | None = None
+    court_item_seq: int | None = None
 
 
 class PropertyDetail(PropertyBase):

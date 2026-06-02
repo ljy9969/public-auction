@@ -1831,6 +1831,34 @@ button.secondary {
   background: #ef4444;
 }
 
+/* ===== 데이터 소스 배지 (공매/경매) ===== */
+.source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+.source-badge.source-onbid {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.source-badge.source-court {
+  background: #ffedd5;
+  color: #c2410c;
+}
+.hero-case-no {
+  font-size: 0.82rem;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 0.18rem 0.55rem;
+  border-radius: 4px;
+  font-family: ui-monospace, monospace;
+}
+
 /* ===== #9 권리분석 자동 판정 섹션 ===== */
 .rights-analysis {
   border-left: 4px solid #cbd5e1;

@@ -101,6 +101,13 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     ("predicted_price_basis", "TEXT"),
     # 재산유형 (예: 압류재산, 유입재산 등) — scrnPrptDvsnNm
     ("asset_type", "TEXT"),
+    # 데이터 소스 — 'onbid'(공매, 기본) / 'court'(법원경매)
+    ("source", "TEXT NOT NULL DEFAULT 'onbid'"),
+    # 법원경매 전용 — onbid 매물은 NULL
+    ("court_case_no", "TEXT"),       # '2024타경6292'
+    ("court_office_cd", "TEXT"),     # 'B000210' (서울중앙지방법원)
+    ("court_office_nm", "TEXT"),     # '서울중앙지방법원'
+    ("court_item_seq", "INTEGER"),   # 사건 내 물건 순번 (maemulSer)
 ]
 
 
@@ -238,6 +245,11 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
         "predicted_price_high": prop.get("predicted_price_high"),
         "predicted_price_basis": prop.get("predicted_price_basis"),
         "asset_type": prop.get("asset_type"),
+        "source": prop.get("source") or "onbid",
+        "court_case_no": prop.get("court_case_no"),
+        "court_office_cd": prop.get("court_office_cd"),
+        "court_office_nm": prop.get("court_office_nm"),
+        "court_item_seq": prop.get("court_item_seq"),
     }
     cols = ", ".join(fields.keys())
     placeholders = ", ".join("?" * len(fields))

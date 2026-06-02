@@ -440,6 +440,9 @@ export default function PropertyList() {
                 >
                   <header className="card-header">
                     <span className="card-idx">#{idx + 1}</span>
+                    <span className={`source-badge source-${p.source || "onbid"}`}>
+                      {p.source === "court" ? "경매" : "공매"}
+                    </span>
                     <h2 className="card-title">{p.title}</h2>
                     {p.id != null && (
                       <button

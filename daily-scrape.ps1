@@ -43,8 +43,9 @@ $sw = [System.Diagnostics.Stopwatch]::StartNew()
 Write-Log '[0/5] Discord notify (start)'
 Append-Output (& $python -m scripts.notify_discord --start 2>&1)
 
-Write-Log '[1/5] Scrape listings (max-pages 10)'
+Write-Log '[1/5] Scrape onbid (max-pages 10) + court (apply, all 수도권 sweep)'
 Append-Output (& $python -m scraper.run --max-pages 10 2>&1)
+Append-Output (& $python -m scraper_court.run --apply --max-pages 10 2>&1)
 
 Write-Log '[2/5] Backfill building registry + Kakao geo + ODsay transit'
 Append-Output (& $python -m scripts.backfill_all 2>&1)

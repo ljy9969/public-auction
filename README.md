@@ -1,6 +1,8 @@
-# BidPick · 공매 큐레이션
+# BidPick · 공·경매 큐레이션
 
-[온비드 조건검색](https://www.onbid.co.kr/op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/mvmnCltrCdtnSrchClg.do) 기반 Playwright 스크래퍼 + 송파/강남 선릉역·영등포/서대문역 후처리 필터 + React UI + FastAPI 백엔드.
+**공매**([온비드 조건검색](https://www.onbid.co.kr/op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/mvmnCltrCdtnSrchClg.do) Playwright)
++ **경매**([법원경매정보](https://www.courtauction.go.kr) WebSquare JSON API)
+통합 스크래퍼 + 송파/강남·영등포/서대문·수도권 후처리 필터 + React UI + FastAPI 백엔드.
 
 > 브랜드: 헤더 워드마크 `BidPick · 공매 큐레이션` (그라데이션 slate→blue). 모바일 ≤420px에서 tagline·dot 자동 숨김.
 
@@ -215,6 +217,13 @@ scraper/
 api/main.py           FastAPI REST
 web/src/              React + Vite
 shared/schemas/       Pydantic
+scraper_court/        법원경매 (courtauction.go.kr) - httpx + WebSquare JSON API
+  codes.py            법원/시도/용도 코드 테이블
+  session.py          JSESSIONID + submissionid/sc-userid 헤더
+  search.py           POST /pgj/pgjsearch/searchControllerMain.on
+  parse.py            응답 row → 공용 prop dict (좌표는 Kakao 백필)
+  run.py              CLI (--dry-run / --apply, 수도권 sweep 기본)
+
 scripts/
   reset_db.py         DB 전체/실패행만 삭제
   backfill_geo.py     Kakao 좌표 백필

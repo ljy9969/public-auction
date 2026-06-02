@@ -250,6 +250,15 @@ export default function PropertyDetail() {
     <div className="detail-page">
       <header className="detail-hero">
         <div className="hero-meta">
+          <span className={`source-badge source-${prop.source || "onbid"}`}>
+            {prop.source === "court" ? "경매" : "공매"}
+          </span>
+          {prop.source === "court" && prop.court_case_no && (
+            <span className="hero-case-no">
+              {prop.court_case_no}
+              {prop.court_office_nm ? ` · ${prop.court_office_nm}` : ""}
+            </span>
+          )}
           {prop.category && <span className="hero-category">{prop.category}</span>}
           {prop.bid_method && <span className="hero-method">{prop.bid_method}</span>}
           <div className="hero-meta-right">
@@ -283,7 +292,7 @@ export default function PropertyDetail() {
               rel="noreferrer"
               className="cta-button cta-hero"
             >
-              온비드 원문 보기 →
+              {prop.source === "court" ? "법원경매 원문 보기 →" : "온비드 원문 보기 →"}
             </a>
           )}
         </div>

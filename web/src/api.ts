@@ -65,6 +65,11 @@ export interface Property {
   predicted_price_high: number | null;
   predicted_price_basis: string | null;
   asset_type: string | null;
+  source: "onbid" | "court";
+  court_case_no: string | null;
+  court_office_cd: string | null;
+  court_office_nm: string | null;
+  court_item_seq: number | null;
 }
 
 export interface RightsAnalysisFlag {

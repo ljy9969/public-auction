@@ -1,0 +1,375 @@
+[
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+    "method": "GET",
+    "headers": {
+      "upgrade-insecure-requests": "1",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\""
+    },
+    "body": null
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "x-requested-with": "XMLHttpRequest",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "*/*",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": null
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcLst.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": "{\"cortExecrOfcDvsCd\":\"00079B\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcDeptLst.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": "{\"cortOfcCd\":\"B000210\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcDeptLst.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": "{\"cortOfcCd\":\"B000210\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectAdongSdLst.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": "{\"pbancMidYn\":\"Y\",\"srchDvsCd\":\"B\",\"pbancDvsCd\":\"A\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectAdongSdLst.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": "{\"pbancMidYn\":\"Y\",\"srchDvsCd\":\"B\",\"pbancDvsCd\":\"BR\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectRnConsonantLst.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": null
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectRdnmAddr.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": "{\"pbancMidYn\":\"Y\",\"srchDvsCd\":\"B\",\"pbancDvsCd\":\"B\",\"adongSdCd\":\"\",\"adongSggCd\":\"\",\"conValue1\":\"35207\",\"conValue2\":\"45207\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "sc-pgmid": "PGJ151F01",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "content-type": "application/json"
+    },
+    "body": "{\"intgGrpCdLst\":\"STG-SYSTM_CD\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "sc-pgmid": "PGJ151F01",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "content-type": "application/json"
+    },
+    "body": "{\"intgGrpCdLst\":\"PGJ-BID_DVS_CD\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "sc-pgmid": "PGJ151F01",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "content-type": "application/json"
+    },
+    "body": "{\"intgGrpCdLst\":\"PGJ-RLET_DSPSL_SPC_COND_CD\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectLclLst.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": "{\"dsignUsgDvsCd\":\"\"}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj151/selectGdsDtlBmrkSrchCond.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "sc-pgmid": "PGJ151F01",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "submissionid": "mf_wfm_mainFrame_sbm_selectBmrkSrchCondLst",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "content-type": "application/json;charset=UTF-8"
+    },
+    "body": "{\"dma_srchBmrkSrchCond\":{\"cortAuctnMbrsId\":\"\",\"cortAuctnSrchCondCd\":\"0004601\"}}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/getLoginInfoUrl.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": null
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/lgnMbrsId.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "submissionid": "mf_wfm_header_sbm_lgnMbrsId",
+      "sc-userid": "SYSTEM",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "content-type": "application/json;charset=UTF-8"
+    },
+    "body": null
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcLst.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"법원사무소 사무소 목록 조회가 완료되었습니다.\",\"timestamp\":1780390368210,\"errors\":null,\"data\":{\"cortOfcLst\":[{\"code\":\"B000210\",\"name\":\"서울중앙지방법원\"},{\"code\":\"B000211\",\"name\":\"서울동부지방법원\"},{\"code\":\"B000215\",\"name\":\"서울서부지방법원\"},{\"code\":\"B000212\",\"name\":\"서울남부지방법원\"},{\"code\":\"B000213\",\"name\":\"서울북부지방법원\"},{\"code\":\"B000214\",\"name\":\"의정부지방법원\"},{\"code\":\"B214807\",\"name\":\"고양지원\"},{\"code\":\"B214804\",\"name\":\"남양주지원\"},{\"code\":\"B000240\",\"name\":\"인천지방법원\"},{\"code\":\"B000241\",\"name\":\"부천지원\"},{\"code\":\"B000250\",\"name\":\"수원지방법원\"},{\"code\":\"B000251\",\"name\":\"성남지원\"},{\"code\":\"B000252\",\"name\":\"여주지원\"},{\"code\":\"B000253\",\"name\":\"평택지원\"},{\"code\":\"B250826\",\"name\":\"안산지원\"},{\"code\":\"B000254\",\"name\":\"안양지원\"},{\"code\":\"B000260\",\"name\":\"춘천지방법원\"},{\"code\":\"B000261\",\"name\":\"강릉지원\"},{\"code\":\"B000262\",\"name\":\"원주지원\"},{\"code\":\"B000263\",\"name\":\"속초지원\"},{\"code\":\"B000264\",\"name\":\"영월지원\"},{\"code\":\"B000270\",\"name\":\"청주지방법원\"},{\"code\":\"B000271\",\"name\":\"충주지원\"},{\"code\":\"B000272\",\"name\":\"제천지원\"},{\"code\":\"B000273\",\"name\":\"영동지원\"},{\"code\":\"B000280\",\"name\":\"대전지방법원\"},{\"code\":\"B000281\",\"name\":\"홍성지원\"},{\"code\":\"B000282\",\"name\":\"논산지원\"},{\"code\":\"B000283\",\"name\":\"천안지원\"},{\"code\":\"B000284\",\"name\":\"공주지원\"},{\"code\":\"B000285\",\"name\":\"서산지원\"},{\"code\":\"B000310\",\"name\":\"대구지방법원\"},{\"code\":\"B000311\",\"name\":\"안동지원\"},{\"code\":\"B000312\",\"name\":\"경주지원\"},{\"code\":\"B000313\",\"name\":\"김천지원\"},{\"code\":\"B000314\",\"name\":\"상주지원\"},{\"code\":\"B000315\",\"name\":\"의성지원\"},{\"code\":\"B000316\",\"name\":\"영덕지원\"},{\"code\":\"B000317\",\"name\":\"포항지원\"},{\"code\":\"B000320\",\"name\":\"대구서부지원\"},{\"code\":\"B000410\",\"name\":\"부산지방법원\"},{\"code\":\"B000412\",\"name\":\"부산동부지원\"},{\"code\":\"B000414\",\"name\":\"부산서부지원\"},{\"code\":\"B000411\",\"name\":\"울산지방법원\"},{\"code\":\"B000420\",\"name\":\"창원지방법원\"},{\"code\":\"B000431\",\"name\":\"마산지원\"},{\"code\":\"B000421\",\"name\":\"진주지원\"},{\"code\":\"B000422\",\"name\":\"통영지원\"},{\"code\":\"B000423\",\"name\":\"밀양지원\"},{\"code\":\"B000424\",\"name\":\"거창지원\"},{\"code\":\"B000510\",\"name\":\"광주지방법원\"},{\"code\":\"B000511\",\"name\":\"목포지원\"},{\"code\":\"B000512\",\"name\":\"장흥지원\"},{\"code\":\"B000513\",\"name\":\"순천지원\"},{\"code\":\"B000514\",\"name\":\"해남지원\"},{\"code\":\"B000520\",\"name\":\"전주지방법원\"},{\"code\":\"B000521\",\"name\":\"군산지원\"},{\"code\":\"B000522\",\"name\":\"정읍지원\"},{\"code\":\"B000523\",\"name\":\"남원지원\"},{\"code\":\"B000530\",\"name\":\"제주지방법원\"}]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcDeptLst.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"법원사무소 부서 목록 조회가 완료되었습니다.\",\"timestamp\":1780390368230,\"errors\":null,\"data\":{\"cortOfcDeptLst\":[{\"name\":\"경매1계\",\"code\":\"1001\",\"value\":\"경매1계\"},{\"name\":\"경매2계\",\"code\":\"1002\",\"value\":\"경매2계\"},{\"name\":\"경매3계\",\"code\":\"1003\",\"value\":\"경매3계\"},{\"name\":\"경매4계\",\"code\":\"1004\",\"value\":\"경매4계\"},{\"name\":\"경매5계\",\"code\":\"1005\",\"value\":\"경매5계\"},{\"name\":\"경매6계\",\"code\":\"1006\",\"value\":\"경매6계\"},{\"name\":\"경매7계\",\"code\":\"1007\",\"value\":\"경매7계\"},{\"name\":\"경매8계\",\"code\":\"1008\",\"value\":\"경매8계\"},{\"name\":\"경매9계\",\"code\":\"1009\",\"value\":\"경매9계\"},{\"name\":\"경매10계\",\"code\":\"1010\",\"value\":\"경매10계\"},{\"name\":\"경매11계\",\"code\":\"1011\",\"value\":\"경매11계\"},{\"name\":\"경매12계\",\"code\":\"1012\",\"value\":\"경매12계\"},{\"name\":\"경매21계\",\"code\":\"1021\",\"value\":\"경매21계\"},{\"name\":\"관리자\",\"code\":\"1099\",\"value\":\"관리자\"},{\"name\":\"경매1계(보존)\",\"code\":\"B901\",\"value\":\"경매1계(보존)\"},{\"name\":\"경매2계(보존)\",\"code\":\"B902\",\"value\":\"경매2계(보존)\"},{\"name\":\"경매3계(보존)\",\"code\":\"B903\",\"value\":\"경매3계(보존)\"},{\"name\":\"경매4계(보존)\",\"code\":\"B904\",\"value\":\"경매4계(보존)\"},{\"name\":\"경매5계(보존)\",\"code\":\"B905\",\"value\":\"경매5계(보존)\"},{\"name\":\"경매6계(보존)\",\"code\":\"B906\",\"value\":\"경매6계(보존)\"},{\"name\":\"경매7계(보존)\",\"code\":\"B907\",\"value\":\"경매7계(보존)\"},{\"name\":\"경매8계(보존)\",\"code\":\"B908\",\"value\":\"경매8계(보존)\"},{\"name\":\"경매9계(보존)\",\"code\":\"B909\",\"value\":\"경매9계(보존)\"},{\"name\":\"경매10계(보존)\",\"code\":\"B910\",\"value\":\"경매10계(보존)\"},{\"name\":\"경매11계(보존)\",\"code\":\"B911\",\"value\":\"경매11계(보존)\"},{\"name\":\"경매21계(보존)\",\"code\":\"B921\",\"value\":\"경매21계(보존)\"}]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcDeptLst.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"법원사무소 부서 목록 조회가 완료되었습니다.\",\"timestamp\":1780390368243,\"errors\":null,\"data\":{\"cortOfcDeptLst\":[{\"name\":\"경매1계\",\"code\":\"1001\",\"value\":\"경매1계\"},{\"name\":\"경매2계\",\"code\":\"1002\",\"value\":\"경매2계\"},{\"name\":\"경매3계\",\"code\":\"1003\",\"value\":\"경매3계\"},{\"name\":\"경매4계\",\"code\":\"1004\",\"value\":\"경매4계\"},{\"name\":\"경매5계\",\"code\":\"1005\",\"value\":\"경매5계\"},{\"name\":\"경매6계\",\"code\":\"1006\",\"value\":\"경매6계\"},{\"name\":\"경매7계\",\"code\":\"1007\",\"value\":\"경매7계\"},{\"name\":\"경매8계\",\"code\":\"1008\",\"value\":\"경매8계\"},{\"name\":\"경매9계\",\"code\":\"1009\",\"value\":\"경매9계\"},{\"name\":\"경매10계\",\"code\":\"1010\",\"value\":\"경매10계\"},{\"name\":\"경매11계\",\"code\":\"1011\",\"value\":\"경매11계\"},{\"name\":\"경매12계\",\"code\":\"1012\",\"value\":\"경매12계\"},{\"name\":\"경매21계\",\"code\":\"1021\",\"value\":\"경매21계\"},{\"name\":\"관리자\",\"code\":\"1099\",\"value\":\"관리자\"},{\"name\":\"경매1계(보존)\",\"code\":\"B901\",\"value\":\"경매1계(보존)\"},{\"name\":\"경매2계(보존)\",\"code\":\"B902\",\"value\":\"경매2계(보존)\"},{\"name\":\"경매3계(보존)\",\"code\":\"B903\",\"value\":\"경매3계(보존)\"},{\"name\":\"경매4계(보존)\",\"code\":\"B904\",\"value\":\"경매4계(보존)\"},{\"name\":\"경매5계(보존)\",\"code\":\"B905\",\"value\":\"경매5계(보존)\"},{\"name\":\"경매6계(보존)\",\"code\":\"B906\",\"value\":\"경매6계(보존)\"},{\"name\":\"경매7계(보존)\",\"code\":\"B907\",\"value\":\"경매7계(보존)\"},{\"name\":\"경매8계(보존)\",\"code\":\"B908\",\"value\":\"경매8계(보존)\"},{\"name\":\"경매9계(보존)\",\"code\":\"B909\",\"value\":\"경매9계(보존)\"},{\"name\":\"경매10계(보존)\",\"code\":\"B910\",\"value\":\"경매10계(보존)\"},{\"name\":\"경매11계(보존)\",\"code\":\"B911\",\"value\":\"경매11계(보존)\"},{\"name\":\"경매21계(보존)\",\"code\":\"B921\",\"value\":\"경매21계(보존)\"}]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectAdongSdLst.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"시/도 리스트 조회가 완료되었습니다.\",\"timestamp\":1780390368253,\"errors\":null,\"data\":{\"adongSdLst\":[{\"name\":\"서울특별시\",\"code\":\"11\",\"value\":\"서울특별시\"},{\"name\":\"부산광역시\",\"code\":\"26\",\"value\":\"부산광역시\"},{\"name\":\"대구광역시\",\"code\":\"27\",\"value\":\"대구광역시\"},{\"name\":\"인천광역시\",\"code\":\"28\",\"value\":\"인천광역시\"},{\"name\":\"광주광역시\",\"code\":\"29\",\"value\":\"광주광역시\"},{\"name\":\"대전광역시\",\"code\":\"30\",\"value\":\"대전광역시\"},{\"name\":\"울산광역시\",\"code\":\"31\",\"value\":\"울산광역시\"},{\"name\":\"세종특별자치시\",\"code\":\"36\",\"value\":\"세종특별자치시\"},{\"name\":\"경기도\",\"code\":\"41\",\"value\":\"경기도\"},{\"name\":\"강원도\",\"code\":\"42\",\"value\":\"강원도\"},{\"name\":\"충청북도\",\"code\":\"43\",\"value\":\"충청북도\"},{\"name\":\"충청남도\",\"code\":\"44\",\"value\":\"충청남도\"},{\"name\":\"전라북도\",\"code\":\"45\",\"value\":\"전라북도\"},{\"name\":\"전라남도\",\"code\":\"46\",\"value\":\"전라남도\"},{\"name\":\"경상북도\",\"code\":\"47\",\"value\":\"경상북도\"},{\"name\":\"경상남도\",\"code\":\"48\",\"value\":\"경상남도\"},{\"name\":\"제주특별자치도\",\"code\":\"50\",\"value\":\"제주특별자치도\"},{\"name\":\"강원특별자치도\",\"code\":\"51\",\"value\":\"강원특별자치도\"},{\"name\":\"전북특별자치도\",\"code\":\"52\",\"value\":\"전북특별자치도\"}]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectAdongSdLst.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"시/도 리스트 조회가 완료되었습니다.\",\"timestamp\":1780390368266,\"errors\":null,\"data\":{\"adongSdLst\":[{\"name\":\"서울특별시\",\"code\":\"11\",\"value\":\"서울특별시\"},{\"name\":\"부산광역시\",\"code\":\"26\",\"value\":\"부산광역시\"},{\"name\":\"대구광역시\",\"code\":\"27\",\"value\":\"대구광역시\"},{\"name\":\"인천광역시\",\"code\":\"28\",\"value\":\"인천광역시\"},{\"name\":\"광주광역시\",\"code\":\"29\",\"value\":\"광주광역시\"},{\"name\":\"대전광역시\",\"code\":\"30\",\"value\":\"대전광역시\"},{\"name\":\"울산광역시\",\"code\":\"31\",\"value\":\"울산광역시\"},{\"name\":\"세종특별자치시\",\"code\":\"36\",\"value\":\"세종특별자치시\"},{\"name\":\"경기도\",\"code\":\"41\",\"value\":\"경기도\"},{\"name\":\"강원도\",\"code\":\"42\",\"value\":\"강원도\"},{\"name\":\"충청북도\",\"code\":\"43\",\"value\":\"충청북도\"},{\"name\":\"충청남도\",\"code\":\"44\",\"value\":\"충청남도\"},{\"name\":\"전라북도\",\"code\":\"45\",\"value\":\"전라북도\"},{\"name\":\"전라남도\",\"code\":\"46\",\"value\":\"전라남도\"},{\"name\":\"경상북도\",\"code\":\"47\",\"value\":\"경상북도\"},{\"name\":\"경상남도\",\"code\":\"48\",\"value\":\"경상남도\"},{\"name\":\"제주특별자치도\",\"code\":\"50\",\"value\":\"제주특별자치도\"},{\"name\":\"강원특별자치도\",\"code\":\"51\",\"value\":\"강원특별자치도\"},{\"name\":\"전북특별자치도\",\"code\":\"52\",\"value\":\"전북특별자치도\"}]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectRnConsonantLst.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"자음 리스트 조회가 완료되었습니다.\",\"timestamp\":1780390368279,\"errors\":null,\"data\":{\"rnConsonantLst\":[{\"name\":\"ㄱ\",\"code\":\"35207_45207\"},{\"name\":\"ㄴ\",\"code\":\"45207_45795\"},{\"name\":\"ㄷ\",\"code\":\"45795_46971\"},{\"name\":\"ㄹ\",\"code\":\"46971_47559\"},{\"name\":\"ㅁ\",\"code\":\"47559_48147\"},{\"name\":\"ㅂ\",\"code\":\"48147_49323\"},{\"name\":\"ㅅ\",\"code\":\"49323_50499\"},{\"name\":\"ㅇ\",\"code\":\"50499_51087\"},{\"name\":\"ㅈ\",\"code\":\"51087_52263\"},{\"name\":\"ㅊ\",\"code\":\"52263_52851\"},{\"name\":\"ㅋ\",\"code\":\"52851_53439\"},{\"name\":\"ㅌ\",\"code\":\"53439_54027\"},{\"name\":\"ㅍ\",\"code\":\"54027_54615\"},{\"name\":\"ㅎ\",\"code\":\"54615_55203\"},{\"name\":\"기타\",\"code\":\"00000_35207\"}]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectRdnmAddr.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"도로명 코드 리스트 조회가 완료되었습니다.\",\"timestamp\":1780390368290,\"errors\":null,\"data\":{\"rdNmLst\":[]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"조회가 완료되었습니다.\",\"timestamp\":1780390368301,\"errors\":null,\"data\":{\"sccdLst\":[{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CGJ\",\"intgCdNm\":\"공증/제증명\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CGL\",\"intgCdNm\":\"기록관리\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CIJ\",\"intgCdNm\":\"일정관리\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CJG\",\"intgCdNm\":\"증거관리\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CMG\",\"intgCdNm\":\"문건\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CMJ\",\"intgCdNm\":\"문서작성\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CSB\",\"intgCdNm\":\"소송비용\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CSD\",\"intgCdNm\":\"송달\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CSS\",\"intgCdNm\":\"서식관리\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"CYM\",\"intgCdNm\":\"업무관리\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"KGS\",\"intgCdNm\":\"사법정보공유센터\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LBA\",\"intgCdNm\":\"본안사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LDC\",\"intgCdNm\":\"독촉사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LHB\",\"intgCdNm\":\"형사보호사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LHG\",\"intgCdNm\":\"형사공판사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LHP\",\"intgCdNm\":\"회생파산사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LHY\",\"intgCdNm\":\"형사약식사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LJH\",\"intgCdNm\":\"집행사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LKS\",\"intgCdNm\":\"기타사건사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LKT\",\"intgCdNm\":\"공탁사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LSC\",\"intgCdNm\":\"신청사무\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"LYJ\",\"intgCdNm\":\"영장\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PGJ\",\"intgCdNm\":\"법원경매정보제공\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PGP\",\"intgCdNm\":\"사법정보공개포털\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PJG\",\"intgCdNm\":\"전자공탁\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PJJ\",\"intgCdNm\":\"재산조회홈페이지\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PJS\",\"intgCdNm\":\"재판조력자선발\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PKJ\",\"intgCdNm\":\"국선전담변호인\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PKS\",\"intgCdNm\":\"국선전담변호사선발\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PMB\",\"intgCdNm\":\"모바일전자소송\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PSP\",\"intgCdNm\":\"전자소송포털\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"PSB\",\"intgCdNm\":\"소년보호관계자\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"SGV\",\"intgCdNm\":\"전자기록뷰어\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"SHG\",\"intgCdNm\":\"형사공통\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"SHJ\",\"intgCdNm\":\"형사재판조력자\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"SJB\",\"intgCdNm\":\"전자법정\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"SJG\",\"intgCdNm\":\"전자소송공통\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"SJJ\",\"intgCdNm\":\"각종절차지원\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"SJT\",\"intgCdNm\":\"지능형통합검색\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"STG\",\"intgCdOnrIdntId\":\"STG\",\"intgGrpCd\":\"SYSTM_CD\",\"intgCd\":\"SJY\",\"intgCdNm\":\"재판연구관보고서관리\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":\"11\",\"scntmIntgCdAddCtt\":null},{\"s"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"조회가 완료되었습니다.\",\"timestamp\":1780390368310,\"errors\":null,\"data\":{\"sccdLst\":[{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"BID_DVS_CD\",\"intgCd\":\"000331\",\"intgCdNm\":\"기일입찰\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"BID_DVS_CD\",\"intgCd\":\"000332\",\"intgCdNm\":\"기간입찰\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"BID_DVS_CD\",\"intgCd\":\"000333\",\"intgCdNm\":\"호가입찰\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null}]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"조회가 완료되었습니다.\",\"timestamp\":1780390368319,\"errors\":null,\"data\":{\"sccdLst\":[{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004301\",\"intgCdNm\":\"법정지상권\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004302\",\"intgCdNm\":\"별도등기\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004303\",\"intgCdNm\":\"유치권\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004304\",\"intgCdNm\":\"분묘기지권\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004305\",\"intgCdNm\":\"재매각\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004306\",\"intgCdNm\":\"특별매각조건\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004307\",\"intgCdNm\":\"농지취득\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004308\",\"intgCdNm\":\"예고등기\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004309\",\"intgCdNm\":\"선순위\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004310\",\"intgCdNm\":\"우선매수신고\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004311\",\"intgCdNm\":\"맹지\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null},{\"systmCd\":\"PGJ\",\"intgCdOnrIdntId\":\"PGJ\",\"intgGrpCd\":\"RLET_DSPSL_SPC_COND_CD\",\"intgCd\":\"0004399\",\"intgCdNm\":\"특수조건모두제외\",\"intgCdOnrDvsCd\":1,\"intgInscrtMtjrCdLstCtt\":null,\"fstmIntgCdAddCtt\":null,\"scntmIntgCdAddCtt\":null}]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectLclLst.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"대분류 목록 조회가 완료되었습니다.\",\"timestamp\":1780390368327,\"errors\":null,\"data\":{\"usgLclLst\":[{\"name\":\"토지\",\"code\":\"10000\"},{\"name\":\"건물\",\"code\":\"20000\"},{\"name\":\"차량및운송장비\",\"code\":\"30000\"},{\"name\":\"기타\",\"code\":\"40000\"}]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/getLoginInfoUrl.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"정상\",\"timestamp\":1780390368358,\"errors\":null,\"data\":{\"loginUiUrl\":\"https://ecfs.scourt.go.kr/psp/index.on\"},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj151/selectGdsDtlBmrkSrchCond.on",
+    "status": 200,
+    "snippet": "{\"status\":204,\"message\":\"자주쓰는검색조건이 조회되지 않았습니다.\",\"timestamp\":1780390368337,\"errors\":null,\"data\":{\"dlt_gdsDtlBmrkSrchCondLst\":[]},\"token\":null}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/lgnMbrsId.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"정상\",\"timestamp\":1780390368367,\"errors\":null,\"data\":{\"lgnMbrsId\":\"\",\"lgnMbrsNm\":\"\"},\"token\":null}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgjsearch/searchControllerMain.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "sec-ch-ua-mobile": "?0",
+      "submissionid": "mf_wfm_mainFrame_sbm_selectGdsDtlSrch",
+      "sc-userid": "SYSTEM",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "content-type": "application/json;charset=UTF-8"
+    },
+    "body": "{\"dma_pageInfo\":{\"pageNo\":1,\"pageSize\":10,\"bfPageNo\":\"\",\"startRowNo\":\"\",\"totalCnt\":\"\",\"totalYn\":\"Y\",\"groupTotalCount\":\"\"},\"dma_srchGdsDtlSrchInfo\":{\"rletDspslSpcCondCd\":\"\",\"bidDvsCd\":\"000331\",\"mvprpRletDvsCd\":\"00031R\",\"cortAuctnSrchCondCd\":\"0004601\",\"rprsAdongSdCd\":\"\",\"rprsAdongSggCd\":\"\",\"rprsAdongEmdCd\":\"\",\"rdnmSdCd\":\"\",\"rdnmSggCd\":\"\",\"rdnmNo\":\"\",\"mvprpDspslPlcAdongSdCd\":\"\",\"mvprpDspslPlcAdongSggCd\":\"\",\"mvprpDspslPlcAdongEmdCd\":\"\",\"rdDspslPlcAdongSdCd\":\"\",\"rdDspslPlcAdongSggCd\":\"\",\"rdDspslPlcAdongEmdCd\":\"\",\"cortOfcCd\":\"B000210\",\"jdbnCd\":\"\",\"execrOfcDvsCd\":\"\",\"lclDspslGdsLstUsgCd\":\"\",\"mclDspslGdsLstUsgCd\":\"\",\"sclDspslGdsLstUsgCd\":\"\",\"cortAuctnMbrsId\":\"\",\"aeeEvlAmtMin\":\"\",\"aeeEvlAmtMax\":\"\",\"lwsDspslPrcRateMin\":\"\",\"lwsDspslPrcRateMax\":\"\",\"flbdNcntMin\":\"\",\"flbdNcntMax\":\"\",\"objctArDtsMin\":\"\",\"objctArDtsMax\":\"\",\"mvprpArtclKndCd\":\"\",\"mvprpArtclNm\":\"\",\"mvprpAtchmPlcTypCd\":\"\",\"notifyLoc\":\"off\",\"lafjOrderBy\":\"\",\"pgmId\":\"PGJ151F01\",\"csNo\":\"\",\"cortStDvs\":\"1\",\"statNum\":1,\"bidBgngYmd\":\"20260602\",\"bidEndYmd\":\"20260616\",\"dspslDxdyYmd\":\"\",\"fstDspslHm\":\"\",\"scndDspslHm\":\"\",\"thrdDspslHm\":\"\",\"fothDspslHm\":\"\",\"dspslPlcNm\":\"\",\"lwsDspslPrcMin\":\"\",\"lwsDspslPrcMax\":\"\",\"grbxTypCd\":\"\",\"gdsVendNm\":\"\",\"fuelKndCd\":\"\",\"carMdyrMax\":\"\",\"carMdyrMin\":\"\",\"carMdlNm\":\"\",\"sideDvsCd\":\"\"}}"
+  },
+  {
+    "phase": "request",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcLst.on",
+    "method": "POST",
+    "headers": {
+      "sec-ch-ua-platform": "\"Windows\"",
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+      "accept": "application/json",
+      "sec-ch-ua": "\"Chromium\";v=\"148\", \"HeadlessChrome\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+      "content-type": "application/json",
+      "sec-ch-ua-mobile": "?0"
+    },
+    "body": "{\"cortExecrOfcDvsCd\":\"00079B\"}"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgjsearch/searchControllerMain.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"검색 결과가 조회되었습니다.\",\"timestamp\":1780390371784,\"errors\":null,\"data\":{\"dma_pageInfo\":{\"pageNo\":1,\"pageSize\":10,\"bfPageNo\":\"\",\"startRowNo\":1,\"totalCnt\":\"278\",\"totalYn\":\"Y\",\"groupTotalCount\":249},\"ipcheck\":true,\"dlt_srchResult\":[{\"docid\":\"B0002102023013000629211\",\"boCd\":\"B000210\",\"saNo\":\"20230130006292\",\"maemulSer\":\"1\",\"mokmulSer\":\"1\",\"srnSaNo\":\"2023타경6292\",\"jpDeptCd\":\"1003\",\"jinstatCd\":\"0002100001\",\"mulStatcd\":\"01\",\"mulJinYn\":\"Y\",\"maemulUtilCd\":\"13\",\"mulBigo\":\"현황 205(에이), 205(비)\",\"gamevalAmt\":\"271000000\",\"minmaePrice\":\"14899000\",\"yuchalCnt\":\"14\",\"maeAmt\":\"0\",\"inqCnt\":\"12\",\"gwansMulRegCnt\":\"21\",\"remaeordDay\":\"\",\"ipchalGbncd\":\"000331\",\"maeGiil\":\"20260616\",\"maegyuljGiil\":\"20260623\",\"maeHh1\":\"1000\",\"maeHh2\":\"\",\"maeHh3\":\"\",\"maeHh4\":\"\",\"notifyMinmaePrice1\":\"11919000\",\"notifyMinmaePrice2\":\"0\",\"notifyMinmaePrice3\":\"0\",\"notifyMinmaePrice4\":\"0\",\"notifyMinmaePriceRate1\":\"4\",\"notifyMinmaePriceRate2\":\"4\",\"maeGiilCnt\":\"14\",\"ipgiganFday\":\"\",\"ipgiganTday\":\"\",\"maePlace\":\"제4별관2층211호법정\",\"spJogCd\":\"\",\"mokGbncd\":\"03\",\"jongCd\":\"000\",\"stopsaGbncd\":\"00\",\"daepyoSidoCd\":\"11\",\"daepyoSiguCd\":\"620\",\"daepyoDongCd\":\"103\",\"daepyoRdCd\":\"00\",\"hjguSido\":\"서울특별시\",\"hjguSigu\":\"관악구\",\"hjguDong\":\"남현동\",\"hjguRd\":\"\",\"daepyoLotno\":\"1064-23\",\"buldNm\":\"씨에스타운\",\"buldList\":\"비동 2층205호\",\"areaList\":\"\",\"jimokList\":\"\",\"lclsUtilCd\":\"20000\",\"mclsUtilCd\":\"20100\",\"sclsUtilCd\":\"20106\",\"jejosaNm\":\"\",\"fuelKindcd\":\"\",\"bsgFormCd\":\"\",\"carNm\":\"\",\"carYrtype\":\"0\",\"xCordi\":\"309863\",\"yCordi\":\"541925\",\"cordiLvl\":\"1\",\"bgPlaceSidoCd\":\"\",\"bgPlaceSiguCd\":\"\",\"bgPlaceDongCd\":\"\",\"bgPlaceRdCd\":\"\",\"bgPlaceLotno\":\"\",\"bgPlaceSido\":\"\",\"bgPlaceSigu\":\"\",\"bgPlaceDong\":\"\",\"bgPlaceRd\":\"\",\"srchHjguBgFlg\":\"\",\"pjbBuldList\":\"철근콘크리트구조 28.33㎡\",\"minArea\":\"28\",\"maxArea\":\"28\",\"groupmaemulser\":\"B000210202301300062921\",\"bocdsano\":\"B00021020230130006292\",\"dupSaNo\":\"\",\"byungSaNo\":\"\",\"srchLclsUtilCd\":\"20000\",\"srchMclsUtilCd\":\"20100\",\"srchSclsUtilCd\":\"20106\",\"srchHjguSidoCd\":\"11\",\"srchHjguSiguCd\":\"11620\",\"srchHjguDongCd\":\"11620103\",\"srchHjguRdCd\":\"1162010300\",\"srchHjguLotno\":\"1064-23\",\"jiwonNm\":\"서울중앙지방법원\",\"jpDeptNm\":\"경매3계\",\"tel\":\"530-1815(제4별관 민사집행과)\",\"maejibun\":\"\",\"wgs84Xcordi\":\"126\",\"wgs84Ycordi\":\"37\",\"rd1Cd\":\"11\",\"rd2Cd\":\"620\",\"rd3Rd4Cd\":\"4160293\",\"rd1Nm\":\"서울특별시\",\"rd2Nm\":\"관악구\",\"rdEubMyun\":\"\",\"rdNm\":\"남현3길\",\"buldNo\":\"39\",\"rdAddrSub\":\"(남현동,씨에스타운)\",\"addrGbncd\":\"R\",\"bgPlaceRdAllAddr\":\"서울특별시 관악구 남현3길 00039-00000\",\"bgPlaceAddrGbncd\":\"R\",\"srchRd1Cd\":\"11\",\"srchRd2Cd\":\"11620\",\"srchRd3Rd4Cd\":\"116204160293\",\"alias\":\"budongsanmok\",\"dummyField\":\"\",\"dspslUsgNm\":\"다세대\",\"convAddr\":\"[집합건물 철근콘크리트구조 28.33㎡]\",\"printSt\":\"서울특별시 관악구 남현3길 39 비동 2층205호 (남현동,씨에스타운)\",\"printCsNo\":\"서울중앙지방법원<br/>2023타경6292\",\"colMerge\":\"202301300062921\"},{\"docid\":\"B0002102023013011087011\",\"boCd\":\"B000210\",\"saNo\":\"20230130110870\",\"maemulSer\":\"1\",\"mokmulSer\":\"1\",\"srnSaNo\":\"2023타경110870\",\"jpDeptCd\":\"1007\",\"jinstatCd\":\"0002100001\",\"mulStatcd\":\"01\",\"mulJinYn\":\"Y\",\"maemulUtilCd\":\"07\",\"mulBigo\":\"1.일괄매각\\n2.지분매각임\\n3.지상 소재 건물을 위하여 법정지상권 성립할 여지 있음\",\"gamevalAmt\":\"720000000\",\"minmaePrice\":\"720000000\",\"yuchalCnt\":\"0\",\"maeAmt\":\"0\",\"inqCnt\":\"62\",\"gwansMulRegCnt\":\"1\",\"remaeordDay\":\"\",\"ipchalGbncd\":\"000331\",\"maeGiil\":\"20260611\",\"maegyuljGiil\":\"20260618\",\"maeHh1\":\"1000\",\"maeHh2\":\"\",\"maeHh3\":\"\",\"maeHh4\":\"\",\"notifyMinmaePrice1\":\"720000000\",\"notifyMinmaePrice2\":\"0\",\"notifyMinmaePrice3\":\"0\",\"notifyMinmaePrice4\":\"0\",\"notifyMinmaePriceRate1\":\"100\",\"notifyMinmaePriceRate2\":\"100\",\"maeGiilCnt\":\"5\",\"ipgiganFday\":\"\",\"ipgiganTday\":\"\",\"maePlace\":\"4별관211호경매법정\",\"spJogCd\":\"0004301,0004310\",\"mokGbncd\":\"01\",\"jongCd\":\"000\",\"stopsaGbncd\":\"00\",\"daepyoSidoCd\":\"11\",\"daepyoSiguCd\":\"140\",\"daepyoDongCd\":\"112\",\"daepyoRdCd\":\"00\",\"hjguSido\":\"서울특별시\",\"hjguSigu\":\"중구\",\"hjguDong\":\"남창동\",\"hjguRd\":\"\",\"daepyoLotno\":\"31-27\",\"buldNm\":\"\",\"buldList\":\"\",\"areaList\":\"30.7㎡\",\"jimokList\":\"대\",\"lclsUtilCd\":\"10000\",\"mclsUtilCd\":\"10100\",\"sclsUtilCd\":\"10108\",\"jejosaNm\":\"\",\"fuelKindcd\":\"\",\"bsgFormCd\":\"\",\"carNm\":\"\",\"carYrtype\":\"0\",\"xCordi\":\"309928\",\"yCordi\":\"551384\",\"cordiLvl\":\"1\",\"bgPlaceSidoCd\":\"\",\"bgPlaceSiguCd\":\"\",\"bgPlaceDongCd\":\"\",\"bgPlaceRdCd\":\"\",\"bgPlaceLotno\":\"\",\"bgPlaceSido\":\"\",\"bgPlaceSigu\":\"\",\"bgPlaceDong\":\"\",\"bgPlaceRd\":\"\",\"srchHjguBgFlg\":\"\",\"pjbBuldList\":\"\",\"minArea\":\"30\",\"maxArea\":\"30\",\"groupmaemulser\":\"B000210202301301108701\",\"bocdsano\":\"B00021020230130110870\",\"dupSaNo\":\"2023타경117642\",\"byungSaNo\":\"\",\"srchLclsUtilCd\":\"10000\",\"srchMclsUtilCd\":\"10100\",\"srchSclsUtilCd\":\"10108\",\"srchHjguSidoCd\":\"11\",\"srchHjguSiguCd\":\"11140\",\"srchHjguDongCd\":\"11140112\",\"srchHjguRdCd\":\"1114011200\",\"srchHjguLotno\":\"31-27^31-28\",\"jiwonNm\":\"서울중앙지방법원\",\"jpDeptNm\":\"경매7계\",\"tel\":\"530-1819(제4별관 민사집행과)\",\"maejibun\":\"갑구 1번 황진숙 지분 160.8분의 40 전부\",\"wgs84Xcordi\":\"126\",\"wgs84Ycordi\":\"37\",\"rd1Cd\":\"\",\"rd2Cd\":\"\",\"rd3Rd4Cd\":\"\",\"rd1Nm\":\"\",\"rd2Nm\":\"\",\"rdEubMyun\":\"\",\"rdNm\":\"\",\"buldNo\":\"\",\"rdAddrSub\":\"\",\"addrGbncd\":\"A\",\"bgPlaceRdAllAddr\":\"\",\"bgPlaceAddrGbncd\":\"\",\"srchRd1Cd\":\"\",\"srchRd2Cd\":\"\",\"srchRd3Rd4Cd\":\"\",\"alias\":\"budongsanmok\",\"dummyField\":\"\",\"dspslUsgNm\":\"대지\",\"convAddr\":\"[토지 대 30.7㎡ 갑구 1번 황진숙 지분 160.8분의 40 전부]\",\"printSt\":\"서울특별시 중구 남창동 31-27 \",\"printCsNo\":\"서울중앙지방법원<br/>2023타경110870<br/>2023타경117642<br/>(중복)\",\"colMerge\":\"202301301108701\"},{\"docid\":\"B0002102023013011087012\",\"boCd\":\"B000210\",\"saNo\":\"20230130110870\",\"maemulSer\":\"1\",\"mokmulSer\":\"2\",\"srnSaNo\":\"2023타경110870\",\"jpDeptCd\":\"1007\",\"jinstatCd\":\"0002100001\",\"mulStatcd\":\"01\",\"mulJinYn\":\"Y\",\"maemulUtilCd\":\"07\",\"mulBigo\":\"1.일괄매각\\n2.지분매각임\\n3.지상 소재 건물을 위하여 법정지상권 성립할 여지 있음\",\"gamevalAmt\":\"720000000\",\"minmaePrice\":\"720000000\",\"yuchalCnt\":\"0\",\"maeAmt\":\"0\",\"inqCnt\":\"62\",\"gwansMulRegCnt\":\"1\",\"remaeordDay\":\"\",\"ipchalGbncd\":\"000331\",\"maeGiil\":\"20260611\",\"maegyuljGiil\":\"20260618\",\"maeHh1\":\"1000\",\"maeHh2\":\"\",\"maeHh3\":\"\",\"maeHh4\":\"\",\"notifyMinmaePrice1\":\"720000000\",\"notifyMinmaePrice2\":\"0\",\"notifyMinmaePrice3\":\"0\",\"notifyMinmaePrice4\":\"0\",\"notifyMinmaePriceRate1\":\"100\",\"notifyMinmaePriceRate2\":\"100\",\"maeGiilCnt\":\"5\",\"ipgiganFday\":\"\",\"ipgiganTday\":\"\",\"maePlace\":\"4별관211호경매법정\",\"spJogCd\":\"0004301,0004310\",\"mokGbncd\":\"01\",\"jongCd\":\"000\",\"stopsaGbncd\":\"00\",\"daepyoSidoCd\":\"11\",\"daepyoSiguCd\":\"140\",\"daepyoDongCd\":\"112\",\"daepyoRdCd\":\"00\",\"hjguSido\":\"서울특별시\",\"hjguSigu\":\"중구\",\"hjguDong\":\"남창동\",\"hjguRd\":\"\",\"daepyoLotno\":\"31-28\",\"buldNm\":\"\",\"buldList\":\"\",\"areaList\":\"51.9㎡\",\"jimokList\":\"대\",\"lclsUtilCd\":\"10000\",\"mclsUtilCd\":\"10100\",\"sclsUtilCd\":\"10108\",\"jejosaNm\":\"\",\"fuelKindcd\":\"\",\"bsgFormCd\":\"\",\"carNm\":\"\",\"carYrtype\":\"0\",\"xCordi\":\"309926\",\"yCordi\":\"551383\",\"cordiLvl\":\"1\",\"bgPlaceSidoCd\":\"\",\"bgPlaceSiguCd\":\"\",\"bgPlaceDongCd\":\"\",\"bgPlaceRdCd\":\"\",\"bgPlaceLotno\":\"\",\"bgPlaceSido\":\"\",\"bgPlaceSigu\":\"\",\"bgPlaceDong\":\"\",\"bgPlaceRd\":\"\",\"srchHjguBgFlg\":\"\",\"pjbBuldList\":\"\",\"minArea\":\"51\",\"maxArea\":\"51\",\"groupmaemulser\":\"B000210202301301108701\",\"bocdsano\":\"B00021020230130110870\",\"dupSaNo\":\"2023타경117642\",\"byungSaNo\":\"\",\"srchLclsUtilCd\":\"10000\",\"srchMclsUtilCd\":\"10100\",\"srchSclsUtilCd\":\"10108\",\"srchHjguSidoCd\":\"11\",\"srchHjguSiguCd\":\"11140\",\"srchHjguDongCd\":\"11140112\",\"srchHjguRdCd\":\"1114011200\",\"srchHjguLotno\":\"31-27^31-28\",\"jiwonNm\":\"서울중앙지방법원\",\"jpDeptNm\":\"경매7계\",\"tel\":\"530-1819(제4별관 민사집행과)\",\"maejibun\":\"갑구 1번 황진숙 지분 160.8분의 40 전부\",\"wgs84Xcordi\":\"126\",\"wgs84Ycordi\":\"37\",\"rd1Cd\":\"\",\"rd2Cd\":\"\",\"rd3Rd4Cd\":\"\",\"rd1Nm\":\"\",\"rd2Nm\":\"\",\"rdEubMyun\":\"\",\"rdNm\":\"\",\"buldNo\":\"\",\"rdAddrSub\":\"\",\"addrGbncd\":\"A\",\"bgPlaceRdAllAddr\":\"\",\"bgPlaceAddrGbncd\":\"\",\"srchRd1Cd\":\"\",\"srchRd2Cd\":\"\",\"srchRd3Rd4Cd\":\"\",\"alias\":\"budongsanmok\",\"dummyField\":\"\",\"dspslUsgNm\":\"대지\",\"convAddr\":\"[토지 대 51.9㎡ 갑구 1번 황진숙 지분 160.8분의 40 전부]\",\"printSt\":\"서울특별시 중구 남창동 31-28 \",\"printCsNo\":\"서울중앙지방법원<br/>2023타경110870<br/>2023타경117642<br/>(중복)\",\"colMerge\":\"202301301108701\"},{\"docid\":\"B0002102024013000177511\",\"boCd\":\"B000210\",\"saNo\":\"20240130001775\",\"maemulSer\":\"1\",\"mokmulSer\":\"1\",\"srnSaNo\":\"2024타경1775\",\"jpDeptCd\":\"1004\",\"jinstatCd\":\"0002100001\",\"mulStatcd\":\"01\",\"mulJinYn\":\"Y\",\"maemulUtilCd\":\"01\",\"mulBigo\":\"특별매각조건 매수신청보증금 최저매각가격의 20%\",\"gamevalAmt\":\"611000000\",\"minmaePrice\":\"128136000\",\"yuchalCnt\":\"8\",\"maeAmt\":\"0\",\"inqCnt\":\"14\",\"gwansMulRegCnt\":\"49\",\"remaeordDay\":\"20251014\",\"ipchalGbncd\":\"000331\",\"maeGiil\":\"20260610\",\"maegyuljGiil"
+  },
+  {
+    "phase": "response",
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcLst.on",
+    "status": 200,
+    "snippet": "{\"status\":200,\"message\":\"법원사무소 사무소 목록 조회가 완료되었습니다.\",\"timestamp\":1780390371826,\"errors\":null,\"data\":{\"cortOfcLst\":[{\"code\":\"B000210\",\"name\":\"서울중앙지방법원\"},{\"code\":\"B000211\",\"name\":\"서울동부지방법원\"},{\"code\":\"B000215\",\"name\":\"서울서부지방법원\"},{\"code\":\"B000212\",\"name\":\"서울남부지방법원\"},{\"code\":\"B000213\",\"name\":\"서울북부지방법원\"},{\"code\":\"B000214\",\"name\":\"의정부지방법원\"},{\"code\":\"B214807\",\"name\":\"고양지원\"},{\"code\":\"B214804\",\"name\":\"남양주지원\"},{\"code\":\"B000240\",\"name\":\"인천지방법원\"},{\"code\":\"B000241\",\"name\":\"부천지원\"},{\"code\":\"B000250\",\"name\":\"수원지방법원\"},{\"code\":\"B000251\",\"name\":\"성남지원\"},{\"code\":\"B000252\",\"name\":\"여주지원\"},{\"code\":\"B000253\",\"name\":\"평택지원\"},{\"code\":\"B250826\",\"name\":\"안산지원\"},{\"code\":\"B000254\",\"name\":\"안양지원\"},{\"code\":\"B000260\",\"name\":\"춘천지방법원\"},{\"code\":\"B000261\",\"name\":\"강릉지원\"},{\"code\":\"B000262\",\"name\":\"원주지원\"},{\"code\":\"B000263\",\"name\":\"속초지원\"},{\"code\":\"B000264\",\"name\":\"영월지원\"},{\"code\":\"B000270\",\"name\":\"청주지방법원\"},{\"code\":\"B000271\",\"name\":\"충주지원\"},{\"code\":\"B000272\",\"name\":\"제천지원\"},{\"code\":\"B000273\",\"name\":\"영동지원\"},{\"code\":\"B000280\",\"name\":\"대전지방법원\"},{\"code\":\"B000281\",\"name\":\"홍성지원\"},{\"code\":\"B000282\",\"name\":\"논산지원\"},{\"code\":\"B000283\",\"name\":\"천안지원\"},{\"code\":\"B000284\",\"name\":\"공주지원\"},{\"code\":\"B000285\",\"name\":\"서산지원\"},{\"code\":\"B000310\",\"name\":\"대구지방법원\"},{\"code\":\"B000311\",\"name\":\"안동지원\"},{\"code\":\"B000312\",\"name\":\"경주지원\"},{\"code\":\"B000313\",\"name\":\"김천지원\"},{\"code\":\"B000314\",\"name\":\"상주지원\"},{\"code\":\"B000315\",\"name\":\"의성지원\"},{\"code\":\"B000316\",\"name\":\"영덕지원\"},{\"code\":\"B000317\",\"name\":\"포항지원\"},{\"code\":\"B000320\",\"name\":\"대구서부지원\"},{\"code\":\"B000410\",\"name\":\"부산지방법원\"},{\"code\":\"B000412\",\"name\":\"부산동부지원\"},{\"code\":\"B000414\",\"name\":\"부산서부지원\"},{\"code\":\"B000411\",\"name\":\"울산지방법원\"},{\"code\":\"B000420\",\"name\":\"창원지방법원\"},{\"code\":\"B000431\",\"name\":\"마산지원\"},{\"code\":\"B000421\",\"name\":\"진주지원\"},{\"code\":\"B000422\",\"name\":\"통영지원\"},{\"code\":\"B000423\",\"name\":\"밀양지원\"},{\"code\":\"B000424\",\"name\":\"거창지원\"},{\"code\":\"B000510\",\"name\":\"광주지방법원\"},{\"code\":\"B000511\",\"name\":\"목포지원\"},{\"code\":\"B000512\",\"name\":\"장흥지원\"},{\"code\":\"B000513\",\"name\":\"순천지원\"},{\"code\":\"B000514\",\"name\":\"해남지원\"},{\"code\":\"B000520\",\"name\":\"전주지방법원\"},{\"code\":\"B000521\",\"name\":\"군산지원\"},{\"code\":\"B000522\",\"name\":\"정읍지원\"},{\"code\":\"B000523\",\"name\":\"남원지원\"},{\"code\":\"B000530\",\"name\":\"제주지방법원\"}]},\"token\":null}"
+  }
+]
