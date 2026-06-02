@@ -351,14 +351,13 @@ export default function PropertyDetail() {
                 },
                 {
                   label: "사용승인일",
+                  value: prop.use_apr_day ? formatDate(prop.use_apr_day) : null,
+                },
+                {
+                  label: "건물 연식",
                   value: prop.use_apr_day ? (
                     <>
-                      {formatDate(prop.use_apr_day)}
-                      {buildingAge(prop.use_apr_day) && (
-                        <span style={{ color: "#64748b", marginLeft: "0.5rem" }}>
-                          ({buildingAge(prop.use_apr_day)})
-                        </span>
-                      )}
+                      {buildingAge(prop.use_apr_day) || "—"}
                       {buildingAgeCategory(prop.use_apr_day) && (
                         <span
                           className={`age-pill age-${buildingAgeCategory(prop.use_apr_day)}`}
