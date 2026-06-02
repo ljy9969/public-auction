@@ -122,10 +122,31 @@ def _is_land(raw_or_prop: dict[str, Any]) -> bool:
     return "토지" in cat
 
 
+def _is_share(raw_or_prop: dict[str, Any]) -> bool:
+    """주거 지분 매물 — title/category/raw 필드에서 검출."""
+    shr = raw_or_prop.get("shrYn") or raw_or_prop.get("share_yn")
+    if shr == "Y":
+        return True
+    if raw_or_prop.get("building_shared") is True:
+        return True
+    title = raw_or_prop.get("title") or raw_or_prop.get("onbidCltrNm") or ""
+    bigo = raw_or_prop.get("mulBigo") or ""
+    if any(k in (title + " " + bigo) for k in ("지분", "공유자", "지분매각")):
+        return True
+    return False
+
+
+def _in_metro(addr: str) -> bool:
+    """수도권(서울/경기/인천) 매칭."""
+    return any(p in addr for p in _METRO_PREFIXES)
+
+
 def in_target_region(raw_or_prop: dict[str, Any], *, require_gangnam_radius: bool = True) -> bool:
-    """카테고리별 분기:
-      오피스텔/용도복합        → 항상 송파/강남 화이트리스트 + 선릉 3km (mode 무관)
-      그 외 (주거/주거지분/도로) → mode=seoul_all 이면 서울 전체, songpa_gangnam 이면 엄격
+    """카테고리별 분기 (공매·경매 공통):
+      오피스텔/용도복합 → 쪈(송파·강남+선릉 3km) OR 쪠(영등포+서대문 8km)
+      토지/도로         → 수도권 (서울/경기/인천)
+      주거 지분         → 수도권 (서울/경기/인천)
+      주거 단독         → 서울 전체 (mode=seoul_all 기준)
     """
     criteria = load_criteria()
     regions = criteria["regions"]
@@ -135,28 +156,25 @@ def in_target_region(raw_or_prop: dict[str, Any], *, require_gangnam_radius: boo
     if not addr:
         return False
 
-    # 오피스텔/용도복합 — '나(쪈, 송파·강남+선릉)' 또는 '언니(쪠, 영등포구)' 둘 중 하나면 통과
+    # 1) 오피스텔/용도복합 — 쪈 OR 쪠 (mode 무관, 가장 엄격)
     if _is_officetel_or_mixed(raw_or_prop):
         if _check_songpa_gangnam_strict(raw_or_prop, addr, regions, require_gangnam_radius):
             return True
         return _check_sister_zone(raw_or_prop, addr, regions)
 
-    # 토지/도로 — 전국 허용 (소액 토지 지분·도로는 지방에 집중, 서울엔 거의 없음)
+    # 2) 토지/도로 — 수도권 (지방 매물 제외, 입문자 소액 투자 + 인접 답사 가능 범위)
     if _is_land(raw_or_prop):
-        return True
+        return _in_metro(addr)
 
+    # 3) 주거 지분 — 수도권
+    if _is_share(raw_or_prop):
+        return _in_metro(addr)
+
+    # 4) 주거 단독 — mode에 따라
     if mode == "seoul_all":
         return ("서울특별시" in addr) or addr.startswith("서울 ")
 
-    # 지분/도로/토지 — 수도권 광역 허용 (입문자 소액 투자 대상)
-    if _is_share_or_land(raw_or_prop):
-        # 서울/경기/인천 외 지역은 차단
-        if not any(p in addr for p in _METRO_PREFIXES):
-            return False
-        # 그 안에서 재개발 핫스팟 또는 송파/강남/서초만 통과
-        return in_metro_redev_area(addr)
-
-    # mode=songpa_gangnam에서 주거/오피스텔 매물은 엄격 룰
+    # mode=songpa_gangnam에서 주거 단독 매물은 엄격 룰
     return _check_songpa_gangnam_strict(raw_or_prop, addr, regions, require_gangnam_radius)
 
 
