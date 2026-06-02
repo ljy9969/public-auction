@@ -257,8 +257,8 @@ docs/                 API notes + TODO
 | GET | `/api/properties/{id}` | 매물 상세 (rights_analysis, predicted_price_* 포함) |
 | GET | `/api/properties/lookup?q={번호}` | cltr_no / cltr_mnmt_no 직조회 (헤더 검색바) |
 | GET | `/api/stats/summary` | 통계 대시보드 데이터 (카테고리·유찰·지역·가격대·시계열·권리 위험) |
-| POST | `/api/scrape?max_pages=3` | 백그라운드 수집 시작 |
-| GET | `/api/scrape/status` | 수집 진행 상태 — **진행 중이 아니면 DB `search_runs` 우선** (daily-scrape.ps1 같은 별도 프로세스 수집도 반영) |
+| POST | `/api/scrape?max_pages=3` | 백그라운드 수집 시작 — **풀파이프** (1) scraper.run (2) backfill_all (3) backfill_realprice (4) backfill_analysis (5) sweep_filters. daily-scrape.ps1과 동일 단계. 웹 헤더의 "지금 수집" 버튼이 이걸 호출 |
+| GET | `/api/scrape/status` | 수집 진행 상태 — **진행 중이 아니면 DB `search_runs` 우선** (daily-scrape.ps1 같은 별도 프로세스 수집도 반영). 진행 중일 땐 `message` 필드가 각 단계 라벨(예 `[3/5] 백필 (국토부 실거래가 시세)`)을 노출 |
 
 ## 외부 API 키 발급
 

@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import sys
 import threading
+
+logger = logging.getLogger(__name__)
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -48,15 +51,73 @@ _scrape_state: dict[str, Any] = {
 
 
 def _run_scrape_job(max_pages: int | None) -> None:
+    """웹 '지금 수집' 풀파이프 — daily-scrape.ps1과 동일 단계.
+
+    1. scraper.run            매물 수집
+    2. backfill_all           Kakao 좌표 + 건축물대장 + ODsay 대중교통
+    3. backfill_realprice     국토부 실거래가 5종(시세) + 임대 수익률
+    4. backfill_analysis      권리분석 + 낙찰가 예측 (스크레이프 시점에 이미 채워지지만 멱등)
+    5. sweep_filters          강화된 필터에 안 맞는 잔존 행 자동 마킹·삭제
+    """
     global _scrape_state
     try:
+        _scrape_state["message"] = "[1/5] 매물 수집"
         count = run_scrape(max_pages=max_pages, fetch_details=True)
         _scrape_state["count"] = count
-        _scrape_state["message"] = f"Saved {count} properties"
+
+        _scrape_state["message"] = "[2/5] 백필 (건축물대장 + Kakao + ODsay)"
+        from scripts.backfill_all import main as _backfill_all
+        _backfill_all()
+
+        _scrape_state["message"] = "[3/5] 백필 (국토부 실거래가 시세)"
+        from scripts.backfill_realprice import main as _backfill_realprice
+        _backfill_realprice()
+
+        _scrape_state["message"] = "[4/5] 백필 (권리분석 + 낙찰가 예측)"
+        from scripts.backfill_analysis import main as _backfill_analysis
+        _backfill_analysis()
+
+        _scrape_state["message"] = "[5/5] Sweep (drift 정리)"
+        # sweep_filters는 argparse를 쓰므로 함수 직접 호출 — 헬퍼 인라인.
+        from scraper.db import delete_failed_properties, get_connection
+        from scraper.filters.quality import apply_quality_filters
+        import json as _json
+        conn = get_connection()
+        rows = conn.execute(
+            "SELECT id, title, category, min_price, appraisal_price, area_build_m2, "
+            "share_yn, building_shared, fail_count, status, bid_end, "
+            "filter_notes, detail_json FROM properties WHERE passes_filters = 1"
+        ).fetchall()
+        sweep_fail = 0
+        for r in rows:
+            prop = {
+                "title": r["title"], "category": r["category"],
+                "min_price": r["min_price"], "appraisal_price": r["appraisal_price"],
+                "area_build_m2": r["area_build_m2"], "share_yn": r["share_yn"],
+                "building_shared": bool(r["building_shared"]) if r["building_shared"] is not None else None,
+                "fail_count": r["fail_count"], "status": r["status"], "bid_end": r["bid_end"],
+                "filter_notes": _json.loads(r["filter_notes"]) if r["filter_notes"] else [],
+                "detail_json": _json.loads(r["detail_json"]) if r["detail_json"] else {},
+                "passes_filters": True,
+            }
+            prop = apply_quality_filters(prop)
+            if not prop.get("passes_filters", True):
+                sweep_fail += 1
+                conn.execute(
+                    "UPDATE properties SET passes_filters=0, filter_notes=? WHERE id=?",
+                    (_json.dumps(prop.get("filter_notes", []), ensure_ascii=False), r["id"]),
+                )
+        conn.commit()
+        conn.close()
+        if sweep_fail:
+            delete_failed_properties()
+
+        _scrape_state["message"] = f"완료 — 저장 {count}건, drift 정리 {sweep_fail}건"
         _scrape_state["error"] = None
     except Exception as exc:
         _scrape_state["error"] = str(exc)
-        _scrape_state["message"] = "Scrape failed"
+        _scrape_state["message"] = f"실패: {exc}"
+        logger.exception("scrape pipeline failed")
     finally:
         _scrape_state["running"] = False
         _scrape_state["finished_at"] = datetime.now(timezone.utc)
