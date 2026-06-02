@@ -39,6 +39,7 @@ export default function PropertyList() {
   const [floorFilter, setFloorFilter] = useState<"all" | "저층" | "중층" | "고층">("all");
   const [subCategory, setSubCategory] = useState<string>("all");
   const [tenantRisk, setTenantRisk] = useState<"all" | "yes" | "no">("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "onbid" | "court">("all");
   const [sortKey, setSortKey] = useState<"default" | "price" | "area" | "transit" | "bidStart" | "fail">("default");
   const [sortAsc, setSortAsc] = useState(true);
   const cardListRef = useRef<HTMLDivElement | null>(null);
@@ -164,6 +165,10 @@ export default function PropertyList() {
       if (subCategory !== "all") {
         if (!(p.category || "").includes(subCategory)) return false;
       }
+      if (sourceFilter !== "all") {
+        const src = p.source || "onbid";
+        if (src !== sourceFilter) return false;
+      }
       if (tenantRisk !== "all") {
         const hasRisk = (p.filter_notes || []).some((t) => t.includes("임차인 인수"));
         if (tenantRisk === "yes" && !hasRisk) return false;
@@ -171,7 +176,7 @@ export default function PropertyList() {
       }
       return true;
     });
-  }, [items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, fav]);
+  }, [items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, fav]);
 
   const sortedItems: Property[] = useMemo(() => {
     if (sortKey === "default") return filteredItems;
@@ -222,6 +227,7 @@ export default function PropertyList() {
     setFloorFilter("all");
     setSubCategory("all");
     setTenantRisk("all");
+    setSourceFilter("all");
     setSortKey("default");
     setSortAsc(true);
   };
@@ -233,6 +239,7 @@ export default function PropertyList() {
     floorFilter !== "all" ||
     subCategory !== "all" ||
     tenantRisk !== "all" ||
+    sourceFilter !== "all" ||
     sortKey !== "default";
 
   return (
@@ -340,6 +347,17 @@ export default function PropertyList() {
             <option value="all">전체</option>
             <option value="no">위험 없음</option>
             <option value="yes">위험 있음</option>
+          </select>
+        </label>
+        <label className="filter-select">
+          <span>소스</span>
+          <select
+            value={sourceFilter}
+            onChange={(e) => setSourceFilter(e.target.value as typeof sourceFilter)}
+          >
+            <option value="all">전체</option>
+            <option value="onbid">공매</option>
+            <option value="court">경매</option>
           </select>
         </label>
         <div className="filter-break" />
