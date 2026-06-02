@@ -350,7 +350,7 @@ export default function PropertyList() {
           </select>
         </label>
         <label className="filter-select">
-          <span>소스</span>
+          <span>구분</span>
           <select
             value={sourceFilter}
             onChange={(e) => setSourceFilter(e.target.value as typeof sourceFilter)}
