@@ -56,17 +56,21 @@ def main() -> int:
         args.dry_run = True  # 기본 안전모드
 
     # 시도 → 코드 변환 (빈값이면 sweep)
-    from scraper_court.codes import SIDO_CODES, USG_LCL
+    from scraper_court.codes import SIDO_CODES, USG_LCL, USG_LCL_TARGET
     if args.sido:
         sido_codes_to_use = [SIDO_CODES.get(args.sido, "")]
     else:
         # 수도권 sweep — 서울/경기/인천
         sido_codes_to_use = [SIDO_CODES["서울특별시"], SIDO_CODES["경기도"], SIDO_CODES["인천광역시"]]
 
-    usg_lcl = ""
+    # 용도 대분류 — 빈값이면 USG_LCL_TARGET(토지·건물) 둘 다 sweep (차량·기타 제외).
+    # ★ 2026-06-03 차량 매물(예: 2025타경104467 E220 d Cabriolet)이 '기타' 카테고리로
+    #   화이트리스트 우회해 들어온 버그 픽스 — 부동산만 명시적 호출.
     if args.usg:
         rev = {v: k for k, v in USG_LCL.items()}
-        usg_lcl = rev.get(args.usg, "")
+        usg_lcl_list = [rev.get(args.usg, "")]
+    else:
+        usg_lcl_list = list(USG_LCL_TARGET)  # ['10000', '20000']
 
     criteria = load_criteria()
     pf = criteria.get("post_filters", {})
@@ -86,6 +90,7 @@ def main() -> int:
     with CourtSession() as session:
         session.warm_up()
         for sido_cd in sido_codes_to_use:
+          for usg_lcl in usg_lcl_list:
             for row in iter_all_pages(
                 session,
                 sido_cd=sido_cd,
@@ -99,6 +104,10 @@ def main() -> int:
             ):
                 raw_count += 1
                 prop = parse_court_row(row)
+                if prop is None:
+                    # 차량·기타 (lclsUtilCd 30000/40000)
+                    filtered_out["parse: 차량·기타 (부동산 아님)"] = filtered_out.get("parse: 차량·기타 (부동산 아님)", 0) + 1
+                    continue
 
                 # 1) 지역 분기 — 공매·경매 공통 region.py 적용
                 if not in_target_region(prop):

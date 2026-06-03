@@ -131,8 +131,16 @@ def _build_address(row: dict[str, Any]) -> tuple[str, str | None]:
     return jibun, road
 
 
-def parse_court_row(row: dict[str, Any]) -> dict[str, Any]:
-    """법원경매 검색 응답 1건을 우리 prop dict 포맷으로."""
+def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:
+    """법원경매 검색 응답 1건을 우리 prop dict 포맷으로.
+    부동산(토지·건물)이 아니면 None 반환 → 호출자가 skip.
+    """
+    # ★ 차량(lclsUtilCd=30000)·기타(40000) 안전망 (2026-06-03 사용자 보고: 차량 매물 노출).
+    #   검색 단계에서 USG_LCL_TARGET=['10000','20000']로 명시해도 만약 섞여 들어오면 컷.
+    lcls = row.get("lclsUtilCd") or ""
+    if lcls and lcls not in ("10000", "20000"):
+        return None
+
     sa_no = row.get("srnSaNo") or ""           # '2023타경6292'
     mokmul_ser = row.get("mokmulSer") or "1"
     cltr_no = f"{sa_no}-{mokmul_ser}" if sa_no else (row.get("docid") or "")
