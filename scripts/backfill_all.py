@@ -14,7 +14,9 @@ if str(ROOT) not in sys.path:
 
 from scraper.db import get_connection
 from scraper.filters.building import fetch_building_info
+from scraper.filters.geo import resolve_coords
 from scraper.filters.transit import apply_transit_filter
+from scraper.session import load_criteria
 
 
 def _safe_int(v) -> int | None:
@@ -28,6 +30,7 @@ def _safe_int(v) -> int | None:
 
 def main() -> None:
     conn = get_connection()
+    criteria = load_criteria()
     rows = conn.execute(
         """SELECT id, address_jibun, address_road, title, region_line,
                   geo_lat, geo_lng, floor_total, category, share_yn,
@@ -47,6 +50,21 @@ def main() -> None:
                 updates["use_apr_day"] = (info.get("useAprDay") or "").strip() or None
                 updates["main_purps"] = (info.get("mainPurpsCdNm") or "").strip() or None
                 updates["address_road"] = (info.get("newPlatPlc") or "").strip() or None
+
+        # 1.5. Kakao 좌표 — 카테고리 무관, 모든 row에 적용 (지도 마커용).
+        #     transit_filter 가드(2026-06-03) 이후 토지/주거 지분 좌표 미수집 문제 해결.
+        if r["geo_lat"] is None or r["geo_lng"] is None:
+            prop_for_geo = {
+                "address_jibun": addr,
+                "title": r["title"],
+                "region_line": r["region_line"],
+                "geo_lat": r["geo_lat"],
+                "geo_lng": r["geo_lng"],
+            }
+            coords = resolve_coords(prop_for_geo, criteria)
+            if coords:
+                updates["geo_lat"] = coords[0]
+                updates["geo_lng"] = coords[1]
 
         # 2. ODsay 대중교통 — 오피스텔/용도복합 + 주거 단독만 + transit_minutes 캐시 (2026-06-03 정책).
         #    주거 지분/토지는 skip. transit_minutes가 이미 있으면 ODsay 재호출 안 함.

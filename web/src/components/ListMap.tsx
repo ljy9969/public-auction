@@ -77,8 +77,10 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
       mapInstance.current = map;
 
       if (markers.length === 1) {
+        // 좌표 1개만 있을 때 너무 줌인되면 'X 위치 고정'처럼 보임 (특히 토지 탭처럼
+        // 대부분 row가 Kakao 백필 전이라 좌표 1개뿐인 케이스). 도시 단위 zoom으로.
         map.setCenter(new naver.LatLng(markers[0].lat, markers[0].lng));
-        map.setZoom(15);
+        map.setZoom(11);
       } else {
         map.fitBounds(bounds);
       }
