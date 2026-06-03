@@ -41,9 +41,11 @@ const COURT_SEARCH_URL =
 function CourtOriginCta({
   caseNo,
   officeNm,
+  sourceUrl,
 }: {
   caseNo: string | null;
   officeNm: string | null;
+  sourceUrl: string | null;
 }) {
   const [copied, setCopied] = useState(false);
   // "2025타경102998" → "102998" (경매사건검색의 '타경' 입력칸에 넣을 번호)
@@ -59,10 +61,14 @@ function CourtOriginCta({
     }
   };
 
+  // DB에 저장된 source_url(#cort=...&year=...&sa=... hash 포함)이 있으면 그대로 사용.
+  // 미설정 row(구버전)는 기본 진입점으로 fallback.
+  const href = sourceUrl || COURT_SEARCH_URL;
+
   return (
     <div className="court-cta">
       <a
-        href={COURT_SEARCH_URL}
+        href={href}
         target="_blank"
         rel="noreferrer"
         className="cta-button cta-hero"
@@ -75,8 +81,9 @@ function CourtOriginCta({
         </button>
       )}
       <p className="court-cta-hint">
-        법원경매정보는 공유 링크로 상세를 바로 열 수 없습니다. 물건상세검색에서
-        {officeNm ? ` ‘${officeNm}’ 선택 후 ` : " "}사건번호(타경 칸)로 검색하세요.
+        <strong>Tampermonkey + BidPick 유저스크립트 설치</strong> 시 링크 한 번 클릭으로
+        법원·연도·타경 번호가 자동 입력되고 검색까지 실행됩니다. 미설치 시:
+        물건상세검색에서{officeNm ? ` ‘${officeNm}’ 선택 후 ` : " "}사건번호(타경 칸)로 수동 검색하세요.
       </p>
     </div>
   );
@@ -341,6 +348,7 @@ export default function PropertyDetail() {
             <CourtOriginCta
               caseNo={prop.court_case_no}
               officeNm={prop.court_office_nm}
+              sourceUrl={prop.source_url}
             />
           ) : (
             prop.source_url && (

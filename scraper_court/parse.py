@@ -140,13 +140,25 @@ def _parse_sa_no(srn: str) -> tuple[str, str]:
 
 
 def _build_source_url(row: dict[str, Any], srn_sa_no: str) -> str:
-    """물건상세검색(PGJ151F00) 진입점.
+    """물건상세검색(PGJ151F00) 진입점 + 유저스크립트용 hash.
 
-    WebSquare가 URL query params(cortOfcCd/saYear/saSer)를 prefill로
-    인식하지 않음(2026-06-03 사용자 검증). 빈 폼만 뜸 → params 제거.
-    사용자는 카드의 사건번호 복사 버튼으로 붙여넣어야 한다.
+    WebSquare는 URL query params를 무시하지만, hash(#cort=...&year=...&sa=...)는
+    브라우저에 남는다. Tampermonkey 유저스크립트
+    (userscript/bidpick-court-prefill.user.js)가 hash를 읽어 폼을 자동으로 채우고
+    검색 버튼까지 클릭한다. 유저스크립트 미설치 시: 빈 폼이 뜨고 카드에서
+    사건번호 복사 버튼으로 붙여넣기 (1단계 fallback).
     """
-    return "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml"
+    base = "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml"
+    sa_year, sa_ser = _parse_sa_no(srn_sa_no)
+    cort = row.get("boCd") or row.get("cortOfcCd") or ""
+    parts: list[str] = []
+    if cort:
+        parts.append(f"cort={cort}")
+    if sa_year:
+        parts.append(f"year={sa_year}")
+    if sa_ser:
+        parts.append(f"sa={sa_ser}")
+    return base + ("#" + "&".join(parts) if parts else "")
 
 
 def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:

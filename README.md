@@ -284,6 +284,27 @@ docs/                 API notes + TODO
 | **ODsay 대중교통** | https://lib.odsay.com | 5천건/일 | 환승 최적 경로·시간 |
 | **Naver Maps NCP** | https://console.ncloud.com → AI·NAVER API > Maps | 응용에 따라 다름 | 지도 JS SDK (`ncpClientId`) |
 
+## 법원경매 원문 자동 prefill (유저스크립트)
+
+법원경매정보(`courtauction.go.kr`)는 WebSquare SPA라 URL query params로 폼을
+prefill할 방법이 없다. **Tampermonkey + 유저스크립트** 한 번 설치하면 BidPick
+링크 한 클릭으로 법원·연도·타경 번호가 자동 입력되고 검색 버튼까지 클릭된다.
+
+### 설치 (1회)
+
+1. **Tampermonkey 확장** 설치 — [Chrome](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) / [Edge](https://microsoftedge.microsoft.com/addons/detail/iikmkjmpaadaobahmlepeloendndfphd) / [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/)
+2. [`userscript/bidpick-court-prefill.user.js`](userscript/bidpick-court-prefill.user.js) 파일 내용을 복사
+3. Tampermonkey 대시보드 → 「새 스크립트 만들기」 → 붙여넣기 → 저장
+
+### 동작
+
+- BidPick 카드의 `법원경매정보 물건상세검색 →` 링크 클릭 → 새 탭에 PGJ151F00 페이지
+- URL hash(`#cort=B000214&year=2025&sa=3671`) 를 유저스크립트가 읽음
+- WebSquare 폼이 그려지면 XPath로 법원/연도/타경 입력 + change 이벤트 발사
+- 0.6초 후 검색 버튼 자동 클릭 → 매물 결과 화면
+
+미설치 시: 빈 폼이 뜨고 카드의 「사건번호 복사」 버튼으로 붙여넣기 (fallback).
+
 ## 외부에서 접속 (Cloudflare Tunnel)
 
 > **가장 쉬운 방법**: `start-all.ps1` 실행 — 서버 3종 + 터널을 백그라운드로 띄우고 URL을 자동 출력/클립보드 복사 ([실행](#한-번에-기동-권장--start-allps1) 참고).
