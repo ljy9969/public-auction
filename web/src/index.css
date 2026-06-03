@@ -1021,11 +1021,15 @@ button.secondary {
 .court-cta {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.45rem;
+  align-items: stretch;          /* 박스 안쪽 요소를 같은 가로폭으로 정렬 */
+  gap: 0.55rem;
   flex-shrink: 1;
-  flex-basis: 18rem;
-  max-width: 24rem;
+  flex-basis: 22rem;
+  max-width: 28rem;
+}
+
+.court-cta .cta-hero {
+  text-align: center;            /* 메인 버튼 가운데 정렬 */
 }
 
 .court-cta-copy {
@@ -1033,8 +1037,8 @@ button.secondary {
   background: #fff;
   color: #334155;
   border-radius: 8px;
-  padding: 0.4rem 0.75rem;
-  font-size: 0.8rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
@@ -1046,12 +1050,19 @@ button.secondary {
 }
 
 .court-cta-hint {
-  margin: 0;
-  max-width: 22rem;
-  text-align: right;
-  font-size: 0.72rem;
-  line-height: 1.35;
-  color: #94a3b8;
+  margin: 0.25rem 0 0;
+  padding: 0.55rem 0.7rem;
+  background: #f8fafc;
+  border-left: 3px solid #cbd5e1;
+  border-radius: 4px;
+  text-align: left;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: #475569;                /* 가독성 위해 더 진한 회색 */
+}
+
+.court-cta-hint strong {
+  color: #0f172a;                /* 핵심어 강조 */
 }
 
 .status-msg {

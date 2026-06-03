@@ -81,9 +81,10 @@ function CourtOriginCta({
         </button>
       )}
       <p className="court-cta-hint">
-        <strong>Tampermonkey + BidPick 유저스크립트 설치</strong> 시 링크 한 번 클릭으로
-        법원·연도·타경 번호가 자동 입력되고 검색까지 실행됩니다. 미설치 시:
-        물건상세검색에서{officeNm ? ` ‘${officeNm}’ 선택 후 ` : " "}사건번호(타경 칸)로 수동 검색하세요.
+        <strong>💡 Tampermonkey + BidPick 유저스크립트</strong> 설치 시 링크 한 번 클릭으로
+        법원·연도·타경 번호 자동 입력 + 검색까지 실행됩니다.
+        <br />
+        미설치 시: 물건상세검색에서{officeNm ? ` ‘${officeNm}’ 선택 후 ` : " "}사건번호(타경 칸)에 위 번호를 붙여넣으세요.
       </p>
     </div>
   );

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BidPick · 법원경매 prefill
 // @namespace    https://github.com/ljy9969/public-auction
-// @version      1.1.0
+// @version      1.2.0
 // @description  BidPick 카드 링크의 URL hash(#cort=...&year=...&sa=...)를 읽어 법원경매정보 물건상세검색 폼을 자동으로 채우고 검색 버튼 클릭
 // @match        https://www.courtauction.go.kr/pgj/index.on*
 // @grant        none
@@ -11,15 +11,24 @@
 (function () {
   "use strict";
 
+  console.log("[BidPick] userscript v1.2.0 loaded on", location.href);
+
   // 물건상세검색(PGJ151F00) 페이지일 때만 동작 — 다른 메뉴 무시
-  if (!location.search.includes("PGJ151F00")) return;
+  if (!location.search.includes("PGJ151F00")) {
+    console.log("[BidPick] skip: not PGJ151F00");
+    return;
+  }
 
   // URL hash 파싱: #cort=B000250&year=2025&sa=863
   const params = new URLSearchParams(location.hash.slice(1));
   const cort = params.get("cort");
   const year = params.get("year");
   const sa = params.get("sa");
-  if (!cort && !year && !sa) return;
+  console.log("[BidPick] hash params:", { cort, year, sa });
+  if (!cort && !year && !sa) {
+    console.log("[BidPick] skip: no params");
+    return;
+  }
 
   // WebSquare 입력 필드 ID (사용자 제공 XPath에서 추출)
   const ID = {
@@ -76,12 +85,23 @@
       if (retries > 0) {
         setTimeout(() => tryFill(retries - 1), 300);
       } else {
+        // 디버깅 — 실제 option들이 어떤 값인지 console에 dump
         console.warn(
-          "[BidPick] prefill: 폼 준비 안 됨 — elements=%s cortOpts=%s yearOpts=%s",
-          !!elementsReady,
-          elCort ? elCort.options.length : "no-el",
-          elYear ? elYear.options.length : "no-el",
+          "[BidPick] prefill TIMEOUT — elements=%s cortReady=%s yearReady=%s",
+          !!elementsReady, cortReady, yearReady,
         );
+        if (elCort && elCort.options) {
+          console.log("[BidPick] elCort options:",
+            Array.from(elCort.options).map(o => ({ value: o.value, text: o.text })));
+        }
+        if (elYear && elYear.options) {
+          console.log("[BidPick] elYear options:",
+            Array.from(elYear.options).map(o => ({ value: o.value, text: o.text })));
+        }
+        // 폴백: cort 매칭 실패해도 year + sa만 채우기 시도
+        if (year && elYear) setAndFire(elYear, year);
+        if (sa && elSa) setAndFire(elSa, sa);
+        console.log("[BidPick] 폴백 — cort 제외하고 year/sa만 채움");
       }
       return;
     }
