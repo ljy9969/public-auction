@@ -170,6 +170,20 @@ def _transit_destination(criteria: dict[str, Any], prop: dict[str, Any] | None =
     return float(dest["lat"]), float(dest["lng"]), dest.get("address", "선릉로 433")
 
 
+def _should_calculate_transit(cat: str, share_yn: str | None) -> bool:
+    """ODsay 호출 대상 카테고리 (2026-06-03 사용자 정책):
+      ✓ 오피스텔/용도복합
+      ✓ 주거 단독 (share_yn != 'Y')
+      ✗ 주거 지분 (share_yn == 'Y')
+      ✗ 토지/도로
+    """
+    if ("오피스텔" in cat) or ("용도복합" in cat):
+        return True
+    if "주거" in cat and share_yn != "Y":
+        return True
+    return False
+
+
 def apply_transit_filter(prop: dict[str, Any]) -> dict[str, Any]:
     criteria = load_criteria()
     max_min = criteria["post_filters"].get("max_transit_minutes")
@@ -181,12 +195,11 @@ def apply_transit_filter(prop: dict[str, Any]) -> dict[str, Any]:
     notes: list[str] = list(prop.get("filter_notes") or [])
     dest_lat, dest_lng, dest_label = _transit_destination(criteria, prop)
 
-    # ★ 2026-06-03 사용자 결정: ODsay 쿼터 절약을 위해
-    #    오피스텔/용도복합이 아닌 매물(주거·주거 지분·토지)은 통근시간 계산 자체를 SKIP.
-    if not is_officetel_mixed:
-        notes.append("transit: skipped (non-officetel)")
+    # ★ 2026-06-03 사용자 결정: ODsay 쿼터 절약 — 대상 카테고리에만 호출.
+    if not _should_calculate_transit(cat, prop.get("share_yn")):
+        notes.append("transit: skipped (지분/토지)")
         prop["filter_notes"] = notes
-        prop["transit_destination"] = dest_label  # 이건 정보 차원에서만 기록
+        prop["transit_destination"] = dest_label
         return prop
 
     coords = resolve_coords(prop, criteria)
