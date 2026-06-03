@@ -80,4 +80,10 @@ Append-Output (& $python -m scripts.notify_discord $dur 2>&1)
 Write-Log '[bonus] D-day reminder push (7-day horizon)'
 Append-Output (& $python -m scripts.notify_dday --days 7 2>&1)
 
+# Mark refresh complete — search_runs 의 마지막 row finished_at 은 onbid scraper
+# 종료 시점(흐름 초반)에 박혀 있어, 헤더의 '마지막 갱신' 이 흐름 시작 무렵으로
+# 표시됨. 전체 사이클 완료 시점을 새 row 로 기록해 _latest_db_run 이 잡게.
+Write-Log '[mark] daily-refresh-complete row append'
+Append-Output (& $python -m scripts.mark_daily_refresh_complete 2>&1)
+
 Write-Log "=== Daily refresh done ($dur) ==="
