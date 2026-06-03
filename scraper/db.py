@@ -251,21 +251,32 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
         "court_office_nm": prop.get("court_office_nm"),
         "court_item_seq": prop.get("court_item_seq"),
     }
-    cols = ", ".join(fields.keys())
-    placeholders = ", ".join("?" * len(fields))
-    updates = ", ".join(f"{k}=excluded.{k}" for k in fields if k not in ("cltr_no", "pbct_cdtn_no"))
-    sql = f"""
-        INSERT INTO properties ({cols}) VALUES ({placeholders})
-        ON CONFLICT(cltr_no, pbct_cdtn_no) DO UPDATE SET {updates}
-    """
-    conn.execute(sql, list(fields.values()))
-    conn.commit()
-    row = conn.execute(
+    # NOTE: ON CONFLICT(cltr_no, pbct_cdtn_no)에 의존하지 않는다.
+    # 법원경매(court) 물건은 pbct_cdtn_no=NULL인데, SQLite UNIQUE 인덱스는
+    # NULL을 서로 다른 값으로 취급해 충돌이 안 잡힌다 → 재스크랩마다 중복 INSERT.
+    # cltr_no는 court·onbid 모두 물건당 고유하므로, IS(=NULL 안전) 조회로
+    # 기존 행을 찾아 UPDATE, 없으면 INSERT 한다.
+    existing = conn.execute(
         "SELECT id FROM properties WHERE cltr_no = ? AND pbct_cdtn_no IS ?",
         (prop["cltr_no"], prop.get("pbct_cdtn_no")),
     ).fetchone()
+    if existing:
+        assigns = ", ".join(f"{k}=?" for k in fields if k not in ("cltr_no", "pbct_cdtn_no"))
+        params = [v for k, v in fields.items() if k not in ("cltr_no", "pbct_cdtn_no")]
+        params.append(int(existing["id"]))
+        conn.execute(f"UPDATE properties SET {assigns} WHERE id = ?", params)
+        new_id = int(existing["id"])
+    else:
+        cols = ", ".join(fields.keys())
+        placeholders = ", ".join("?" * len(fields))
+        cur = conn.execute(
+            f"INSERT INTO properties ({cols}) VALUES ({placeholders})",
+            list(fields.values()),
+        )
+        new_id = int(cur.lastrowid)
+    conn.commit()
     conn.close()
-    return int(row["id"]) if row else 0
+    return new_id
 
 
 def list_properties(

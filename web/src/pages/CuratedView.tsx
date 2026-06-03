@@ -95,6 +95,18 @@ const THEMES: Theme[] = [
 
 const MAX_PER_THEME = 6;
 
+/** 같은 온비드 물건(cltr_no)이 여러 행으로 들어오는 경우 1건으로 합친다. */
+function dedupeByCltr(list: Property[]): Property[] {
+  const seen = new Map<string, Property>();
+  for (const p of list) {
+    const key = p.cltr_no || `id:${p.id}`;
+    const prev = seen.get(key);
+    // id가 있는 행(=DB에 정식 적재된 행)을 우선 보존
+    if (!prev || (prev.id == null && p.id != null)) seen.set(key, p);
+  }
+  return Array.from(seen.values());
+}
+
 function PropCard({ p }: { p: Property }) {
   return (
     <Link to={`/properties/${p.id}`} className="curated-card">
@@ -124,7 +136,7 @@ export default function CuratedView() {
 
   useEffect(() => {
     fetchProperties({ passes_only: true })
-      .then(setItems)
+      .then((list) => setItems(dedupeByCltr(list)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -168,7 +180,7 @@ export default function CuratedView() {
           </p>
           <div className="curated-card-grid">
             {popular.map((p) => (
-              <PropCard p={p} key={p.id} />
+              <PropCard p={p} key={p.cltr_no ?? p.id} />
             ))}
           </div>
         </section>
@@ -190,7 +202,7 @@ export default function CuratedView() {
           ) : (
             <div className="curated-card-grid">
               {list.map((p) => (
-                <PropCard p={p} key={p.id} />
+                <PropCard p={p} key={p.cltr_no ?? p.id} />
               ))}
             </div>
           )}
