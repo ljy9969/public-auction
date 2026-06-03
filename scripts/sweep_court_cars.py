@@ -20,7 +20,8 @@ DB = ROOT / "data" / "onbid.db"
 
 
 def main() -> int:
-    conn = sqlite3.connect(DB)
+    # timeout=30 — uvicorn 백엔드가 동시 connection 잡고 있을 때 30초까지 대기.
+    conn = sqlite3.connect(DB, timeout=30)
     # 차량 + 기타 카테고리 court 매물
     cars = conn.execute(
         "SELECT id, court_case_no, title FROM properties "
