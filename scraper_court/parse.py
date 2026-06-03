@@ -194,9 +194,13 @@ def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:
             "전화": row.get("tel") or "",
             "매각장소": row.get("maePlace") or "",
         },
+        # 법원경매정보는 WebSquare SPA라 상세(PGJ153F00)가 POST로만 로드된다.
+        # docId GET 딥링크는 세션이 없으면 튕긴다 → 공유 가능한 상세 URL 없음.
+        # 차선책: 경매사건검색(PGJ159M00) 페이지로 보내 사건번호 한 줄만 입력하게 한다.
+        # 물건상세검색(PGJ151F00)은 '기일별검색' 등 다른 탭이 기본 노출돼 부적합.
         "source_url": (
-            f"https://www.courtauction.go.kr/pgj/index.on"
-            f"?w2xPath=/pgj/ui/pgj100/PGJ153F00.xml&docId={row.get('docid','')}"
+            "https://www.courtauction.go.kr/pgj/index.on"
+            "?w2xPath=/pgj/ui/pgj100/PGJ159M00.xml"
         ),
         "scraped_at": datetime.now(timezone.utc).isoformat(),
         "raw_row": row,
