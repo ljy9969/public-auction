@@ -289,6 +289,12 @@ export function propertyTab(p: Property): PropertyTab | null {
   return null;
 }
 
+/** 토지 카테고리 여부 — 면적 라벨 '건물면적' vs '토지면적' 분기 등에 사용. */
+export function isLandCategory(p: Property): boolean {
+  const t = propertyTab(p);
+  return t === "토지" || t === "토지 지분";
+}
+
 const WEEKDAY = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 function _parseDate(v: string | Date | null | undefined): Date | null {

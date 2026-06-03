@@ -19,6 +19,7 @@ import {
   formatPriceFull,
   formatSharePct,
   formatStatus,
+  isLandCategory,
   isRedundantTag,
   propertyTab,
   storeTab,
@@ -417,7 +418,7 @@ export default function PropertyDetail() {
                 { label: "소재지 (지번)", value: prop.address_jibun },
                 { label: "소재지 (도로명)", value: prop.address_road },
                 { label: "용도", value: prop.category },
-                { label: "건물면적", value: formatArea(prop.area_build_m2) },
+                { label: isLandCategory(prop) ? "토지면적" : "건물면적", value: formatArea(prop.area_build_m2) },
                 {
                   label: "층수",
                   value:

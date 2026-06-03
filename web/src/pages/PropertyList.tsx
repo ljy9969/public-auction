@@ -13,6 +13,7 @@ import {
   formatPriceFull,
   formatSharePct,
   isCautionTag,
+  isLandCategory,
   isRedundantTag,
   parseFloor,
   propertyTab,
@@ -517,8 +518,18 @@ export default function PropertyList() {
                       {formatPriceFull(p.appraisal_price)}
                       <span className="price-sub">{formatPrice(p.appraisal_price)}</span>
                     </dd>
-                    <dt>건물면적</dt>
-                    <dd>{formatArea(p.area_build_m2)}</dd>
+                    <dt>{isLandCategory(p) ? "토지면적" : "건물면적"}</dt>
+                    <dd>
+                      {formatArea(p.area_build_m2)}
+                      {p.share_yn === "Y"
+                        && p.land_share_ratio != null
+                        && p.area_build_m2 != null
+                        && formatSharePct(p.land_share_ratio) && (
+                          <span className="share-pill">
+                            지분 {Math.round(p.area_build_m2 * p.land_share_ratio)}㎡ ({formatSharePct(p.land_share_ratio)})
+                          </span>
+                        )}
+                    </dd>
                     {floor.current != null && (
                       <>
                         <dt>층수</dt>
