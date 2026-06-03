@@ -30,7 +30,8 @@ def main() -> None:
     conn = get_connection()
     rows = conn.execute(
         """SELECT id, address_jibun, address_road, title, region_line,
-                  geo_lat, geo_lng, floor_total, category
+                  geo_lat, geo_lng, floor_total, category,
+                  transit_minutes, transit_mode, transit_summary, transit_estimated
            FROM properties"""
     ).fetchall()
     for r in rows:
@@ -47,20 +48,29 @@ def main() -> None:
                 updates["main_purps"] = (info.get("mainPurpsCdNm") or "").strip() or None
                 updates["address_road"] = (info.get("newPlatPlc") or "").strip() or None
 
-        # 2. ODsay 대중교통 — 매번 재계산 (오피스텔/용도복합만, 2026-06-03 정책)
-        prop = {
-            "address_jibun": r["address_jibun"],
-            "title": r["title"],
-            "region_line": r["region_line"],
-            "geo_lat": r["geo_lat"],
-            "geo_lng": r["geo_lng"],
-            "category": r["category"],  # apply_transit_filter의 오피스텔 가드용
-        }
-        t = apply_transit_filter(prop)
-        updates["transit_minutes"] = t.get("transit_minutes")
-        updates["transit_mode"] = t.get("transit_mode")
-        updates["transit_summary"] = t.get("transit_summary")
-        updates["transit_estimated"] = 1 if t.get("transit_estimated") else 0
+        # 2. ODsay 대중교통 — 오피스텔/용도복합만 + transit_minutes 캐시 (2026-06-03 정책).
+        #    transit_minutes가 이미 있으면 ODsay 재호출 안 함 (쿼터 절약).
+        cat = r["category"] or ""
+        is_officetel = ("오피스텔" in cat) or ("용도복합" in cat)
+        if is_officetel and r["transit_minutes"] is None:
+            prop = {
+                "address_jibun": r["address_jibun"],
+                "title": r["title"],
+                "region_line": r["region_line"],
+                "geo_lat": r["geo_lat"],
+                "geo_lng": r["geo_lng"],
+                "category": cat,
+            }
+            t = apply_transit_filter(prop)
+            updates["transit_minutes"] = t.get("transit_minutes")
+            updates["transit_mode"] = t.get("transit_mode")
+            updates["transit_summary"] = t.get("transit_summary")
+            updates["transit_estimated"] = 1 if t.get("transit_estimated") else 0
+
+        if not updates:
+            # 건축물대장 + transit 모두 캐시 적중 → 업데이트 없음 (DB·ODsay 부담 0)
+            print(f"[skip] id={r['id']} 이미 채워짐 (cat={cat})")
+            continue
 
         # COALESCE로 기존값 보존 (None이면 덮어쓰지 않음, address_road 빼고)
         sets = ", ".join(
