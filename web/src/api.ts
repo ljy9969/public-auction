@@ -233,6 +233,26 @@ export const PROPERTY_TABS: PropertyTab[] = [
   "토지 지분",
 ];
 
+/** 상세 → 목록 복귀 시 어떤 탭으로 돌아갈지 기억 (sessionStorage). */
+export const LIST_TAB_STORAGE_KEY = "auction:listTab";
+
+export function readStoredTab(): PropertyTab | null {
+  try {
+    const v = sessionStorage.getItem(LIST_TAB_STORAGE_KEY);
+    return v && (PROPERTY_TABS as string[]).includes(v) ? (v as PropertyTab) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function storeTab(tab: PropertyTab | null): void {
+  try {
+    if (tab) sessionStorage.setItem(LIST_TAB_STORAGE_KEY, tab);
+  } catch {
+    /* sessionStorage 차단 환경 무시 */
+  }
+}
+
 /** 지분 비율(0~1) → "90.0%" (없거나 100%면 null) */
 export function formatSharePct(ratio: number | null | undefined): string | null {
   if (ratio == null || ratio <= 0 || ratio >= 1) return null;

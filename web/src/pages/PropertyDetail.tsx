@@ -21,6 +21,7 @@ import {
   formatStatus,
   isRedundantTag,
   propertyTab,
+  storeTab,
   parseFloor,
   tagCategory,
   translateTag,
@@ -283,6 +284,11 @@ export default function PropertyDetail() {
       .then(setAll)
       .catch(() => setAll([]));
   }, [id]);
+
+  // 헤더 '목록' 버튼이 이 물건의 탭으로 돌아가도록 기억 (검색/직링크 진입 포함).
+  useEffect(() => {
+    if (prop) storeTab(propertyTab(prop));
+  }, [prop]);
 
   const similar = useMemo(() => {
     if (!prop) return [];

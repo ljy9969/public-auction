@@ -17,6 +17,8 @@ import {
   parseFloor,
   propertyTab,
   PROPERTY_TABS,
+  readStoredTab,
+  storeTab,
   tagCategory,
   translateTag,
   transitModeLabel,
@@ -25,12 +27,22 @@ import {
 } from "../api";
 import { useFavorites } from "../favorites";
 
+// 수집 단계에서 criteria.yaml post_filters.max_fail_count(=3) 이하만 가져오므로,
+// 유찰 필터도 0~3 범위로 제한 (그 이상은 매물이 없음).
+const MAX_FAIL_COUNT = 3;
+
+const clampFail = (n: number): number => {
+  if (Number.isNaN(n)) return 0;
+  return Math.min(MAX_FAIL_COUNT, Math.max(0, Math.trunc(n)));
+};
+
 export default function PropertyList() {
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const [maxFail, setMaxFail] = useState(3);
+  const [maxFail, setMaxFail] = useState(MAX_FAIL_COUNT);
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
-  const [tab, setTab] = useState<PropertyTab>("용도복합·오피스텔 쪈");
+  // 상세에서 '목록'으로 돌아올 때, 직전에 보던/그 물건의 탭으로 복원 (없으면 기본 오피스텔).
+  const [tab, setTab] = useState<PropertyTab>(() => readStoredTab() ?? "용도복합·오피스텔 쪈");
   // 추가 필터 (클라이언트 사이드)
   const [favOnly, setFavOnly] = useState(false);
   const [regionFilter, setRegionFilter] = useState<"all" | "gangnam" | "songpa">("all");
@@ -101,6 +113,11 @@ export default function PropertyList() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // 활성 탭 기억 — 상세 진입 후 '목록'으로 돌아올 때 같은 탭으로 복원
+  useEffect(() => {
+    storeTab(tab);
+  }, [tab]);
 
   // 수집 완료 시 App.tsx에서 fire하는 이벤트로 목록 자동 갱신
   useEffect(() => {
@@ -397,9 +414,11 @@ export default function PropertyList() {
             <input
               type="number"
               min={0}
-              max={10}
+              max={MAX_FAIL_COUNT}
+              step={1}
               value={maxFail}
-              onChange={(e) => setMaxFail(Number(e.target.value))}
+              // 스피너·직접 입력 모두 0~3으로 강제 (음수·3 초과 차단)
+              onChange={(e) => setMaxFail(clampFail(Number(e.target.value)))}
               style={{ width: 56 }}
             />
           </label>
