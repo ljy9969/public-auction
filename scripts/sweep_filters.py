@@ -25,6 +25,7 @@ if str(ROOT) not in sys.path:
 
 from scraper.db import delete_failed_properties, get_connection
 from scraper.filters.quality import apply_quality_filters
+from scraper.filters.region import in_target_region
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -49,9 +50,10 @@ def main() -> int:
     rows = conn.execute(
         "SELECT id, title, category, min_price, appraisal_price, area_build_m2, "
         "share_yn, building_shared, fail_count, status, bid_end, "
-        "filter_notes, detail_json FROM properties WHERE passes_filters = 1"
+        "filter_notes, detail_json, address_jibun, region_line, distance_sister_km "
+        "FROM properties WHERE passes_filters = 1"
     ).fetchall()
-    logger.info("Re-evaluating %s rows (quality filters only)", len(rows))
+    logger.info("Re-evaluating %s rows (quality + region filters)", len(rows))
 
     fail = 0
     for r in rows:
@@ -68,8 +70,25 @@ def main() -> int:
             "bid_end": r["bid_end"],
             "filter_notes": _decode_json(r["filter_notes"]) or [],
             "detail_json": _decode_json(r["detail_json"]) or {},
+            "address_jibun": r["address_jibun"],
+            "region_line": r["region_line"],
+            "distance_sister_km": r["distance_sister_km"],
             "passes_filters": True,
         }
+        # 1) region 분기 (2026-06-03 추가) — 토지/도로·주거지분은 수도권만 통과
+        if not in_target_region(prop):
+            fail += 1
+            notes = list(prop.get("filter_notes") or []) + ["region: 카테고리별 허용 지역 외"]
+            logger.info("FAIL id=%s region — addr=%s cat=%s",
+                        r["id"], (r["address_jibun"] or "")[:40], r["category"])
+            if args.apply:
+                conn.execute(
+                    "UPDATE properties SET passes_filters=0, filter_notes=? WHERE id=?",
+                    (json.dumps(notes, ensure_ascii=False), r["id"]),
+                )
+            continue
+
+        # 2) quality 화이트리스트
         prop = apply_quality_filters(prop)
         if not prop.get("passes_filters", True):
             fail += 1
