@@ -28,10 +28,14 @@ DB = ROOT / "data" / "onbid.db"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scraper.db import get_connection  # noqa: E402  — ensure_columns(ALTER) 자동 호출
 from scraper_court.parse import _parse_land_share_ratio  # noqa: E402
 
 
 def main() -> int:
+    # 백엔드가 안 떠 있을 때도 land_share_ratio 컬럼이 보장되도록.
+    # get_connection 내부 _migrate가 _EXTRA_COLUMNS 전부 ALTER TABLE.
+    get_connection().close()
     conn = sqlite3.connect(DB, timeout=30)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
