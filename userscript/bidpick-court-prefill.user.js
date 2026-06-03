@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         BidPick · 법원경매 prefill
 // @namespace    https://github.com/ljy9969/public-auction
-// @version      1.2.0
+// @version      1.3.0
 // @description  BidPick 카드 링크의 URL hash(#cort=...&year=...&sa=...)를 읽어 법원경매정보 물건상세검색 폼을 자동으로 채우고 검색 버튼 클릭
 // @match        https://www.courtauction.go.kr/pgj/index.on*
 // @grant        none
@@ -11,7 +11,7 @@
 (function () {
   "use strict";
 
-  console.log("[BidPick] userscript v1.2.0 loaded on", location.href);
+  console.log("[BidPick] userscript v1.3.0 loaded on", location.href);
 
   // 물건상세검색(PGJ151F00) 페이지일 때만 동작 — 다른 메뉴 무시
   if (!location.search.includes("PGJ151F00")) {
@@ -19,13 +19,14 @@
     return;
   }
 
-  // URL hash 파싱: #cort=B000250&year=2025&sa=863
+  // URL hash 파싱: #cort=B000250&name=수원지방법원&year=2025&sa=863
   const params = new URLSearchParams(location.hash.slice(1));
   const cort = params.get("cort");
+  const cortName = params.get("name");
   const year = params.get("year");
   const sa = params.get("sa");
-  console.log("[BidPick] hash params:", { cort, year, sa });
-  if (!cort && !year && !sa) {
+  console.log("[BidPick] hash params:", { cort, cortName, year, sa });
+  if (!cort && !cortName && !year && !sa) {
     console.log("[BidPick] skip: no params");
     return;
   }
@@ -59,14 +60,25 @@
     return null;
   }
 
-  // select에 특정 value의 option이 존재하는지 검증.
-  // WebSquare는 법원 목록을 ajax로 받아 채우므로 처음엔 option 1개(전체)뿐.
-  function selectHasOption(el, value) {
-    if (!el || !el.options) return false;
-    for (const opt of el.options) {
-      if (opt.value === value) return true;
+  // select에서 우리가 원하는 option의 실제 value 찾기.
+  // 1순위: option.value === code (예 'B000250') — 우리 API 코드와 매칭
+  // 2순위: option.text === name (예 '수원지방법원') — 시각 텍스트로 폴백
+  //   ★ 2026-06-03: 법원 select의 option value 형식이 API 코드와 다른 사이트라
+  //                  text 폴백 없으면 매칭 실패. 한국어명을 hash에 같이 박아 해결.
+  function findOptionValue(el, code, name) {
+    if (!el || !el.options) return null;
+    if (code) {
+      for (const opt of el.options) {
+        if (opt.value === code) return opt.value;
+      }
     }
-    return false;
+    if (name) {
+      const target = name.trim();
+      for (const opt of el.options) {
+        if ((opt.text || "").trim() === target) return opt.value;
+      }
+    }
+    return null;
   }
 
   function tryFill(retries) {
@@ -76,9 +88,12 @@
 
     // 요소 자체 존재 + 법원 select의 option이 충분히 로드됐는지 확인.
     //   - elCort 없거나 option < 5개(기본 placeholder만) → 더 기다림
-    //   - cort 값이 옵션에 없으면 → 더 기다림 (B000250 등 전국 법원 코드 다 로드 후 진행)
+    //   - cort/name 매칭되는 option 있으면 진행
     const elementsReady = elCort && elYear && elSa;
-    const cortReady = !cort || (elCort && elCort.options && elCort.options.length > 5 && selectHasOption(elCort, cort));
+    const cortMatchValue = (cort || cortName) ? findOptionValue(elCort, cort, cortName) : null;
+    const cortReady = (!cort && !cortName) || (
+      elCort && elCort.options && elCort.options.length > 5 && cortMatchValue !== null
+    );
     const yearReady = !year || (elYear && elYear.options && elYear.options.length > 1);
 
     if (!elementsReady || !cortReady || !yearReady) {
@@ -107,23 +122,22 @@
     }
 
     let touched = 0;
-    if (cort && setAndFire(elCort, cort)) touched++;
+    if (cortMatchValue && setAndFire(elCort, cortMatchValue)) touched++;
     if (year && setAndFire(elYear, year)) touched++;
     if (sa && setAndFire(elSa, sa)) touched++;
     console.log(
-      `[BidPick] prefill: ${touched}개 필드 채움 (cort=${cort} year=${year} sa=${sa})`
+      `[BidPick] prefill: ${touched}개 필드 채움 (cort=${cortMatchValue} year=${year} sa=${sa})`
     );
 
     // 검증 — 의도한 값이 실제로 들어갔는지 확인. 다르면 한 번 더.
     setTimeout(() => {
-      const actualCort = elCort.value;
-      if (cort && actualCort !== cort) {
+      if (cortMatchValue && elCort.value !== cortMatchValue) {
         console.warn(
           "[BidPick] prefill: 법원 값 불일치 (expected=%s actual=%s) — 재시도",
-          cort,
-          actualCort,
+          cortMatchValue,
+          elCort.value,
         );
-        setAndFire(elCort, cort);
+        setAndFire(elCort, cortMatchValue);
         setTimeout(triggerSearch, 400);
       } else {
         triggerSearch();

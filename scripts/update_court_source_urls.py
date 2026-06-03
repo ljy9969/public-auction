@@ -11,6 +11,7 @@ from __future__ import annotations
 import re
 import sqlite3
 import sys
+import urllib.parse
 from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -29,7 +30,8 @@ def main() -> int:
     conn = sqlite3.connect(DB, timeout=30)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
-        "SELECT id, court_case_no, court_office_cd FROM properties WHERE source='court'"
+        "SELECT id, court_case_no, court_office_cd, court_office_nm "
+        "FROM properties WHERE source='court'"
     ).fetchall()
     print(f"court rows: {len(rows)}")
 
@@ -37,9 +39,12 @@ def main() -> int:
     for r in rows:
         m = re.match(r"(\d{4})\s*타경\s*(\d+)", r["court_case_no"] or "")
         cort = r["court_office_cd"] or ""
+        name = r["court_office_nm"] or ""
         parts: list[str] = []
         if cort:
             parts.append(f"cort={cort}")
+        if name:
+            parts.append(f"name={urllib.parse.quote(name)}")
         if m:
             parts.append(f"year={m.group(1)}")
             parts.append(f"sa={m.group(2)}")
