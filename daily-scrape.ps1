@@ -53,6 +53,9 @@ Append-Output (& $python -m scripts.backfill_court_photos 2>&1)
 Write-Log '[2/5] Backfill building registry + Kakao geo + ODsay transit'
 Append-Output (& $python -m scripts.backfill_all 2>&1)
 
+Write-Log '[2.5/5] Backfill land share ratio — court detail (no-op if no new 토지 지분)'
+Append-Output (& $python -m scripts.backfill_land_share_ratio 2>&1)
+
 Write-Log '[3/5] Backfill MOLIT real-estate prices / rental yield'
 Append-Output (& $python -m scripts.backfill_realprice 2>&1)
 
