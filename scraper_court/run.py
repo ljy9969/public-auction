@@ -38,7 +38,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true", help="DB write 없이 stdout dump")
     parser.add_argument("--apply", action="store_true", help="DB에 upsert (기본은 dry-run)")
@@ -48,10 +48,12 @@ def main() -> int:
     parser.add_argument("--sido", default="", help="시도명 (빈값=모든 시도 = 수도권 sweep)")
     parser.add_argument("--usg", default="", choices=["", "토지", "건물"], help="대분류")
     parser.add_argument("--max-price", type=int, default=None, help="최저매각가 상한 (원)")
-    parser.add_argument("--max-fail", type=int, default=5)
+    # 기본값 None → criteria.yaml post_filters.max_fail_count 를 따른다(온비드 검색폼 cap과 동일).
+    parser.add_argument("--max-fail", type=int, default=None,
+                        help="유찰 횟수 상한 (미지정 시 criteria.yaml의 max_fail_count)")
     parser.add_argument("--bid-start", default="", help="YYYYMMDD")
     parser.add_argument("--bid-end", default="", help="YYYYMMDD")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     if not args.dry_run and not args.apply:
         args.dry_run = True  # 기본 안전모드
 
@@ -77,6 +79,10 @@ def main() -> int:
     # criteria.yaml의 가격 cap 동일 적용
     if args.max_price is None:
         args.max_price = int(pf.get("max_min_price", 300_000_000))
+    # 유찰 cap도 criteria 기준으로 통일 — 온비드(form.srch_usbd_nft_end)와 동일하게
+    # 수집 단계에서 컷해, passes_filters / 알림 집계가 모두 유찰<=max_fail_count로 일치.
+    if args.max_fail is None:
+        args.max_fail = int(pf.get("max_fail_count", 3))
 
     passed: list[dict] = []
     raw_count = 0
@@ -185,8 +191,11 @@ def main() -> int:
         print(f"  지분           : {p.get('share_yn')}")
         print(f"  url            : {p.get('source_url')}")
         print()
-    return 0
+    # 호출자(웹 '지금 수집' 등)가 수집 건수를 알 수 있게 반환.
+    # CLI 종료코드로는 쓰지 않는다(0 유지) — daily-scrape.ps1의 $LASTEXITCODE 경고 방지.
+    return saved if args.apply else len(passed)
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
+    sys.exit(0)

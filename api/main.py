@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
@@ -38,6 +39,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 법원경매 매물 사진 — courtauction은 공개 이미지 URL이 없어 base64를 받아
+# data/court_photos/ 에 저장(scripts.backfill_court_photos)하고 여기서 정적 서빙한다.
+# data 디렉터리는 docker-compose에서 컨테이너에 마운트됨(./data → /app/data).
+_COURT_PHOTO_DIR = ROOT / "data" / "court_photos"
+_COURT_PHOTO_DIR.mkdir(parents=True, exist_ok=True)
+app.mount(
+    "/api/court-photos",
+    StaticFiles(directory=str(_COURT_PHOTO_DIR)),
+    name="court-photos",
+)
+
 _scrape_lock = threading.Lock()
 _scrape_state: dict[str, Any] = {
     "running": False,
@@ -53,64 +65,54 @@ _scrape_state: dict[str, Any] = {
 def _run_scrape_job(max_pages: int | None) -> None:
     """웹 '지금 수집' 풀파이프 — daily-scrape.ps1과 동일 단계.
 
-    1. scraper.run            매물 수집
+    1. scraper.run + scraper_court.run   매물 수집 (공매 + 경매)
     2. backfill_all           Kakao 좌표 + 건축물대장 + ODsay 대중교통
     3. backfill_realprice     국토부 실거래가 5종(시세) + 임대 수익률
     4. backfill_analysis      권리분석 + 낙찰가 예측 (스크레이프 시점에 이미 채워지지만 멱등)
     5. sweep_filters          강화된 필터에 안 맞는 잔존 행 자동 마킹·삭제
+
+    백필 3종은 source 무관하게 passes_filters=1 전체를 처리하므로 공매·경매 모두 커버.
     """
     global _scrape_state
     try:
-        _scrape_state["message"] = "[1/5] 매물 수집"
+        # 1) 공매(온비드)
+        _scrape_state["message"] = "[1/6] 매물 수집 (공매)"
         count = run_scrape(max_pages=max_pages, fetch_details=True)
+
+        # 1) 경매(법원경매) — daily-scrape.ps1과 동일하게 --apply, 수도권 sweep
+        _scrape_state["message"] = "[1/6] 매물 수집 (경매)"
+        from scraper_court.run import main as _court_scrape
+        court_count = _court_scrape(["--apply", "--max-pages", str(max_pages or 10)])
+
+        count = (count or 0) + (court_count or 0)
         _scrape_state["count"] = count
 
-        _scrape_state["message"] = "[2/5] 백필 (건축물대장 + Kakao + ODsay)"
+        # 경매 대표사진 백필 — courtauction은 공개 이미지 URL이 없어 base64를 받아 저장.
+        # 공매는 직링크라 불필요. 실패해도 파이프라인 전체를 막지 않도록 격리.
+        _scrape_state["message"] = "[2/6] 백필 (경매 대표사진)"
+        try:
+            from scripts.backfill_court_photos import main as _backfill_court_photos
+            _backfill_court_photos([])
+        except Exception:
+            logger.exception("court photo backfill failed (계속 진행)")
+
+        _scrape_state["message"] = "[3/6] 백필 (건축물대장 + Kakao + ODsay)"
         from scripts.backfill_all import main as _backfill_all
         _backfill_all()
 
-        _scrape_state["message"] = "[3/5] 백필 (국토부 실거래가 시세)"
+        _scrape_state["message"] = "[4/6] 백필 (국토부 실거래가 시세)"
         from scripts.backfill_realprice import main as _backfill_realprice
         _backfill_realprice()
 
-        _scrape_state["message"] = "[4/5] 백필 (권리분석 + 낙찰가 예측)"
+        _scrape_state["message"] = "[5/6] 백필 (권리분석 + 낙찰가 예측)"
         from scripts.backfill_analysis import main as _backfill_analysis
         _backfill_analysis()
 
-        _scrape_state["message"] = "[5/5] Sweep (drift 정리)"
-        # sweep_filters는 argparse를 쓰므로 함수 직접 호출 — 헬퍼 인라인.
-        from scraper.db import delete_failed_properties, get_connection
-        from scraper.filters.quality import apply_quality_filters
-        import json as _json
-        conn = get_connection()
-        rows = conn.execute(
-            "SELECT id, title, category, min_price, appraisal_price, area_build_m2, "
-            "share_yn, building_shared, fail_count, status, bid_end, "
-            "filter_notes, detail_json FROM properties WHERE passes_filters = 1"
-        ).fetchall()
-        sweep_fail = 0
-        for r in rows:
-            prop = {
-                "title": r["title"], "category": r["category"],
-                "min_price": r["min_price"], "appraisal_price": r["appraisal_price"],
-                "area_build_m2": r["area_build_m2"], "share_yn": r["share_yn"],
-                "building_shared": bool(r["building_shared"]) if r["building_shared"] is not None else None,
-                "fail_count": r["fail_count"], "status": r["status"], "bid_end": r["bid_end"],
-                "filter_notes": _json.loads(r["filter_notes"]) if r["filter_notes"] else [],
-                "detail_json": _json.loads(r["detail_json"]) if r["detail_json"] else {},
-                "passes_filters": True,
-            }
-            prop = apply_quality_filters(prop)
-            if not prop.get("passes_filters", True):
-                sweep_fail += 1
-                conn.execute(
-                    "UPDATE properties SET passes_filters=0, filter_notes=? WHERE id=?",
-                    (_json.dumps(prop.get("filter_notes", []), ensure_ascii=False), r["id"]),
-                )
-        conn.commit()
-        conn.close()
-        if sweep_fail:
-            delete_failed_properties()
+        _scrape_state["message"] = "[6/6] Sweep (drift 정리)"
+        # daily-scrape.ps1과 동일한 sweep 사용 — region + quality 재평가 후 drift 행 삭제.
+        # (이전엔 quality만 재적용하는 인라인 버전이라 region drift를 못 잡았음)
+        from scripts.sweep_filters import main as _sweep
+        sweep_fail = _sweep(["--apply", "--delete"]) or 0
 
         _scrape_state["message"] = f"완료 — 저장 {count}건, drift 정리 {sweep_fail}건"
         _scrape_state["error"] = None

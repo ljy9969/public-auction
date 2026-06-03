@@ -40,11 +40,11 @@ def _decode_json(raw):
         return None
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--apply", action="store_true", help="DB에 변경 반영")
     parser.add_argument("--delete", action="store_true", help="--apply 이후 실패 행 삭제")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     conn = get_connection()
     rows = conn.execute(
@@ -114,8 +114,10 @@ def main() -> int:
         removed = delete_failed_properties()
         logger.info("Deleted %s failed rows", removed)
     conn.close()
-    return 0
+    # 호출자(웹 '지금 수집' 등)가 drift 건수를 알 수 있게 반환. CLI 종료코드는 0 유지.
+    return fail
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
+    sys.exit(0)

@@ -64,12 +64,13 @@ class CourtSession:
         payload: dict[str, Any],
         *,
         submission_id: str = "mf_wfm_mainFrame_sbm_selectGdsDtlSrch",
+        sc_userid: str = "SYSTEM",
     ) -> dict[str, Any]:
         """검색/상세 컨트롤러 호출 — JSON POST.
 
         WebSquare가 다음 두 헤더를 검증 (정찰에서 확보):
         - submissionid : WebSquare submission 식별자
-        - sc-userid    : 항상 'SYSTEM'
+        - sc-userid    : 검색은 'SYSTEM', 상세(물건사진)는 'NONUSER' 관측 — 호출부가 지정
         """
         # rate limit
         delta = time.monotonic() - self._last_post
@@ -87,7 +88,7 @@ class CourtSession:
                 "Content-Type": "application/json;charset=UTF-8",
                 "Accept": "application/json",
                 "submissionid": submission_id,
-                "sc-userid": "SYSTEM",
+                "sc-userid": sc_userid,
             },
         )
         self._last_post = time.monotonic()
