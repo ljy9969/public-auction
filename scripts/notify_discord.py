@@ -14,6 +14,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 import httpx
 from dotenv import load_dotenv
 
@@ -27,7 +33,7 @@ DB_PATH = ROOT / os.environ.get("ONBID_DB_PATH", "data/onbid.db")
 def _start_message() -> str:
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     return (
-        f"🚀 **온비드 공매 통합 재수집 시작** ({now})\n"
+        f"🚀 **BidPick 경공매 통합 재수집 시작** ({now})\n"
         "5단계 (수집·건축물대장/Kakao/ODsay·시세·권리분석/낙찰가·sweep) "
         "진행 중 — 완료 시 결과 요약 알림"
     )
@@ -37,6 +43,16 @@ def _summary(duration: str | None) -> str:
     con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
     total = cur.execute("SELECT COUNT(*) FROM properties WHERE passes_filters=1").fetchone()[0]
+    # source 컬럼이 없는 구버전 DB에선 0으로 처리
+    try:
+        src_rows = cur.execute(
+            "SELECT source, COUNT(*) FROM properties WHERE passes_filters=1 GROUP BY source"
+        ).fetchall()
+        src_map = {s or "onbid": n for s, n in src_rows}
+    except sqlite3.OperationalError:
+        src_map = {"onbid": total}
+    onbid = src_map.get("onbid", 0)
+    court = src_map.get("court", 0)
     mkt = cur.execute(
         "SELECT COUNT(*) FROM properties WHERE passes_filters=1 AND market_median_price IS NOT NULL"
     ).fetchone()[0]
@@ -49,10 +65,10 @@ def _summary(duration: str | None) -> str:
     con.close()
 
     cat_lines = "\n".join(f"  · {c}: {n}" for c, n in rows)
-    lines = ["✅ **온비드 공매 통합 재수집 완료**"]
+    lines = ["✅ **BidPick 경공매 통합 재수집 완료**"]
     if duration:
         lines.append(f"⏱️ 소요 시간: **{duration}**")
-    lines.append(f"📊 매물 **{total}건** · 시세 **{mkt}** · 임대수익률 **{rent}**")
+    lines.append(f"📊 매물 **{total}건** (공매 {onbid} · 경매 {court}) · 시세 **{mkt}** · 임대수익률 **{rent}**")
     lines.append(cat_lines)
     return "\n".join(lines)
 

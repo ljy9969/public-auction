@@ -60,7 +60,13 @@ Write-Log '[4.5/5] Sweep filters — drop drift rows (stricter criteria.yaml)'
 Append-Output (& $python -m scripts.sweep_filters --apply --delete 2>&1)
 
 $sw.Stop()
-$dur = '{0}m {1}s' -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
+# NOTE: TimeSpan.Minutes returns ONLY the minute component (0-59).
+# Without including Hours, a 72-min job would print as '12m' (1h.Minutes=12).
+if ($sw.Elapsed.TotalHours -ge 1) {
+    $dur = '{0}h {1}m {2}s' -f [int]$sw.Elapsed.TotalHours, $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
+} else {
+    $dur = '{0}m {1}s' -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
+}
 
 Write-Log "[5/5] Discord notify (duration $dur)"
 Append-Output (& $python -m scripts.notify_discord $dur 2>&1)
