@@ -73,9 +73,16 @@ def main() -> int:
         print(f"  {(c or '?'):<40} {s:<6} {sh or '-':<5} {n:>5}")
     print()
 
-    # API limit=200 추정 영향
-    print("API /api/properties?passes_only=true 기본 limit=200")
-    print(f"  → DB {total}건 중 {min(total, 200)}건 반환")
+    # API limit — main.py 소스에서 정규식으로 추출. (FastAPI 의존성 없이 동기화)
+    import re
+    api_limit = 5000  # 폴백
+    main_py = Path(__file__).resolve().parents[1] / "api" / "main.py"
+    if main_py.exists():
+        m = re.search(r"limit:\s*int\s*=\s*(\d+)", main_py.read_text(encoding="utf-8"))
+        if m:
+            api_limit = int(m.group(1))
+    print(f"API /api/properties?passes_only=true 기본 limit={api_limit}")
+    print(f"  → DB {total}건 중 {min(total, api_limit)}건 반환")
 
     conn.close()
     return 0
