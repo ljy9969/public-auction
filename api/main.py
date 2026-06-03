@@ -131,7 +131,7 @@ def health() -> dict[str, str]:
 @app.get("/api/properties", response_model=list[PropertyListItem])
 def list_properties(
     passes_only: bool = True,
-    limit: int = 200,
+    limit: int = 5000,  # 공·경매 통합 후 수백 건 → 잘림 방지
     offset: int = 0,
 ) -> list[PropertyListItem]:
     rows = scraper_db.list_properties(passes_only=passes_only, limit=limit, offset=offset)
