@@ -1006,15 +1006,52 @@ button.secondary {
   align-items: flex-end;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .hero-left {
-  min-width: 0;
-  flex: 1;
+  min-width: 16rem;  /* 제목·주소가 글자 단위로 wrap되지 않도록 최소폭 보장 */
+  flex: 1 1 60%;
 }
 
 .cta-hero {
   flex-shrink: 0;
+}
+
+.court-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.45rem;
+  flex-shrink: 1;
+  flex-basis: 18rem;
+  max-width: 24rem;
+}
+
+.court-cta-copy {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.court-cta-copy:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.court-cta-hint {
+  margin: 0;
+  max-width: 22rem;
+  text-align: right;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #94a3b8;
 }
 
 .status-msg {
