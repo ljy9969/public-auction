@@ -131,6 +131,31 @@ def _build_address(row: dict[str, Any]) -> tuple[str, str | None]:
     return jibun, road
 
 
+def _parse_sa_no(srn: str) -> tuple[str, str]:
+    """'2025타경9546' → ('2025', '9546'). 매칭 실패 시 ('', '')."""
+    m = re.match(r"(\d{4})\s*타경\s*(\d+)", srn or "")
+    if not m:
+        return "", ""
+    return m.group(1), m.group(2)
+
+
+def _build_source_url(row: dict[str, Any], srn_sa_no: str) -> str:
+    """물건상세검색(PGJ151F00) URL + 법원/사건번호 query params.
+    WebSquare가 받아들이면 폼 prefill, 아니면 빈 폼이 뜬다 (둘 다 상세 페이지로의 진입점은 됨).
+    """
+    base = "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml"
+    sa_year, sa_ser = _parse_sa_no(srn_sa_no)
+    cort = row.get("boCd") or row.get("cortOfcCd") or ""
+    parts = []
+    if cort:
+        parts.append(f"cortOfcCd={cort}")
+    if sa_year:
+        parts.append(f"saYear={sa_year}")
+    if sa_ser:
+        parts.append(f"saSer={sa_ser}")
+    return base + ("&" + "&".join(parts) if parts else "")
+
+
 def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:
     """법원경매 검색 응답 1건을 우리 prop dict 포맷으로.
     부동산(토지·건물)이 아니면 None 반환 → 호출자가 skip.
@@ -196,12 +221,9 @@ def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:
         },
         # 법원경매정보는 WebSquare SPA라 상세(PGJ153F00)가 POST로만 로드된다.
         # docId GET 딥링크는 세션이 없으면 튕긴다 → 공유 가능한 상세 URL 없음.
-        # 차선책: 경매사건검색(PGJ159M00) 페이지로 보내 사건번호 한 줄만 입력하게 한다.
-        # 물건상세검색(PGJ151F00)은 '기일별검색' 등 다른 탭이 기본 노출돼 부적합.
-        "source_url": (
-            "https://www.courtauction.go.kr/pgj/index.on"
-            "?w2xPath=/pgj/ui/pgj100/PGJ159M00.xml"
-        ),
+        # 물건상세검색(PGJ151F00) 진입점 + 법원/연도/사건번호 query params 시도.
+        # WebSquare가 받아들이지 않으면 빈 폼이 뜨지만 카드에 사건번호 노출 → 수동 입력 가능.
+        "source_url": _build_source_url(row, sa_no),
         "scraped_at": datetime.now(timezone.utc).isoformat(),
         "raw_row": row,
     }
