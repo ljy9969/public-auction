@@ -220,14 +220,16 @@ export type PropertyTab =
   | "용도복합·오피스텔 쪠"
   | "주거"
   | "주거 지분"
-  | "토지";
+  | "토지"
+  | "토지 지분";
 
 export const PROPERTY_TABS: PropertyTab[] = [
   "용도복합·오피스텔 쪈",
   "용도복합·오피스텔 쪠",
   "주거",
-  "주거 지분",
   "토지",
+  "주거 지분",
+  "토지 지분",
 ];
 
 /** 지분 비율(0~1) → "90.0%" (없거나 100%면 null) */
@@ -249,7 +251,7 @@ export function propertyTab(p: Property): PropertyTab | null {
     haystack.includes("임야") ||
     haystack.includes("대지")
   ) {
-    return "토지";
+    return p.share_yn === "Y" ? "토지 지분" : "토지";
   }
   if (cat.includes("용도복합") || cat.includes("오피스텔")) {
     // 언니(쪠) = 영등포구 OR 서대문역 8km, 그 외(송파·강남) = 나(쪈)

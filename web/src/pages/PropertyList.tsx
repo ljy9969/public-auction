@@ -114,8 +114,9 @@ export default function PropertyList() {
       "용도복합·오피스텔 쪈": 0,
       "용도복합·오피스텔 쪠": 0,
       "주거": 0,
-      "주거 지분": 0,
       "토지": 0,
+      "주거 지분": 0,
+      "토지 지분": 0,
     };
     const today = new Date();
     today.setHours(0, 0, 0, 0);
