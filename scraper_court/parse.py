@@ -140,20 +140,13 @@ def _parse_sa_no(srn: str) -> tuple[str, str]:
 
 
 def _build_source_url(row: dict[str, Any], srn_sa_no: str) -> str:
-    """물건상세검색(PGJ151F00) URL + 법원/사건번호 query params.
-    WebSquare가 받아들이면 폼 prefill, 아니면 빈 폼이 뜬다 (둘 다 상세 페이지로의 진입점은 됨).
+    """물건상세검색(PGJ151F00) 진입점.
+
+    WebSquare가 URL query params(cortOfcCd/saYear/saSer)를 prefill로
+    인식하지 않음(2026-06-03 사용자 검증). 빈 폼만 뜸 → params 제거.
+    사용자는 카드의 사건번호 복사 버튼으로 붙여넣어야 한다.
     """
-    base = "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml"
-    sa_year, sa_ser = _parse_sa_no(srn_sa_no)
-    cort = row.get("boCd") or row.get("cortOfcCd") or ""
-    parts = []
-    if cort:
-        parts.append(f"cortOfcCd={cort}")
-    if sa_year:
-        parts.append(f"saYear={sa_year}")
-    if sa_ser:
-        parts.append(f"saSer={sa_ser}")
-    return base + ("&" + "&".join(parts) if parts else "")
+    return "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml"
 
 
 def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:

@@ -30,6 +30,58 @@ import {
 import { useFavorites } from "../favorites";
 import { recordView } from "../viewTracker";
 
+// 법원경매정보(courtauction.go.kr)는 WebSquare SPA라서 상세 화면이 POST로만 로드된다.
+// docId를 붙인 GET 딥링크는 세션이 없으면 튕긴다 → 공유 가능한 상세 URL이 없음.
+// 사용자 요청(2026-06-03): 경매사건검색(PGJ159M00) → 물건상세검색(PGJ151F00).
+// WebSquare가 URL query params(cortOfcCd/saYear/saSer)를 prefill로 인식하지 않음을 확인.
+// 빈 폼이 뜨지만 페이지 자체가 사용자가 원한 곳 → 카드의 사건번호 복사 버튼으로 붙여넣기.
+const COURT_SEARCH_URL =
+  "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml";
+
+function CourtOriginCta({
+  caseNo,
+  officeNm,
+}: {
+  caseNo: string | null;
+  officeNm: string | null;
+}) {
+  const [copied, setCopied] = useState(false);
+  // "2025타경102998" → "102998" (경매사건검색의 '타경' 입력칸에 넣을 번호)
+  const caseDigits = caseNo?.match(/타경\s*(\d+)/)?.[1] ?? caseNo ?? "";
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(caseDigits);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* 클립보드 차단 환경은 무시 */
+    }
+  };
+
+  return (
+    <div className="court-cta">
+      <a
+        href={COURT_SEARCH_URL}
+        target="_blank"
+        rel="noreferrer"
+        className="cta-button cta-hero"
+      >
+        법원경매정보 물건상세검색 →
+      </a>
+      {caseNo && (
+        <button type="button" className="court-cta-copy" onClick={copy}>
+          {copied ? "복사됨 ✓" : `사건번호 복사 (${caseNo})`}
+        </button>
+      )}
+      <p className="court-cta-hint">
+        법원경매정보는 공유 링크로 상세를 바로 열 수 없습니다. 물건상세검색에서
+        {officeNm ? ` ‘${officeNm}’ 선택 후 ` : " "}사건번호(타경 칸)로 검색하세요.
+      </p>
+    </div>
+  );
+}
+
 function discountPercent(min: number | null | undefined, appr: number | null | undefined): string | null {
   if (!min || !appr || appr <= 0) return null;
   const pct = (1 - min / appr) * 100;
@@ -285,15 +337,22 @@ export default function PropertyDetail() {
               <p className="hero-address">{prop.address_jibun || prop.region_line}</p>
             )}
           </div>
-          {prop.source_url && (
-            <a
-              href={prop.source_url}
-              target="_blank"
-              rel="noreferrer"
-              className="cta-button cta-hero"
-            >
-              {prop.source === "court" ? "법원경매 원문 보기 →" : "온비드 원문 보기 →"}
-            </a>
+          {prop.source === "court" ? (
+            <CourtOriginCta
+              caseNo={prop.court_case_no}
+              officeNm={prop.court_office_nm}
+            />
+          ) : (
+            prop.source_url && (
+              <a
+                href={prop.source_url}
+                target="_blank"
+                rel="noreferrer"
+                className="cta-button cta-hero"
+              >
+                온비드 원문 보기 →
+              </a>
+            )
           )}
         </div>
       </header>
