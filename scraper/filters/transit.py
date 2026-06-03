@@ -181,6 +181,14 @@ def apply_transit_filter(prop: dict[str, Any]) -> dict[str, Any]:
     notes: list[str] = list(prop.get("filter_notes") or [])
     dest_lat, dest_lng, dest_label = _transit_destination(criteria, prop)
 
+    # ★ 2026-06-03 사용자 결정: ODsay 쿼터 절약을 위해
+    #    오피스텔/용도복합이 아닌 매물(주거·주거 지분·토지)은 통근시간 계산 자체를 SKIP.
+    if not is_officetel_mixed:
+        notes.append("transit: skipped (non-officetel)")
+        prop["filter_notes"] = notes
+        prop["transit_destination"] = dest_label  # 이건 정보 차원에서만 기록
+        return prop
+
     coords = resolve_coords(prop, criteria)
     if not coords:
         notes.append("transit: no coordinates")

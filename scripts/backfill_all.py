@@ -30,7 +30,7 @@ def main() -> None:
     conn = get_connection()
     rows = conn.execute(
         """SELECT id, address_jibun, address_road, title, region_line,
-                  geo_lat, geo_lng, floor_total
+                  geo_lat, geo_lng, floor_total, category
            FROM properties"""
     ).fetchall()
     for r in rows:
@@ -47,13 +47,14 @@ def main() -> None:
                 updates["main_purps"] = (info.get("mainPurpsCdNm") or "").strip() or None
                 updates["address_road"] = (info.get("newPlatPlc") or "").strip() or None
 
-        # 2. ODsay 대중교통 — 매번 재계산 (실시간)
+        # 2. ODsay 대중교통 — 매번 재계산 (오피스텔/용도복합만, 2026-06-03 정책)
         prop = {
             "address_jibun": r["address_jibun"],
             "title": r["title"],
             "region_line": r["region_line"],
             "geo_lat": r["geo_lat"],
             "geo_lng": r["geo_lng"],
+            "category": r["category"],  # apply_transit_filter의 오피스텔 가드용
         }
         t = apply_transit_filter(prop)
         updates["transit_minutes"] = t.get("transit_minutes")
