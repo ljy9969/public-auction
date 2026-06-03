@@ -14,6 +14,8 @@ from scraper.filters.transit import apply_transit_filter
 
 def main() -> None:
     conn = get_connection()
+    # ODsay 예산 가드(별도 커넥션)와 잠금 충돌 방지 — busy_timeout + per-row commit.
+    conn.execute("PRAGMA busy_timeout=15000")
     rows = conn.execute(
         "SELECT id, address_jibun, title, region_line, geo_lat, geo_lng FROM properties"
     ).fetchall()
@@ -31,12 +33,17 @@ def main() -> None:
         mode = out.get("transit_mode")
         estimated = out.get("transit_estimated")
         if minutes is None:
-            print(f"[miss] id={r['id']}")
+            # ODsay 일일 한도 이월(deferred) 또는 좌표 미해결 → 다음 실행에서 재시도
+            deferred = any(
+                "deferred (ODsay" in n for n in (out.get("filter_notes") or [])
+            )
+            print(f"[{'defer' if deferred else 'miss'}] id={r['id']}")
             continue
         conn.execute(
             "UPDATE properties SET transit_minutes=?, transit_mode=?, transit_estimated=? WHERE id=?",
             (minutes, mode, 1 if estimated else 0, r["id"]),
         )
+        conn.commit()  # per-row commit — 예산 가드 커넥션 잠금 대기 최소화
         updated += 1
         print(f"[ok] id={r['id']} {minutes}분 ({mode})")
     conn.commit()

@@ -216,6 +216,15 @@ def apply_transit_filter(prop: dict[str, Any]) -> dict[str, Any]:
     # 자가용은 출퇴근에 안 씀 — Kakao Mobility fallback 제거.
     odsay_key = os.environ.get("ODSAY_API_KEY", "").strip()
     if odsay_key:
+        # 일일 ODsay 호출 한도 가드(2026-06-03 초과→중단 통보). 예산 소진 시
+        # 호출을 보류하고 transit_minutes를 비워둔 채 반환 → 다음 날 backfill에서
+        # 재시도(이월). 휴리스틱으로 채우면 영영 재시도 안 되므로 채우지 않는다.
+        from scraper.filters.odsay_budget import try_consume as _odsay_try_consume
+        if not _odsay_try_consume():
+            notes.append("transit: deferred (ODsay 일일한도)")
+            prop["filter_notes"] = notes
+            prop["transit_destination"] = dest_label
+            return prop
         result = odsay_transit_minutes(coords[0], coords[1], dest_lat, dest_lng, odsay_key)
         if result is not None:
             minutes, mode, summary = result
