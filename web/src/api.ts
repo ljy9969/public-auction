@@ -14,6 +14,7 @@ export interface Property {
   share_yn: string | null;
   building_shared: boolean | null;
   building_share_ratio: number | null;
+  land_share_ratio: number | null;
   fail_count: number | null;
   bid_start: string | null;
   bid_end: string | null;

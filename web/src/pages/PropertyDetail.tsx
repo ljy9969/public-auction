@@ -451,7 +451,7 @@ export default function PropertyDetail() {
                   value:
                     prop.share_yn === "Y"
                       ? (() => {
-                          const pct = formatSharePct(prop.building_share_ratio);
+                          const pct = formatSharePct(prop.building_share_ratio ?? prop.land_share_ratio);
                           return pct
                             ? `지분 (총 면적의 ${pct})`
                             : "지분";

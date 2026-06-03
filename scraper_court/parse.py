@@ -101,6 +101,33 @@ def _category_label(row: dict[str, Any]) -> str:
     return lcl_label or scl_label or "기타"
 
 
+def _parse_land_share_ratio(*texts: str) -> float | None:
+    """buldList/mulBigo의 'N분의 M' 패턴에서 토지 지분 비율(0~1) 추출.
+
+    예: '[토지 임야 15781㎡ 갑구 24번 15781분의 661 강복동 지분 전부]'
+        → 분모=15781, 분자=661 → 661/15781 ≈ 0.0419
+
+    여러 매칭이 있어도 첫 번째만 사용(보통 토지 행이 먼저). 분자/분모가
+    0이거나 비율이 [0, 1] 범위 밖이면 None.
+    """
+    pat = re.compile(r"(\d[\d,]*)\s*분의\s*(\d[\d,]*)")
+    for t in texts:
+        if not t:
+            continue
+        m = pat.search(t)
+        if not m:
+            continue
+        try:
+            denom = int(m.group(1).replace(",", ""))
+            numer = int(m.group(2).replace(",", ""))
+        except ValueError:
+            continue
+        if denom <= 0 or numer <= 0 or numer >= denom:
+            continue
+        return numer / denom
+    return None
+
+
 def _is_share(row: dict[str, Any], title: str) -> str:
     """지분 여부 — mulBigo + title + buldList 다중 검사.
     공유자 우선매수신고 / 지분매각 / 지분 키워드 모두 시그널.
@@ -191,6 +218,13 @@ def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:
 
     cat = _category_label(row)
     share_yn = _is_share(row, title)
+    # 토지 지분 비율 — share_yn=Y이고 lcls=10000(토지)일 때만. buldList/mulBigo 둘 다 후보.
+    land_share_ratio: float | None = None
+    if share_yn == "Y" and lcls == "10000":
+        land_share_ratio = _parse_land_share_ratio(
+            row.get("buldList") or "",
+            row.get("mulBigo") or "",
+        )
 
     return {
         "source": "court",
@@ -211,6 +245,7 @@ def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:
         "appraisal_price": _format_price(row.get("gamevalAmt")),
         "area_build_m2": bld_area,
         "share_yn": share_yn,
+        "land_share_ratio": land_share_ratio,
         "fail_count": _format_int(row.get("yuchalCnt")),
         "bid_start": _format_ymd(row.get("maeGiil")),
         "bid_end": _format_ymd(row.get("maeGiil")),  # 기일입찰은 시작=마감

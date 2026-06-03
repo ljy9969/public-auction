@@ -23,6 +23,7 @@ class PropertyBase(BaseModel):
     share_yn: str | None = None
     building_shared: bool | None = None
     building_share_ratio: float | None = None
+    land_share_ratio: float | None = None
     fail_count: int | None = None
     bid_start: str | None = None
     bid_end: str | None = None

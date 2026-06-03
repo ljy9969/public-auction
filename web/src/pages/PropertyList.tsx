@@ -482,9 +482,9 @@ export default function PropertyList() {
                     <dt>용도</dt>
                     <dd>
                       {p.category || "-"}
-                      {p.share_yn === "Y" && formatSharePct(p.building_share_ratio) && (
+                      {p.share_yn === "Y" && formatSharePct(p.building_share_ratio ?? p.land_share_ratio) && (
                         <span className="share-pill">
-                          지분 {formatSharePct(p.building_share_ratio)}
+                          지분 {formatSharePct(p.building_share_ratio ?? p.land_share_ratio)}
                         </span>
                       )}
                     </dd>
