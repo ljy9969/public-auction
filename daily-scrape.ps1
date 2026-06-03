@@ -47,6 +47,9 @@ Write-Log '[1/5] Scrape onbid (max-pages 10) + court (apply, all 수도권 sweep
 Append-Output (& $python -m scraper.run --max-pages 10 2>&1)
 Append-Output (& $python -m scraper_court.run --apply --max-pages 10 2>&1)
 
+Write-Log '[1.5/5] Backfill court property photos (base64 -> data/court_photos)'
+Append-Output (& $python -m scripts.backfill_court_photos 2>&1)
+
 Write-Log '[2/5] Backfill building registry + Kakao geo + ODsay transit'
 Append-Output (& $python -m scripts.backfill_all 2>&1)
 

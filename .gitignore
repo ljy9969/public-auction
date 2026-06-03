@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 .env
 data/*.db
+data/court_photos/
 node_modules/
 web/dist/
 *.log
