@@ -288,6 +288,23 @@ docs/                 API notes + TODO
 
 > **가장 쉬운 방법**: `start-all.ps1` 실행 — 서버 3종 + 터널을 백그라운드로 띄우고 URL을 자동 출력/클립보드 복사 ([실행](#한-번에-기동-권장--start-allps1) 참고).
 
+### 현재 돌고 있는 URL 확인 (이미 띄워둔 상태일 때)
+
+`.cloudflared.log`에서 가장 최근에 발급된 trycloudflare URL을 한 줄로 추출:
+
+```powershell
+Select-String -Path .\.cloudflared.log -Pattern 'https://[a-z0-9-]+\.trycloudflare\.com' | Select-Object -Last 1 | ForEach-Object { $_.Matches[0].Value }
+```
+
+클립보드 복사까지 하려면:
+
+```powershell
+(Select-String -Path .\.cloudflared.log -Pattern 'https://[a-z0-9-]+\.trycloudflare\.com' | Select-Object -Last 1).Matches[0].Value | Set-Clipboard
+```
+
+- 절전 후 cloudflared가 죽었거나 URL이 바뀌면 `.\start-all.ps1 -SkipScrape`로 재기동 → 새 URL 발급
+- TryCloudflare URL은 cloudflared 재시작마다 변경됨 (고정 URL 원하면 아래 "고정 도메인" 참고)
+
 수동으로 하려면, 로컬 dev 서버를 외부 URL로 노출하려면 [cloudflared](https://github.com/cloudflare/cloudflared/releases/latest)를 설치 후:
 
 ```powershell
