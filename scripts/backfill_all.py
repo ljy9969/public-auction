@@ -99,12 +99,15 @@ def main() -> None:
         )
         params = list(updates.values()) + [r["id"]]
         conn.execute(f"UPDATE properties SET {sets} WHERE id = ?", params)
-        print(
-            f"[ok] id={r['id']} floor={updates.get('floor_total')} "
-            f"road={updates.get('address_road') or '?'} "
-            f"transit={updates.get('transit_minutes')}분({updates.get('transit_mode')}) "
-            f"summary={updates.get('transit_summary') or '-'}"
-        )
+        # 어떤 분야가 채워졌는지 ok 로그에 표시 — 좌표만 채워진 토지 row도 식별 가능.
+        parts = [f"[ok] id={r['id']}"]
+        if "floor_total" in updates or "address_road" in updates:
+            parts.append(f"floor={updates.get('floor_total')} road={updates.get('address_road') or '?'}")
+        if "geo_lat" in updates:
+            parts.append(f"geo=({updates['geo_lat']:.5f},{updates['geo_lng']:.5f})")
+        if "transit_minutes" in updates:
+            parts.append(f"transit={updates['transit_minutes']}분({updates.get('transit_mode')})")
+        print(" ".join(parts))
     conn.commit()
     conn.close()
 
