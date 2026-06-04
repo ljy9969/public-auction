@@ -101,6 +101,30 @@ def _category_label(row: dict[str, Any]) -> str:
     return lcl_label or scl_label or "기타"
 
 
+def extract_object_area_m2(dma_result: dict[str, Any]) -> float | None:
+    """detail 의 gdsDspslObjctLst[0].objctArDts 에서 호수/필지의 진짜 면적(㎡) 추출.
+
+    search API 의 minArea 는 동 전체(예: 1536㎡) 가 들어와 호수 전용면적
+    (예: 16.685㎡) 과 60배 차이가 나는 케이스 발생 — detail 의 objctArDts
+    가 "철근콘크리트구조 16.685㎡" 같이 호수 단위 면적을 갖고 있다.
+
+    토지 매물도 같은 키에 "대지 25㎡" 같은 형식으로 채워져 있을 것으로
+    가정 — 패턴은 단순히 "숫자㎡" 정규식.
+    """
+    objs = dma_result.get("gdsDspslObjctLst") or []
+    if not objs or not isinstance(objs[0], dict):
+        return None
+    txt = objs[0].get("objctArDts") or ""
+    m = re.search(r"(\d+(?:\.\d+)?)\s*㎡", txt)
+    if not m:
+        return None
+    try:
+        v = float(m.group(1))
+    except ValueError:
+        return None
+    return v if v > 0 else None
+
+
 def extract_current_min_price(dma_result: dict[str, Any]) -> int | None:
     """detail API 응답에서 '현재 회차' 최저매각가 추출.
 

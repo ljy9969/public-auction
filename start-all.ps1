@@ -29,6 +29,8 @@ if (-not $SkipScrape) {
     & $python -m scripts.backfill_court_photos
     Write-Host '[0/3] Backfilling court current-round min_price (detail tsLwsDspslPrc)...' -ForegroundColor Cyan
     & $python -m scripts.backfill_court_prices
+    Write-Host '[0/3] Backfilling court object-level area (detail objctArDts)...' -ForegroundColor Cyan
+    & $python -m scripts.backfill_court_area
     Write-Host '[0/3] Backfilling building registry + ODsay transit...' -ForegroundColor Cyan
     & $python -m scripts.backfill_all
     Write-Host '[0/3] Backfilling MOLIT real estate prices / rental yield...' -ForegroundColor Cyan
