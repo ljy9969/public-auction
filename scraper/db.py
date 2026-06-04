@@ -109,6 +109,12 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     ("court_office_cd", "TEXT"),     # 'B000210' (서울중앙지방법원)
     ("court_office_nm", "TEXT"),     # '서울중앙지방법원'
     ("court_item_seq", "INTEGER"),   # 사건 내 물건 순번 (maemulSer)
+    # AI 예상 낙찰가 — 상세 페이지 'AI 예상가' 버튼 on-demand 호출 결과 캐시.
+    # ai_estimate_json: {low, median, high, reasoning, confidence, ...} 직렬화.
+    ("ai_estimate_json", "TEXT"),
+    ("ai_provider", "TEXT"),         # 'claude' | 'gemini'
+    ("ai_model", "TEXT"),            # 'claude-sonnet-4-6' 등
+    ("ai_estimated_at", "TEXT"),     # ISO8601 (캐시 신선도 판단)
 ]
 
 
@@ -125,6 +131,9 @@ def get_connection(db_path: Path | None = None) -> sqlite3.Connection:
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
+    # 마이그레이션(ALTER)·쓰기가 다른 커넥션과 겹쳐도 'database is locked'로 즉시
+    # 실패하지 않고 대기하도록. (스크랩/백필 중 새 컬럼 추가가 막히는 문제 방어)
+    conn.execute("PRAGMA busy_timeout=10000")
     conn.executescript(SCHEMA)
     _migrate(conn)
     return conn
