@@ -1025,6 +1025,7 @@ button.secondary {
   flex-wrap: wrap;                /* 좁은 화면에선 자동 줄바꿈 */
   gap: 0.55rem;
   flex-shrink: 0;                 /* 헤더 우측에 안 줄어들고 자기 크기 유지 */
+  margin-left: auto;              /* hero-main 이 wrap 되어 다음 줄로 가도 우측 정렬 */
 }
 
 .court-cta .cta-hero {
