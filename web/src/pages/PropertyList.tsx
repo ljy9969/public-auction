@@ -54,7 +54,7 @@ export default function PropertyList() {
   const [subCategory, setSubCategory] = usePersistentState<string>("auction:subCategory", "all");
   const [tenantRisk, setTenantRisk] = usePersistentState<"all" | "yes" | "no">("auction:tenantRisk", "all");
   const [sourceFilter, setSourceFilter] = usePersistentState<"all" | "onbid" | "court">("auction:sourceFilter", "all");
-  const [sortKey, setSortKey] = usePersistentState<"default" | "price" | "area" | "transit" | "bidStart" | "fail">("auction:sortKey", "default");
+  const [sortKey, setSortKey] = usePersistentState<"default" | "price" | "area" | "transit" | "bidStart" | "fail" | "buildAge">("auction:sortKey", "default");
   const [sortAsc, setSortAsc] = usePersistentState("auction:sortAsc", true);
   const cardListRef = useRef<HTMLDivElement | null>(null);
   const [scrollTargetId, setScrollTargetId] = useState<number | null>(null);
@@ -209,6 +209,7 @@ export default function PropertyList() {
         const d = new Date(p.bid_start.replace(" ", "T"));
         return isNaN(d.getTime()) ? null : d.getTime();
       }
+      if (sortKey === "buildAge") return buildingAge(p.use_apr_day);
       return p.transit_minutes ?? null;
     };
     return [...filteredItems].sort((a, b) => {
@@ -389,6 +390,7 @@ export default function PropertyList() {
             ["transit", "직장까지"],
             ["bidStart", "입찰 시작"],
             ["fail", "유찰횟수"],
+            ["buildAge", "건물 연식"],
           ] as const).map(([key, label]) => (
             <button
               key={key}
