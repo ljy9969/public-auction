@@ -263,7 +263,13 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
         (prop["cltr_no"], prop.get("pbct_cdtn_no")),
     ).fetchone()
     if existing:
-        assigns = ", ".join(f"{k}=?" for k in fields if k not in ("cltr_no", "pbct_cdtn_no"))
+        # COALESCE 로 NULL 덮어쓰기 방지 — scrape 의 prop dict 는 image_url, geo_lat 등
+        # 백필이 채우는 컬럼을 None 으로 갖고 있어, 매 scrape 마다 backfill 결과를 NULL 로
+        # reset 하던 버그(2026-06-04 court 사진 0/81 사고)의 root fix.
+        # 새 값이 NOT NULL 이면 그대로 덮어씀, NULL 이면 기존 값 유지.
+        assigns = ", ".join(
+            f"{k}=COALESCE(?, {k})" for k in fields if k not in ("cltr_no", "pbct_cdtn_no")
+        )
         params = [v for k, v in fields.items() if k not in ("cltr_no", "pbct_cdtn_no")]
         params.append(int(existing["id"]))
         conn.execute(f"UPDATE properties SET {assigns} WHERE id = ?", params)
