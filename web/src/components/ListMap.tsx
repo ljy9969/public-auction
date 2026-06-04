@@ -143,7 +143,10 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
     const target = markers.find((x) => x.id === highlightedId);
     if (!target || !mapInstance.current) return;
     const timer = window.setTimeout(() => {
-      mapInstance.current?.panTo(new naver.LatLng(target.lat, target.lng));
+      // panTo는 목표가 멀면 부드러운 이동을 위해 '줌아웃→이동→줌인' morph를 써서
+      // 현재 줌이 살짝 바뀐다. 사용자가 확대해 둔 화면을 그대로 유지하려면
+      // 줌을 건드리지 않고 중심만 옮기는 setCenter를 쓴다.
+      mapInstance.current?.setCenter(new naver.LatLng(target.lat, target.lng));
     }, 300);
     return () => window.clearTimeout(timer);
   }, [highlightedId, markers]);
