@@ -2107,8 +2107,10 @@ button.secondary {
 .ai-estimate-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   padding: 0.55rem 1rem;
+  width: 12rem;            /* 통계 휴리스틱 배지와 가로 통일 */
   border: 1px solid #c7d2fe;
   background: linear-gradient(135deg, #eef2ff, #faf5ff);
   color: #4338ca;
@@ -2155,10 +2157,12 @@ button.secondary {
 }
 
 .predicted-badge {
-  /* 사이즈 속성은 .ai-estimate-btn 과 동일 — 통계/AI 라벨 시각 균형 */
+  /* 사이즈는 .ai-estimate-btn 과 완전 동일 (가로/세로 모두) */
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   padding: 0.55rem 1rem;
+  width: 12rem;            /* AI 버튼과 가로 통일 */
   border: 1px solid #a7f3d0;
   border-radius: 9px;
   font-size: 0.88rem;
