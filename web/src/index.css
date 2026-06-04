@@ -1022,12 +1022,9 @@ button.secondary {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: space-between; /* 좌(복사) / 우(검색) 양 끝 배치 */
   flex-wrap: wrap;                /* 좁은 화면에선 자동 줄바꿈 */
   gap: 0.55rem;
-  flex-shrink: 1;
-  flex-basis: 22rem;
-  max-width: 32rem;
+  flex-shrink: 0;                 /* 헤더 우측에 안 줄어들고 자기 크기 유지 */
 }
 
 .court-cta .cta-hero {
