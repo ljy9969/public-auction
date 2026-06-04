@@ -387,10 +387,10 @@ export default function PropertyList() {
           {([
             ["price", "최저가"],
             ["area", "건물면적"],
+            ["buildAge", "건물 연식"],
+            ["fail", "유찰횟수"],
             ["transit", "직장까지"],
             ["bidStart", "입찰 시작"],
-            ["fail", "유찰횟수"],
-            ["buildAge", "건물 연식"],
           ] as const).map(([key, label]) => (
             <button
               key={key}
