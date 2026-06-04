@@ -122,7 +122,9 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
     document.head.appendChild(s);
   }, [markers, naverKey, onMarkerClick]);
 
-  // Update highlight when selection changes
+  // Update highlight when selection changes — 마커 색은 즉시, panTo 만 debounce.
+  // (카드 hover 가 빠르게 옮겨다닐 때 지도가 흔들리는 문제 — 한 카드 위에
+  //  300ms 머무를 때만 지도가 이동.)
   useEffect(() => {
     const naver = (window as NaverWindow).naver?.maps;
     if (!naver) return;
@@ -133,10 +135,13 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
       marker.setIcon(makeIcon(naver, m.index, active));
       marker.setZIndex(active ? 1000 : 100);
     });
-    if (highlightedId != null && mapInstance.current) {
-      const m = markers.find((x) => x.id === highlightedId);
-      if (m) mapInstance.current.panTo(new naver.LatLng(m.lat, m.lng));
-    }
+    if (highlightedId == null) return;
+    const target = markers.find((x) => x.id === highlightedId);
+    if (!target || !mapInstance.current) return;
+    const timer = window.setTimeout(() => {
+      mapInstance.current?.panTo(new naver.LatLng(target.lat, target.lng));
+    }, 300);
+    return () => window.clearTimeout(timer);
   }, [highlightedId, markers]);
 
   if (!naverKey) {
