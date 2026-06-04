@@ -31,20 +31,32 @@ RENT_ENDPOINTS = {
 }
 
 
-def _select_endpoint(category: str) -> tuple[str, str] | None:
-    """카테고리 → (label, endpoint path)"""
+def _select_endpoints(category: str, area_m2: float | None = None) -> list[tuple[str, str]]:
+    """카테고리(+면적) → 시도할 [(label, endpoint)] 리스트.
+
+    ★ 도시형생활주택은 MOLIT 분류상 '연립다세대' 로 거래되지만, 우리 court
+       분류는 같은 단지를 '단독주택'(sclsUtilCd 20104) 으로 잘못 분류하는
+       경우가 빈번 — 단독다가구 endpoint 만 가면 거래 0건. 길동청광플러스원
+       큐브 사례(2026-06-04).
+       작은 평형(≤60㎡) 단독주택은 도시형생활주택 가능성 ↑ → 연립다세대도
+       같이 시도해 매칭 통합.
+    """
     cat = category or ""
     if "오피스텔" in cat or "용도복합" in cat:
-        return "오피스텔", ENDPOINTS["오피스텔"]
+        return [("오피스텔", ENDPOINTS["오피스텔"])]
     if "아파트" in cat:
-        return "아파트", ENDPOINTS["아파트"]
-    if "다세대" in cat or "연립" in cat or "빌라" in cat:
-        return "연립다세대", ENDPOINTS["연립다세대"]
+        return [("아파트", ENDPOINTS["아파트"])]
+    if "도시형생활주택" in cat or "다세대" in cat or "연립" in cat or "빌라" in cat:
+        return [("연립다세대", ENDPOINTS["연립다세대"])]
     if "토지" in cat or "도로" in cat or "대지" in cat or "전 /" in cat or "답 /" in cat:
-        return "토지", ENDPOINTS["토지"]
+        return [("토지", ENDPOINTS["토지"])]
     if "단독" in cat or "다가구" in cat:
-        return "단독다가구", ENDPOINTS["단독다가구"]
-    return None
+        # 작은 평형이면 연립다세대도 시도(도시형생활주택 분류 오류 보정).
+        if area_m2 is not None and area_m2 <= 60:
+            return [("단독다가구", ENDPOINTS["단독다가구"]),
+                    ("연립다세대", ENDPOINTS["연립다세대"])]
+        return [("단독다가구", ENDPOINTS["단독다가구"])]
+    return []
 
 
 def _recent_months(n: int = 6, today: date | None = None) -> list[str]:
@@ -168,16 +180,24 @@ def _match(prop: dict[str, Any], trade: dict[str, Any], area_tol: float = 0.10) 
         if n_cand and (n_cand in n_bld or n_bld in n_cand):
             score += 6
 
-    # 면적 매칭 — 같은 단지일 때 더 엄격하게
+    # 면적 매칭 — 같은 단지일 때 더 엄격하게.
+    # ★ 차이 50% 이상이면 다른 평형으로 간주, score=0 강제(매칭 제외).
+    # 동만 같은 거래가 16㎡ 도시형생활주택 vs 100㎡ 아파트 처럼 평형 차이가 큰
+    # 케이스의 중앙값을 오염시키던 문제 해결 (2026-06-04).
     my_area = prop.get("area_build_m2")
     trade_area = trade.get("excluUseAr") or trade.get("totalFloorAr")
     if my_area and trade_area:
         try:
-            ratio = abs(float(trade_area) - float(my_area)) / float(my_area)
-            if ratio <= 0.05:
-                score += 3
-            elif ratio <= area_tol:
-                score += 2
+            my = float(my_area)
+            tr = float(trade_area)
+            if my > 0:
+                ratio = abs(tr - my) / my
+                if ratio > 0.5:
+                    return 0
+                if ratio <= 0.05:
+                    score += 3
+                elif ratio <= area_tol:
+                    score += 2
         except (ValueError, TypeError):
             pass
 
@@ -204,10 +224,9 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
     if not api_key:
         return None
 
-    sel = _select_endpoint(prop.get("category") or "")
-    if not sel:
+    candidates = _select_endpoints(prop.get("category") or "", prop.get("area_build_m2"))
+    if not candidates:
         return None
-    label, endpoint = sel
 
     # 시군구코드 — Kakao b_code 앞 5자리에서 추출
     sgg_cd: str | None = None
@@ -224,12 +243,20 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
     if not sgg_cd:
         return None
 
-    # 최근 N개월 거래 모두 수집
+    # 최근 N개월 거래 모두 수집 — 카테고리에 매칭되는 모든 endpoint 통합.
+    # 매칭 통과한 거래에 label 을 같이 박아둠(샘플 출력용).
     all_trades: list[dict[str, Any]] = []
-    for ymd in _recent_months(months):
-        all_trades.extend(fetch_monthly_trades(endpoint, sgg_cd, ymd, api_key))
+    label_by_trade: dict[int, str] = {}  # id(trade) → label
+    for label, endpoint in candidates:
+        for ymd in _recent_months(months):
+            for t in fetch_monthly_trades(endpoint, sgg_cd, ymd, api_key):
+                all_trades.append(t)
+                label_by_trade[id(t)] = label
     if not all_trades:
         return None
+    # 첫 후보의 라벨을 'primary' 로 사용(샘플 출력 등). 매칭 결과 라벨은 가장
+    # 거래가 많이 잡힌 endpoint 로 결정.
+    label = candidates[0][0]
 
     # 매물과 매칭 점수 산출
     scored = [(t, _match(prop, t)) for t in all_trades]
@@ -242,7 +269,10 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
     tier3 = [t for t, s in scored if s >= 5]
     tier4 = [t for t, s in scored if s >= 3]
 
-    if tier1 and len(tier1) >= 3:
+    # Tier 1 (같은 단지 + 면적 매칭) 은 1건만 있어도 가장 신뢰. 옛 코드는 3건
+    # 미만이면 단지 전체(Tier 2) 로 떨어졌는데, 도시형생활주택처럼 같은 단지에
+    # 거래가 드문 케이스에서 면적 무관한 단지 평균으로 시세가 오염되던 문제.
+    if tier1:
         sample = tier1
         match_kind = "building+area"
     elif tier2:
