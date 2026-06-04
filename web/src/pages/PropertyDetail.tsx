@@ -22,11 +22,13 @@ import {
   isLandCategory,
   isRedundantTag,
   propertyTab,
+  requestAiEstimate,
   storeTab,
   parseFloor,
   tagCategory,
   translateTag,
   transitModeLabel,
+  type AiEstimate,
   type Property,
 } from "../api";
 import { useFavorites } from "../favorites";
@@ -264,11 +266,29 @@ export default function PropertyDetail() {
   const [prop, setProp] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [all, setAll] = useState<Property[]>([]);
+  const [aiEstimate, setAiEstimate] = useState<AiEstimate | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
   const fav = useFavorites();
+
+  const runAiEstimate = async (refresh = false) => {
+    if (!prop?.id) return;
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      setAiEstimate(await requestAiEstimate(prop.id, refresh));
+    } catch (e) {
+      setAiError(e instanceof Error ? e.message : "AI 예상가 요청 실패");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
     recordView(Number(id));
+    setAiEstimate(null);  // 다른 물건으로 이동 시 이전 AI 결과 초기화
+    setAiError(null);
     fetchProperty(Number(id))
       .then(setProp)
       .catch(console.error)
@@ -925,7 +945,8 @@ export default function PropertyDetail() {
                     i
                     <span className="info-tip-content">
                       감정가 × 카테고리별 잔존가율(서울 아파트 85% / 빌라 70% / 토지 58% 등) ×
-                      유찰 1회당 -5%p, 시세가 있으면 50% 가중 평균. AI 아닌 통계 휴리스틱.
+                      유찰 1회당 -5%p에, 국토부 실거래가 표본 수에 따라 시세를 35~70% 신뢰도
+                      가중. 통계 휴리스틱이며, 아래 'AI 예상가' 버튼으로 LLM 종합 분석도 가능.
                     </span>
                   </button>
                 </h3>
@@ -947,6 +968,76 @@ export default function PropertyDetail() {
                 {judgmentLabel && (
                   <p className={`predicted-judgment ${judgmentClass}`}>{judgmentLabel}</p>
                 )}
+
+                <div className="ai-estimate">
+                  {!aiEstimate ? (
+                    <button
+                      type="button"
+                      className="ai-estimate-btn"
+                      onClick={() => runAiEstimate(false)}
+                      disabled={aiLoading}
+                    >
+                      {aiLoading ? "AI 분석 중…" : "🤖 AI 예상가 요청"}
+                    </button>
+                  ) : (
+                    <div className="ai-estimate-result">
+                      <div className="ai-estimate-head">
+                        <span className="ai-estimate-badge">
+                          AI 예상 ·{" "}
+                          <span className="ai-estimate-provider">
+                            {aiEstimate.provider === "claude" ? "Claude" : "Gemini"}
+                          </span>
+                          {aiEstimate.model && (
+                            <span className="ai-estimate-model"> ({aiEstimate.model})</span>
+                          )}
+                          {aiEstimate.confidence && (
+                            <>
+                              {" "}· 신뢰도{" "}
+                              <span className={`ai-estimate-confidence conf-${aiEstimate.confidence}`}>
+                                {aiEstimate.confidence}
+                              </span>
+                            </>
+                          )}
+                        </span>
+                        <button
+                          type="button"
+                          className="ai-estimate-refresh"
+                          onClick={() => runAiEstimate(true)}
+                          disabled={aiLoading}
+                        >
+                          {aiLoading ? "분석 중…" : "↻ 재분석"}
+                        </button>
+                      </div>
+                      <div className="predicted-range">
+                        <div className="predicted-stat">
+                          <span className="market-stat-label">하한</span>
+                          <span className="market-stat-value">
+                            {formatPrice(aiEstimate.low ?? aiEstimate.median)}
+                          </span>
+                        </div>
+                        <div className="predicted-stat">
+                          <span className="market-stat-label">AI 중앙값</span>
+                          <span className="market-stat-value market-stat-strong">
+                            {formatPrice(aiEstimate.median)}
+                          </span>
+                        </div>
+                        <div className="predicted-stat">
+                          <span className="market-stat-label">상한</span>
+                          <span className="market-stat-value">
+                            {formatPrice(aiEstimate.high ?? aiEstimate.median)}
+                          </span>
+                        </div>
+                      </div>
+                      {aiEstimate.reasoning && (
+                        <p className="ai-estimate-reasoning">{aiEstimate.reasoning}</p>
+                      )}
+                      <p className="ai-estimate-meta">
+                        {aiEstimate.model} · {aiEstimate.cached ? "캐시" : "방금 생성"} · 참고용 추정
+                      </p>
+                    </div>
+                  )}
+                  {aiError && <p className="ai-estimate-error">{aiError}</p>}
+                </div>
               </section>
             );
           })()}
