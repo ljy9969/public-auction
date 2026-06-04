@@ -25,6 +25,8 @@ if (-not $SkipScrape) {
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     Write-Host '[0/3] Scraping listings (this takes a few minutes)...' -ForegroundColor Cyan
     & $python -m scraper.run --max-pages 10
+    Write-Host '[0/3] Backfilling court property photos (image_url IS NULL only)...' -ForegroundColor Cyan
+    & $python -m scripts.backfill_court_photos
     Write-Host '[0/3] Backfilling building registry + ODsay transit...' -ForegroundColor Cyan
     & $python -m scripts.backfill_all
     Write-Host '[0/3] Backfilling MOLIT real estate prices / rental yield...' -ForegroundColor Cyan
