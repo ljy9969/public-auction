@@ -57,6 +57,12 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
   const mapDiv = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<NaverMap | null>(null);
   const markerInstances = useRef<NaverMarker[]>([]);
+  // onMarkerClick은 부모(PropertyList)에서 인라인 화살표로 넘어와 매 렌더마다 identity가 바뀐다.
+  // 이걸 아래 init useEffect deps에 직접 넣으면: 마커 클릭 → 부모 리렌더 → 핸들러 identity 변경
+  // → 맵 재초기화(fitBounds) → 줌이 서울 전체로 리셋되는 버그가 생긴다.
+  // ref로 최신 핸들러만 들고 있으면 재초기화 없이 클릭 시점의 핸들러를 호출할 수 있다.
+  const onMarkerClickRef = useRef(onMarkerClick);
+  onMarkerClickRef.current = onMarkerClick;
   const naverKey = (import.meta.env.VITE_NAVER_MAP_CLIENT_ID as string | undefined)?.trim();
 
   // Initialize map + markers when the marker set changes
@@ -93,9 +99,7 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
           icon: makeIcon(naver, m.index, false),
           zIndex: 100,
         });
-        if (onMarkerClick) {
-          marker.addListener("click", () => onMarkerClick(m.id));
-        }
+        marker.addListener("click", () => onMarkerClickRef.current?.(m.id));
         return marker;
       });
     };
@@ -120,7 +124,7 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
     s.async = true;
     s.onload = init;
     document.head.appendChild(s);
-  }, [markers, naverKey, onMarkerClick]);
+  }, [markers, naverKey]);
 
   // Update highlight when selection changes — 마커 색은 즉시, panTo 만 debounce.
   // (카드 hover 가 빠르게 옮겨다닐 때 지도가 흔들리는 문제 — 한 카드 위에
