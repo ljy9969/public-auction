@@ -209,7 +209,11 @@ export default function PropertyList() {
         const d = new Date(p.bid_start.replace(" ", "T"));
         return isNaN(d.getTime()) ? null : d.getTime();
       }
-      if (sortKey === "buildAge") return buildingAge(p.use_apr_day);
+      if (sortKey === "buildAge") {
+        // 건물 연식 정렬 — 준공일(YYYYMMDD)을 숫자로. 오름차순=오래된 건물 먼저.
+        const d = p.use_apr_day;
+        return d && /^\d{8}$/.test(d) ? parseInt(d, 10) : null;
+      }
       return p.transit_minutes ?? null;
     };
     return [...filteredItems].sort((a, b) => {
@@ -262,6 +266,60 @@ export default function PropertyList() {
     tenantRisk !== "all" ||
     sourceFilter !== "all" ||
     sortKey !== "default";
+
+  // 결과 0건일 때, 활성 필터 중 "이것만 풀면 매물이 나오는" 후보를 진단 (leave-one-out).
+  // 필터 영속화로 조건이 누적되면 어떤 필터가 결과를 0으로 만드는지 알기 어려워,
+  // 해제 시 가장 많은 매물이 나오는 순으로 제시한다. (유찰 cap은 서버측이라 제외)
+  const emptyHints = useMemo(() => {
+    if (sortedItems.length > 0) return [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const base = items.filter((p) => {
+      if (propertyTab(p) !== tab) return false;
+      if (p.bid_end) {
+        const end = new Date(p.bid_end.replace(" ", "T"));
+        if (!isNaN(end.getTime()) && end < today) return false;
+      }
+      return true;
+    });
+    if (base.length === 0) return []; // 탭 자체가 비면 필터 탓이 아님
+
+    const nowY = new Date().getFullYear();
+    type ActiveFilter = {
+      key: string;
+      label: string;
+      pred: (p: Property) => boolean;
+      clear: () => void;
+    };
+    const active: ActiveFilter[] = [];
+    if (favOnly)
+      active.push({ key: "fav", label: "즐겨찾기만", pred: (p) => p.id != null && fav.has(p.id), clear: () => setFavOnly(false) });
+    if (regionFilter !== "all")
+      active.push({ key: "region", label: regionFilter === "gangnam" ? "지역: 강남구" : "지역: 송파구", pred: (p) => (p.address_jibun || "").includes(regionFilter === "gangnam" ? "강남구" : "송파구"), clear: () => setRegionFilter("all") });
+    if (priceMax !== "all")
+      active.push({ key: "price", label: `최저가 ${priceMax}억 이하`, pred: (p) => p.min_price == null || p.min_price <= parseInt(priceMax, 10) * 100_000_000, clear: () => setPriceMax("all") });
+    if (ageMax !== "all")
+      active.push({ key: "age", label: `연식 ${ageMax}년 이내`, pred: (p) => { if (!(p.use_apr_day && /^\d{8}$/.test(p.use_apr_day))) return true; return nowY - parseInt(p.use_apr_day.slice(0, 4), 10) <= parseInt(ageMax, 10); }, clear: () => setAgeMax("all") });
+    if (floorFilter !== "all")
+      active.push({ key: "floor", label: `층수: ${floorFilter}`, pred: (p) => parseFloor(p.title, p.floor_total).category === floorFilter, clear: () => setFloorFilter("all") });
+    if (subCategory !== "all")
+      active.push({ key: "sub", label: `용도: ${subCategory}`, pred: (p) => (p.category || "").includes(subCategory), clear: () => setSubCategory("all") });
+    if (sourceFilter !== "all")
+      active.push({ key: "source", label: `구분: ${sourceFilter === "court" ? "경매" : "공매"}`, pred: (p) => (p.source || "onbid") === sourceFilter, clear: () => setSourceFilter("all") });
+    if (tenantRisk !== "all")
+      active.push({ key: "tenant", label: `임차인 인수: ${tenantRisk === "yes" ? "위험 있음" : "위험 없음"}`, pred: (p) => { const has = (p.filter_notes || []).some((t) => t.includes("임차인 인수")); return tenantRisk === "yes" ? has : !has; }, clear: () => setTenantRisk("all") });
+
+    if (active.length === 0) return [];
+
+    return active
+      .map((f) => {
+        const others = active.filter((x) => x.key !== f.key);
+        const count = base.filter((p) => others.every((o) => o.pred(p))).length;
+        return { label: f.label, count, clear: f.clear };
+      })
+      .filter((r) => r.count > 0)
+      .sort((a, b) => b.count - a.count);
+  }, [sortedItems, items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, fav]);
 
   return (
     <>
@@ -386,7 +444,7 @@ export default function PropertyList() {
           <span className="filter-sort-label">정렬</span>
           {([
             ["price", "최저가"],
-            ["area", "건물면적"],
+            ["area", "건물 면적"],
             ["buildAge", "건물 연식"],
             ["fail", "유찰횟수"],
             ["transit", "직장까지"],
@@ -438,11 +496,30 @@ export default function PropertyList() {
       {loading ? (
         <p className="empty">불러오는 중…</p>
       ) : sortedItems.length === 0 ? (
-        <p className="empty">
-          {items.length === 0
-            ? "조건에 맞는 물건이 없습니다. 「지금 수집」을 눌러 온비드에서 데이터를 가져오세요."
-            : "필터 조건에 맞는 매물이 없습니다. 필터를 조정해 보세요."}
-        </p>
+        <div className="empty">
+          {items.length === 0 ? (
+            "조건에 맞는 물건이 없습니다. 「지금 수집」을 눌러 온비드에서 데이터를 가져오세요."
+          ) : emptyHints.length > 0 ? (
+            <>
+              <p>필터 조건에 맞는 매물이 없습니다.</p>
+              <p className="empty-hint-label">아래 필터를 해제하면 매물이 나옵니다 ↓</p>
+              <div className="empty-hint-actions">
+                {emptyHints.slice(0, 3).map((h) => (
+                  <button
+                    key={h.label}
+                    type="button"
+                    className="empty-hint-btn"
+                    onClick={h.clear}
+                  >
+                    「{h.label}」 해제 <strong>{h.count}건</strong>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            "필터 조건에 맞는 매물이 없습니다. 필터를 조정해 보세요."
+          )}
+        </div>
       ) : (
         <div className="list-with-map">
           <aside className="list-map-pane">

@@ -1065,6 +1065,40 @@ button.secondary {
   color: #94a3b8;
 }
 
+/* 결과 0건일 때 "어떤 필터를 풀면 N건" 힌트 */
+.empty-hint-label {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.empty-hint-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+.empty-hint-btn {
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  border-radius: 999px;
+  padding: 0.35rem 0.8rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.empty-hint-btn:hover {
+  background: rgba(37, 99, 235, 0.16);
+  border-color: #93c5fd;
+}
+
+.empty-hint-btn strong {
+  font-weight: 700;
+}
+
 .header-actions,
 .filters {
   display: flex;
