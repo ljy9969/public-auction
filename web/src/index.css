@@ -2145,6 +2145,30 @@ button.secondary {
   border-radius: 6px;
 }
 
+/* 통계 휴리스틱 예상 낙찰가 — AI 배지와 같은 톤(다른 색)으로 출처 구분. */
+.predicted-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0 0 0.6rem;
+}
+
+.predicted-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #047857;            /* 진한 청록 — AI(보라) 와 구분 */
+  background: #ecfdf5;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+}
+
+.predicted-basis {
+  font-size: 0.82rem;
+  color: #475569;
+  font-weight: 500;
+}
+
 /* AI 예상 배지 안의 강조 — provider 는 진한 파랑, model 은 옅은 회색, */
 /*   confidence 는 high(녹색)/medium(주황)/low(빨강)                 */
 .ai-estimate-provider {

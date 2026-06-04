@@ -130,6 +130,43 @@ export async function fetchProperty(id: number): Promise<Property> {
   return res.json();
 }
 
+export interface AiEstimate {
+  low: number | null;
+  median: number | null;
+  high: number | null;
+  confidence?: string | null;
+  reasoning: string;
+  provider: string;
+  model: string;
+  cached?: boolean;
+  estimated_at?: string | null;
+}
+
+/** 페이지 진입 시 자동 호출 — 캐시된 AI 예상이 있으면 반환, 없으면 null. 비용 0. */
+export async function fetchCachedAiEstimate(id: number): Promise<AiEstimate | null> {
+  const res = await fetch(`/api/properties/${id}/ai-estimate`);
+  if (res.status === 204 || !res.ok) return null;
+  return res.json();
+}
+
+/** 상세 페이지 'AI 예상가' 버튼 — on-demand LLM 예상 낙찰가 (캐시 우선, refresh로 재생성). */
+export async function requestAiEstimate(id: number, refresh = false): Promise<AiEstimate> {
+  const res = await fetch(
+    `/api/properties/${id}/ai-estimate${refresh ? "?refresh=true" : ""}`,
+    { method: "POST" }
+  );
+  if (!res.ok) {
+    let detail = "AI 예상가 요청 실패";
+    try {
+      detail = (await res.json()).detail || detail;
+    } catch {
+      /* 본문 파싱 실패 시 기본 메시지 */
+    }
+    throw new Error(detail);
+  }
+  return res.json();
+}
+
 export interface StatsSummary {
   total_count: number;
   overall_avg_discount_pct: number | null;

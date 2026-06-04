@@ -9,6 +9,7 @@ import {
   buildingAge,
   buildingAgeCategory,
   dDayLevel,
+  fetchCachedAiEstimate,
   fetchProperties,
   fetchProperty,
   formatArea,
@@ -296,6 +297,11 @@ export default function PropertyDetail() {
     fetchProperties({ passes_only: false })
       .then(setAll)
       .catch(() => setAll([]));
+    // 캐시된 AI 예상이 있으면 자동으로 복원 (비용 0, LLM 호출 안 함).
+    // 캐시 없으면 null 그대로 두고 사용자가 직접 버튼 클릭 시에만 새 호출.
+    fetchCachedAiEstimate(Number(id))
+      .then((cached) => { if (cached) setAiEstimate(cached); })
+      .catch(() => { /* 캐시 없음/오류는 조용히 무시 */ });
   }, [id]);
 
   // 헤더 '목록' 버튼이 이 물건의 탭으로 돌아가도록 기억 (검색/직링크 진입 포함).
@@ -950,7 +956,10 @@ export default function PropertyDetail() {
                     </span>
                   </button>
                 </h3>
-                <p className="section-hint">{prop.predicted_price_basis}</p>
+                <p className="section-hint predicted-meta">
+                  <span className="predicted-badge">통계 휴리스틱</span>
+                  <span className="predicted-basis">{prop.predicted_price_basis}</span>
+                </p>
                 <div className="predicted-range">
                   <div className="predicted-stat">
                     <span className="market-stat-label">하한 (low)</span>

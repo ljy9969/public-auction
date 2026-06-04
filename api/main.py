@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import sys
 import threading
@@ -11,7 +12,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -19,12 +20,21 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+# AI 키 등 .env를 API 프로세스에 명시적으로 로드 (import 순서·실행 경로 무관 보장)
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(ROOT / ".env")
+except ImportError:
+    pass
+
 from shared.schemas.property import (
     PropertyDetail,
     PropertyListItem,
     ScrapeStatus,
     ScrapeTriggerResponse,
 )
+from api import ai_estimate
 from api import stats as stats_module
 from scraper import db as scraper_db
 from scraper.run import run_scrape
@@ -175,6 +185,72 @@ def get_property(prop_id: int) -> PropertyDetail:
     if not row:
         raise HTTPException(status_code=404, detail="Property not found")
     return PropertyDetail(**_public_fields(row))
+
+
+@app.get("/api/properties/{prop_id}/ai-estimate")
+def ai_estimate_cached(prop_id: int) -> Response:
+    """페이지 진입 시 자동 호출용 — 캐시된 AI 예상이 있으면 반환, 없으면 204.
+
+    POST 와 달리 LLM 호출을 절대 안 함(비용 0). 사용자가 직접 버튼 클릭한
+    이력만 캐시로 남고, 그 매물에 다시 들어오면 그대로 노출되도록.
+    """
+    row = scraper_db.get_property(prop_id)
+    if not row or not row.get("ai_estimate_json"):
+        return Response(status_code=204)
+    try:
+        cached = json.loads(row["ai_estimate_json"])
+    except (TypeError, json.JSONDecodeError):
+        return Response(status_code=204)
+    cached["cached"] = True
+    cached["estimated_at"] = row.get("ai_estimated_at")
+    return Response(content=json.dumps(cached, ensure_ascii=False),
+                    media_type="application/json")
+
+
+@app.post("/api/properties/{prop_id}/ai-estimate")
+def ai_estimate_endpoint(prop_id: int, refresh: bool = False) -> dict[str, Any]:
+    """상세 페이지 'AI 예상가' 버튼 — on-demand LLM 예상 낙찰가.
+
+    캐시 우선(refresh=true면 재생성). 키 미설정 시 503, API 실패 시 502.
+    """
+    row = scraper_db.get_property(prop_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    if not refresh and row.get("ai_estimate_json"):
+        try:
+            cached = json.loads(row["ai_estimate_json"])
+            cached["cached"] = True
+            cached["estimated_at"] = row.get("ai_estimated_at")
+            return cached
+        except (TypeError, json.JSONDecodeError):
+            pass  # 캐시 손상 → 새로 생성
+
+    try:
+        result = ai_estimate.estimate(row)
+    except ai_estimate.AiEstimateError as exc:
+        msg = str(exc)
+        # 키 미설정은 503(설정 필요), 그 외 API 오류는 502
+        raise HTTPException(status_code=503 if "키가 설정" in msg else 502, detail=msg)
+
+    now = datetime.now(timezone.utc).isoformat()
+    # 캐시 저장은 best-effort — 수집 중 DB 잠금 등으로 실패해도 비싼 AI 결과는 그대로 반환.
+    try:
+        conn = scraper_db.get_connection()
+        conn.execute(
+            "UPDATE properties SET ai_estimate_json=?, ai_provider=?, ai_model=?, "
+            "ai_estimated_at=? WHERE id=?",
+            (json.dumps(result, ensure_ascii=False), result["provider"], result["model"], now, prop_id),
+        )
+        conn.commit()
+        conn.close()
+        result["persisted"] = True
+    except Exception:
+        logger.exception("AI 예상가 캐시 저장 실패 (결과는 반환, 다음 호출 시 재생성)")
+        result["persisted"] = False
+    result["cached"] = False
+    result["estimated_at"] = now
+    return result
 
 
 @app.get("/api/stats/summary")
