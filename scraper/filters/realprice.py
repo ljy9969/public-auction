@@ -51,10 +51,16 @@ def _select_endpoints(category: str, area_m2: float | None = None) -> list[tuple
     if "토지" in cat or "도로" in cat or "대지" in cat or "전 /" in cat or "답 /" in cat:
         return [("토지", ENDPOINTS["토지"])]
     if "단독" in cat or "다가구" in cat:
-        # 작은 평형이면 연립다세대도 시도(도시형생활주택 분류 오류 보정).
+        # ★ 작은 평형(≤60㎡) 단독주택은 도시형생활주택일 가능성 ↑.
+        # MOLIT 분류는 연립다세대 또는 오피스텔에 등록되는 경우가 많아
+        # 단독다가구만 보면 16㎡ 매물에 30~50㎡ 단독 거래가 잘못 매칭됨.
+        # 세 endpoint 모두 시도해 단지명 매칭되는 거래를 잡는다.
         if area_m2 is not None and area_m2 <= 60:
-            return [("단독다가구", ENDPOINTS["단독다가구"]),
-                    ("연립다세대", ENDPOINTS["연립다세대"])]
+            return [
+                ("단독다가구", ENDPOINTS["단독다가구"]),
+                ("연립다세대", ENDPOINTS["연립다세대"]),
+                ("오피스텔", ENDPOINTS["오피스텔"]),
+            ]
         return [("단독다가구", ENDPOINTS["단독다가구"])]
     return []
 
@@ -267,11 +273,11 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
     tier1 = [t for t, s in scored if s >= 11]
     tier2 = [t for t, s in scored if s >= 9]
     tier3 = [t for t, s in scored if s >= 5]
-    tier4 = [t for t, s in scored if s >= 3]
 
-    # Tier 1 (같은 단지 + 면적 매칭) 은 1건만 있어도 가장 신뢰. 옛 코드는 3건
-    # 미만이면 단지 전체(Tier 2) 로 떨어졌는데, 도시형생활주택처럼 같은 단지에
-    # 거래가 드문 케이스에서 면적 무관한 단지 평균으로 시세가 오염되던 문제.
+    # Tier 1 (같은 단지 + 면적 매칭) 은 1건만 있어도 가장 신뢰.
+    # ★ Tier 4 (dong only, score≥3) 제거 — 면적 매칭 없는 동 평균은 평형
+    # 차이로 오염되기 쉬워 사용자 신뢰도 ↓ (길동 16㎡ 매물에 30평 아파트
+    # 시세가 노출되던 사례). 면적 매칭 못 한 매물은 시세 없음(NULL) 으로.
     if tier1:
         sample = tier1
         match_kind = "building+area"
@@ -281,9 +287,6 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
     elif tier3:
         sample = tier3
         match_kind = "dong+area"
-    elif tier4:
-        sample = tier4
-        match_kind = "dong"
     else:
         return None
 
