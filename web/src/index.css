@@ -2290,6 +2290,12 @@ button.secondary {
 .bid-simulator small.bid-info {
   color: #64748b;
 }
+/* 시뮬 결과 라벨('입찰 보증금 (최저가 10%)', '취득세 등 (주거 ≤85㎡ 1.1%)'  */
+/* 등)이 길어 기본 8.5rem 으로는 2줄로 접힘 — 시뮬레이션 섹션만 넓힘.       */
+.bid-sim-result .info-row {
+  grid-template-columns: 13rem 1fr;
+}
+
 .bid-sim-result .bid-sim-total dt {
   font-weight: 700;
   color: #0f172a;
