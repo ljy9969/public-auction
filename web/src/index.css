@@ -1022,7 +1022,8 @@ button.secondary {
   display: flex;
   flex-direction: row;
   align-items: center;
-  flex-wrap: wrap;               /* 좁은 화면에서 자동 줄바꿈 */
+  justify-content: space-between; /* 좌(복사) / 우(검색) 양 끝 배치 */
+  flex-wrap: wrap;                /* 좁은 화면에선 자동 줄바꿈 */
   gap: 0.55rem;
   flex-shrink: 1;
   flex-basis: 22rem;
