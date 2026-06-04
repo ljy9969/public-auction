@@ -60,17 +60,24 @@ def _select_endpoints(category: str, area_m2: float | None = None) -> list[tuple
                 ("단독다가구", ENDPOINTS["단독다가구"]),
                 ("연립다세대", ENDPOINTS["연립다세대"]),
                 ("오피스텔", ENDPOINTS["오피스텔"]),
+                ("아파트", ENDPOINTS["아파트"]),
             ]
         return [("단독다가구", ENDPOINTS["단독다가구"])]
     return []
 
 
 def _recent_months(n: int = 6, today: date | None = None) -> list[str]:
-    """YYYYMM 문자열 리스트, 최근 n개월 (최신순)."""
+    """n개월 윈도우 안의 모든 YYYYMM (최신순) — n+1 개 반환.
+
+    n=12, today=2026-06-04 → ['202606', '202605', ..., '202506'] (13개).
+    1년 전 같은 달의 거래(예: 25.06.13) 도 1년 윈도우 안이므로 포함되어야
+    하는데, 기존 range(n) 은 12개만 돌려 25.06 거래가 누락되던 버그
+    (2026-06-04 사용자 보고).
+    """
     today = today or date.today()
     out: list[str] = []
     y, m = today.year, today.month
-    for _ in range(n):
+    for _ in range(n + 1):
         out.append(f"{y:04d}{m:02d}")
         m -= 1
         if m == 0:
