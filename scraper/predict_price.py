@@ -74,20 +74,49 @@ def predict_price(prop: dict[str, Any]) -> dict[str, Any] | None:
 
     median_by_appraisal = int(appraisal * ratio)
 
-    # 시세 보정 — market_median_price 있으면 50% 가중치
+    # 시세/실거래가 보정 — 국토부 실거래가 표본 수(market_sample_count)에 따라
+    # 신뢰도 가중치를 동적으로. 표본이 많을수록 시세를 더 신뢰(감정가 의존↓).
+    #   0건  → 0    (감정가만)
+    #   1~2  → 0.35
+    #   3~5  → 0.50
+    #   6~9  → 0.60
+    #   10+  → 0.70
     market = prop.get("market_median_price")
-    if market and market > 0:
-        # 보통 낙찰가 ≈ 시세 × 0.85 (시장가보다 다소 저렴)
-        market_implied = int(market * 0.85)
-        median = int((median_by_appraisal + market_implied) / 2)
-        basis = "감정가 잔존가율 + 시세 평균"
-    else:
-        median = median_by_appraisal
-        basis = "감정가 잔존가율 (시세 없음)"
+    market_n = int(prop.get("market_sample_count") or 0)
+    market_min = prop.get("market_min_price")
+    market_max = prop.get("market_max_price")
 
-    # 분포: 중앙값 ±10%
-    low = int(median * 0.90)
-    high = int(median * 1.10)
+    if market and market > 0 and market_n > 0:
+        if market_n >= 10:
+            w, confidence = 0.70, "high"
+        elif market_n >= 6:
+            w, confidence = 0.60, "high"
+        elif market_n >= 3:
+            w, confidence = 0.50, "medium"
+        else:
+            w, confidence = 0.35, "low"
+        # 낙찰가 ≈ 시세 × 0.85 (시장가보다 다소 저렴하게 낙찰되는 경향)
+        market_implied = market * 0.85
+        median = int(median_by_appraisal * (1 - w) + market_implied * w)
+        basis = (
+            f"감정가 잔존가율({int(ratio*100)}%) + 국토부 실거래가 "
+            f"{market_n}건 가중({int(w*100)}%)"
+        )
+    else:
+        w, confidence = 0.0, "none"
+        median = median_by_appraisal
+        basis = f"감정가 잔존가율({int(ratio*100)}%) — 실거래가 표본 없음"
+
+    # 분포(low/high): 신뢰도 낮으면 밴드를 넓혀 불확실성 반영.
+    band = 0.10 if confidence in ("high", "medium") else 0.15 if confidence == "low" else 0.18
+    low = int(median * (1 - band))
+    high = int(median * (1 + band))
+    # 실거래가 범위가 있으면 밴드를 현실값으로 클램프 (낙찰가는 시세 범위 × 0.85 안쪽 경향)
+    if market_min and market_min > 0 and market_max and market_max > 0:
+        low = max(low, int(market_min * 0.70))
+        high = min(high, int(market_max * 0.95))
+        if low >= high:  # 클램프가 역전되면 중앙값 ±10%로 복귀
+            low, high = int(median * 0.90), int(median * 1.10)
 
     # 현재 최저가 vs 예상 낙찰가 비교 (가드는 하지 않음 — 정보로 노출)
     min_price = prop.get("min_price") or 0
@@ -111,11 +140,14 @@ def predict_price(prop: dict[str, Any]) -> dict[str, Any] | None:
         "kind": cls,
         "base_ratio": round(ratio, 3),
         "fail_count_applied": fail,
+        "market_weight": round(w, 2),
+        "market_sample_count": market_n,
+        "confidence": confidence,
         "vs_min_percent": vs_min_percent,
         "judgment": judgment,
         "disclaimer": (
             "통계 기반 추정값입니다 (AI/ML 아님). "
-            "유찰 회차별 평균 잔존가율 + 카테고리별 한국 시장 낙찰가율 + 시세 가중평균. "
-            "실제 입찰은 현장 답사·권리분석 결과를 반영해 결정하세요."
+            "감정가 잔존가율 + 카테고리별 한국 시장 낙찰가율 + 국토부 실거래가 신뢰도 가중. "
+            "더 깊은 분석은 상단 'AI 예상가' 버튼을, 실제 입찰은 현장 답사·권리분석을 반영하세요."
         ),
     }

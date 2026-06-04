@@ -36,7 +36,8 @@ def main() -> int:
     rows = conn.execute(
         "SELECT id, title, category, detail_json, rights_json, share_yn, "
         "building_shared, appraisal_price, min_price, fail_count, "
-        "market_median_price FROM properties WHERE passes_filters = 1"
+        "market_median_price, market_sample_count, market_min_price, market_max_price "
+        "FROM properties WHERE passes_filters = 1"
     ).fetchall()
 
     n_rights, n_price = 0, 0
@@ -52,6 +53,9 @@ def main() -> int:
             "min_price": r["min_price"],
             "fail_count": r["fail_count"],
             "market_median_price": r["market_median_price"],
+            "market_sample_count": r["market_sample_count"],
+            "market_min_price": r["market_min_price"],
+            "market_max_price": r["market_max_price"],
         }
 
         # #9 권리분석
