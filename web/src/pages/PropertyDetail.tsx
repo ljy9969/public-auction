@@ -42,11 +42,9 @@ const COURT_SEARCH_URL =
 
 function CourtOriginCta({
   caseNo,
-  officeNm,
   sourceUrl,
 }: {
   caseNo: string | null;
-  officeNm: string | null;
   sourceUrl: string | null;
 }) {
   const [copied, setCopied] = useState(false);
@@ -69,6 +67,11 @@ function CourtOriginCta({
 
   return (
     <div className="court-cta">
+      {caseNo && (
+        <button type="button" className="court-cta-copy" onClick={copy}>
+          {copied ? "복사됨 ✓" : `사건번호 복사 (${caseNo})`}
+        </button>
+      )}
       <a
         href={href}
         target="_blank"
@@ -77,17 +80,6 @@ function CourtOriginCta({
       >
         법원경매정보 물건상세검색 →
       </a>
-      {caseNo && (
-        <button type="button" className="court-cta-copy" onClick={copy}>
-          {copied ? "복사됨 ✓" : `사건번호 복사 (${caseNo})`}
-        </button>
-      )}
-      <p className="court-cta-hint">
-        <strong>💡 Tampermonkey + BidPick 유저스크립트</strong> 설치 시 링크 한 번 클릭으로
-        법원·연도·타경 번호 자동 입력 + 검색까지 실행됩니다.
-        <br />
-        미설치 시: 물건상세검색에서{officeNm ? ` ‘${officeNm}’ 선택 후 ` : " "}사건번호(타경 칸)에 위 번호를 붙여넣으세요.
-      </p>
     </div>
   );
 }
@@ -355,7 +347,6 @@ export default function PropertyDetail() {
           {prop.source === "court" ? (
             <CourtOriginCta
               caseNo={prop.court_case_no}
-              officeNm={prop.court_office_nm}
               sourceUrl={prop.source_url}
             />
           ) : (
