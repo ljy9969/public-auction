@@ -93,11 +93,10 @@ export default function BidSimulator({ prop }: { prop: Property }) {
         <label>
           <span>입찰가 (원)</span>
           <input
-            type="number"
-            min={0}
-            step={100_000}
-            value={bidStr}
-            onChange={(e) => setBidStr(e.target.value)}
+            type="text"
+            inputMode="numeric"
+            value={bidStr ? Number(bidStr).toLocaleString("ko-KR") : ""}
+            onChange={(e) => setBidStr(e.target.value.replace(/[^\d]/g, ""))}
           />
           {minBid > 0 && (
             <small className={belowMin ? "bid-warn" : "bid-info"}>
@@ -110,12 +109,17 @@ export default function BidSimulator({ prop }: { prop: Property }) {
         <label>
           <span>명도비 (override, 옵션)</span>
           <input
-            type="number"
-            min={0}
-            step={100_000}
-            placeholder={String(evictionEst.amount)}
-            value={evictionOverride}
-            onChange={(e) => setEvictionOverride(e.target.value)}
+            type="text"
+            inputMode="numeric"
+            placeholder={evictionEst.amount.toLocaleString("ko-KR")}
+            value={
+              evictionOverride
+                ? Number(evictionOverride).toLocaleString("ko-KR")
+                : ""
+            }
+            onChange={(e) =>
+              setEvictionOverride(e.target.value.replace(/[^\d]/g, ""))
+            }
           />
           <small className="bid-info">기본: {evictionEst.basis}</small>
         </label>
