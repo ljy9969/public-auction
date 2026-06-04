@@ -550,13 +550,14 @@ export function buildingAgeCategory(
   return "노후";                       // 25년+
 }
 
-/** title에서 "제N층" 추출. 총 층수는 건축물대장(floor_total)으로 보강. */
+/** title에서 "N층" 추출 (온비드 "제13층" + 경매 "4층603호" 둘 다 — '제' 선택적).
+ *  총 층수는 건축물대장(floor_total)으로 보강. */
 export function parseFloor(
   title: string | null | undefined,
   total: number | null | undefined = null
 ): FloorInfo {
   if (!title) return { current: null, total: total ?? null, category: null };
-  const m = title.match(/제\s*(\d+)\s*층/);
+  const m = title.match(/제?\s*(\d+)\s*층/);
   const current = m ? parseInt(m[1], 10) : null;
   let category: FloorInfo["category"] = null;
   if (current != null) {
