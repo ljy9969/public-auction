@@ -101,6 +101,31 @@ def _category_label(row: dict[str, Any]) -> str:
     return lcl_label or scl_label or "기타"
 
 
+def extract_current_min_price(dma_result: dict[str, Any]) -> int | None:
+    """detail API 응답에서 '현재 회차' 최저매각가 추출.
+
+    검색 API 의 minmaePrice 는 첫 회차(=감정가) 만 돌려줘서, 유찰된 매물의
+    감액된 가격을 못 본다. detail 의 gdsDspslDxdyLst 에는 회차별 기일이
+    들어 있고, 진행 중 입찰기일의 tsLwsDspslPrc 가 진짜 최저매각가.
+
+    판정: auctnDxdyKndCd='01' (입찰기일) + auctnDxdyRsltCd 없음(=결과 미정/진행)
+          + tsLwsDspslPrc > 0. dxdyYmd 가장 빠른 항목 선택.
+    """
+    dxdy = dma_result.get("gdsDspslDxdyLst") or []
+    upcoming = [
+        x for x in dxdy
+        if isinstance(x, dict)
+        and x.get("auctnDxdyKndCd") == "01"
+        and not x.get("auctnDxdyRsltCd")
+        and isinstance(x.get("tsLwsDspslPrc"), int)
+        and x["tsLwsDspslPrc"] > 0
+    ]
+    if not upcoming:
+        return None
+    upcoming.sort(key=lambda x: x.get("dxdyYmd") or "")
+    return int(upcoming[0]["tsLwsDspslPrc"])
+
+
 def _parse_land_share_ratio(*texts: str) -> float | None:
     """buldList/mulBigo의 'N분의 M' 패턴에서 토지 지분 비율(0~1) 추출.
 
