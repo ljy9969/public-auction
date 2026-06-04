@@ -27,6 +27,7 @@ import {
   type PropertyTab,
 } from "../api";
 import { useFavorites } from "../favorites";
+import { usePersistentState } from "../usePersistentState";
 
 // 수집 단계에서 criteria.yaml post_filters.max_fail_count(=3) 이하만 가져오므로,
 // 유찰 필터도 0~3 범위로 제한 (그 이상은 매물이 없음).
@@ -40,21 +41,21 @@ const clampFail = (n: number): number => {
 export default function PropertyList() {
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const [maxFail, setMaxFail] = useState(MAX_FAIL_COUNT);
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
   // 상세에서 '목록'으로 돌아올 때, 직전에 보던/그 물건의 탭으로 복원 (없으면 기본 오피스텔).
   const [tab, setTab] = useState<PropertyTab>(() => readStoredTab() ?? "용도복합·오피스텔 쪈");
-  // 추가 필터 (클라이언트 사이드)
-  const [favOnly, setFavOnly] = useState(false);
-  const [regionFilter, setRegionFilter] = useState<"all" | "gangnam" | "songpa">("all");
-  const [priceMax, setPriceMax] = useState<"all" | "1" | "2" | "3">("all");
-  const [ageMax, setAgeMax] = useState<"all" | "5" | "10" | "20">("all");
-  const [floorFilter, setFloorFilter] = useState<"all" | "저층" | "중층" | "고층">("all");
-  const [subCategory, setSubCategory] = useState<string>("all");
-  const [tenantRisk, setTenantRisk] = useState<"all" | "yes" | "no">("all");
-  const [sourceFilter, setSourceFilter] = useState<"all" | "onbid" | "court">("all");
-  const [sortKey, setSortKey] = useState<"default" | "price" | "area" | "transit" | "bidStart" | "fail">("default");
-  const [sortAsc, setSortAsc] = useState(true);
+  // 필터·정렬은 상세 다녀와도 유지 — sessionStorage 영속화 (탭 닫으면 초기화).
+  const [maxFail, setMaxFail] = usePersistentState("auction:maxFail", MAX_FAIL_COUNT);
+  const [favOnly, setFavOnly] = usePersistentState("auction:favOnly", false);
+  const [regionFilter, setRegionFilter] = usePersistentState<"all" | "gangnam" | "songpa">("auction:regionFilter", "all");
+  const [priceMax, setPriceMax] = usePersistentState<"all" | "1" | "2" | "3">("auction:priceMax", "all");
+  const [ageMax, setAgeMax] = usePersistentState<"all" | "5" | "10" | "20">("auction:ageMax", "all");
+  const [floorFilter, setFloorFilter] = usePersistentState<"all" | "저층" | "중층" | "고층">("auction:floorFilter", "all");
+  const [subCategory, setSubCategory] = usePersistentState<string>("auction:subCategory", "all");
+  const [tenantRisk, setTenantRisk] = usePersistentState<"all" | "yes" | "no">("auction:tenantRisk", "all");
+  const [sourceFilter, setSourceFilter] = usePersistentState<"all" | "onbid" | "court">("auction:sourceFilter", "all");
+  const [sortKey, setSortKey] = usePersistentState<"default" | "price" | "area" | "transit" | "bidStart" | "fail">("auction:sortKey", "default");
+  const [sortAsc, setSortAsc] = usePersistentState("auction:sortAsc", true);
   const cardListRef = useRef<HTMLDivElement | null>(null);
   const [scrollTargetId, setScrollTargetId] = useState<number | null>(null);
   const navigate = useNavigate();
