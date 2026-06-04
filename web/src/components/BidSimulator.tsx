@@ -47,6 +47,19 @@ function evictionCostEstimate(prop: Property): { amount: number; basis: string }
   };
 }
 
+/** 총 매수 비용용 — 1억 이상도 만원 단위까지 (예: '2억 3,575만'). formatPrice 는
+ *  1억 이상에서 'X.X억' 으로 반올림해 만원 단위가 사라져 사용자가 정밀도를
+ *  잃는 문제 해소. 1억 미만은 기존과 동일하게 'NNNN만'. */
+function formatPriceManwon(n: number): string {
+  if (n < 100_000_000) {
+    return `${Math.round(n / 10_000).toLocaleString("ko-KR")}만`;
+  }
+  const eok = Math.floor(n / 100_000_000);
+  const manwon = Math.round((n % 100_000_000) / 10_000);
+  if (manwon === 0) return `${eok}억`;
+  return `${eok}억 ${manwon.toLocaleString("ko-KR")}만`;
+}
+
 export default function BidSimulator({ prop }: { prop: Property }) {
   const minBid = prop.min_price ?? 0;
   const defaultBid = prop.predicted_price_median ?? minBid;
@@ -149,7 +162,7 @@ export default function BidSimulator({ prop }: { prop: Property }) {
         <div className="info-row bid-sim-total">
           <dt>총 매수 비용</dt>
           <dd>
-            <strong>{formatPrice(total)}</strong>
+            <strong>{formatPriceManwon(total)}</strong>
             {marketDiffLabel && (
               <small
                 className={
