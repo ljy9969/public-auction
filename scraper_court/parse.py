@@ -91,11 +91,15 @@ def _category_label(row: dict[str, Any]) -> str:
     lcls = row.get("lclsUtilCd") or ""
     scls = row.get("sclsUtilCd") or ""
     lcl_label = _LCLS_LABEL.get(lcls, "")
-    scl_label = ""
-    if lcls == "10000":
-        scl_label = _LAND_SCLS_LABEL.get(scls, "")
-    elif lcls == "20000":
-        scl_label = _BLD_SCLS_LABEL.get(scls, "")
+    # ★ sclsUtilCd 코드 매핑은 부정확하다 — 일괄매각 단독주택 건물이 scls 20101(우리
+    #   표상 '아파트')로 와도 법원의 실제 용도명 dspslUsgNm은 '단독주택'(2026-06-07
+    #   2024타경52930 사례). 그래서 dspslUsgNm을 세부 용도로 우선 사용한다.
+    scl_label = (row.get("dspslUsgNm") or "").strip()
+    if not scl_label:
+        if lcls == "10000":
+            scl_label = _LAND_SCLS_LABEL.get(scls, "")
+        elif lcls == "20000":
+            scl_label = _BLD_SCLS_LABEL.get(scls, "")
     if lcl_label and scl_label:
         return f"{lcl_label} / {scl_label}"
     return lcl_label or scl_label or "기타"

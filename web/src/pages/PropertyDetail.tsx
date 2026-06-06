@@ -421,6 +421,11 @@ export default function PropertyDetail() {
             </span>
           )}
           {prop.category && <span className="hero-category">{prop.category}</span>}
+          {/일괄매각/.test(prop.detail_json?.["비고"] || "") && (
+            <span className="hero-bundle" title="토지+건물 등을 묶어 한 번에 파는 일괄매각">
+              일괄매각
+            </span>
+          )}
           {prop.bid_method && <span className="hero-method">{prop.bid_method}</span>}
           <div className="hero-meta-right">
             {prop.id != null && (

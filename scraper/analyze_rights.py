@@ -106,14 +106,28 @@ def analyze_rights(prop: dict[str, Any]) -> dict[str, Any]:
                 "label": f"임차인 {tenant_count}명 (대항력 확인 필요)",
             })
 
+    # 지분 매물 caution — 입찰 메리트·환금성 (인수 위험과는 별개)
+    if re.search(r"공유자\s*우선매수", text):
+        flags.append({
+            "kind": "co_owner_priority",
+            "label": "공유자 우선매수권 — 낙찰해도 공유자가 같은 값에 가져갈 수 있음",
+        })
+    is_share = (prop.get("share_yn") == "Y") or prop.get("building_shared") is True
+    if is_share:
+        ratio = prop.get("building_share_ratio") or prop.get("land_share_ratio")
+        rtxt = f" {round(ratio * 100)}%" if isinstance(ratio, (int, float)) and 0 < ratio < 1 else ""
+        flags.append({
+            "kind": "minority_share",
+            "label": f"지분 매물{rtxt} — 단독 사용·처분 제약, 출구는 공유물분할 소송 등",
+        })
+    cautions = [f for f in flags if f["kind"] in ("co_owner_priority", "minority_share")]
+
     # 위험도 산정
     takeover = [f for f in flags if f["kind"] == "takeover_risk"]
     if len(takeover) >= 2:
         risk = "high"
-    elif len(takeover) == 1:
+    elif takeover or tenant_count > 0 or cautions:
         risk = "medium"
-    elif tenant_count > 0:
-        risk = "medium"  # 대항력 미확인이지만 임차인 존재
     else:
         risk = "low"
 
@@ -121,14 +135,15 @@ def analyze_rights(prop: dict[str, Any]) -> dict[str, Any]:
 
     if risk == "low":
         summary = "특수권리·대항력 임차인 키워드 미검출 — 등기부등본 확인 권장"
-    elif risk == "medium":
-        if takeover:
-            summary = f"{takeover[0]['label']} 등 인수 위험 1건 — 직접 확인 필수"
-        else:
-            summary = f"임차인 존재 ({tenant_count}명) — 대항력 직접 확인 필수"
-    else:
-        labels = ", ".join(f["label"] for f in takeover[:3])
+    elif risk == "high":
+        labels = ", ".join(f["label"].split(" —")[0] for f in takeover[:3])
         summary = f"인수 위험 다중 ({labels}) — 입찰 전 변호사 자문 권장"
+    elif takeover:
+        summary = f"{takeover[0]['label']} 등 인수 위험 1건 — 직접 확인 필수"
+    elif cautions:
+        summary = " · ".join(f["label"].split(" —")[0] for f in cautions) + " — 입찰 메리트 신중 검토"
+    else:
+        summary = f"임차인 존재 ({tenant_count}명) — 대항력 직접 확인 필수"
 
     return {
         "risk_level": risk,

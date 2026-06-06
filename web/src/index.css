@@ -288,6 +288,15 @@ button.secondary {
   color: #475569;
 }
 
+.hero-bundle {
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.12rem 0.5rem;
+  border-radius: 6px;
+}
+
 .hero-meta-right {
   margin-left: auto;
   display: inline-flex;
