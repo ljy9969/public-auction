@@ -721,7 +721,11 @@ button.secondary {
 .market-desc {
   font-size: 0.75rem;
   color: #64748b;
-  /* 텍스트 길어도 줄바꿈 대신 한 줄 + ellipsis. 카드 폭 안에서 잘림. */
+}
+
+/* 네이버 부동산 카드의 하단 설명만 ellipsis — '「긴 단지명」 매물 검색' 처럼 */
+/*  길어지는 케이스가 잦아 한 줄로 자르고 …                              */
+.market-link.naver .market-desc {
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
@@ -772,11 +776,6 @@ button.secondary {
 .market-empty-row > .market-empty {
   flex: 1 1 16rem;
   margin: 0;
-  /* 좌측 메시지는 항상 3줄로 고정. 좁은 폭에서 4줄+ 늘어나지 않도록 line-clamp. */
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
 
 .market-empty-row > .market-links {
