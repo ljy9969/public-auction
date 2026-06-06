@@ -2787,6 +2787,57 @@ button.secondary {
   white-space: nowrap;
 }
 
+/* 검색 자동완성 드롭다운 (사건/물건번호·주소·건물명) */
+.lookup-results {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  z-index: 50;
+  min-width: 22rem;
+  max-width: 28rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+}
+.lookup-results li {
+  margin: 0;
+}
+.lookup-result {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+}
+.lookup-result:hover {
+  background: #f1f5f9;
+}
+.lookup-result-main {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.84rem;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lookup-result-sub {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
 /* ===== #6 추천/큐레이션 ===== */
 .curated-page {
   display: flex;

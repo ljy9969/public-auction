@@ -201,9 +201,19 @@ export async function fetchStats(): Promise<StatsSummary> {
   return res.json();
 }
 
+export interface LookupMatch {
+  id: number;
+  title: string;
+  address_jibun: string | null;
+  building_name: string | null;
+  cltr_mnmt_no: string | null;
+  court_case_no: string | null;
+  source: string | null;
+}
+
 export async function lookupProperty(
   query: string
-): Promise<{ found: boolean; id?: number; query: string }> {
+): Promise<{ found: boolean; id?: number; matches?: LookupMatch[]; query: string }> {
   const res = await fetch(`/api/properties/lookup?q=${encodeURIComponent(query)}`);
   if (!res.ok) throw new Error("Lookup failed");
   return res.json();

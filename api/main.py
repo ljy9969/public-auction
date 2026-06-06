@@ -152,31 +152,58 @@ def list_properties(
 
 @app.get("/api/properties/lookup")
 def lookup_property(q: str) -> dict[str, Any]:
-    """사건번호/물건관리번호로 매물 직조회 (#7).
+    """매물 검색 — 사건/물건관리번호 + 주소(지번·도로명) + 건물명.
 
-    q: cltr_no (예 2026-04174-001) 또는 cltr_mnmt_no 부분 일치.
-    매물 발견 시 {found: true, id: int} 반환, 미발견은 {found: false}.
+    관련도순 매칭 목록(matches, 최대 8건)을 반환. 하위호환으로 found/id(최상위)도 포함.
+    랭킹: 번호 정확일치 > 번호 부분일치 > 건물명 > 주소. passes_filters=1 우선, 최신순.
     """
     needle = (q or "").strip()
     if not needle:
         raise HTTPException(status_code=400, detail="query empty")
+    like = f"%{needle}%"
     conn = scraper_db.get_connection()
-    row = conn.execute(
+    rows = conn.execute(
         """
-        SELECT id FROM properties
-        WHERE cltr_no = ?
-           OR cltr_mnmt_no = ?
-           OR cltr_no LIKE ?
-           OR cltr_mnmt_no LIKE ?
-        ORDER BY (CASE WHEN cltr_no = ? OR cltr_mnmt_no = ? THEN 0 ELSE 1 END), scraped_at DESC
-        LIMIT 1
+        SELECT id, title, address_jibun, address_road, building_name,
+               cltr_mnmt_no, court_case_no, source
+        FROM properties
+        WHERE cltr_no = ? OR cltr_mnmt_no = ? OR court_case_no = ?
+           OR cltr_no LIKE ? OR cltr_mnmt_no LIKE ? OR court_case_no LIKE ?
+           OR building_name LIKE ? OR address_jibun LIKE ? OR address_road LIKE ?
+        ORDER BY
+          CASE
+            WHEN cltr_no = ? OR cltr_mnmt_no = ? OR court_case_no = ? THEN 0
+            WHEN cltr_no LIKE ? OR cltr_mnmt_no LIKE ? OR court_case_no LIKE ? THEN 1
+            WHEN building_name LIKE ? THEN 2
+            ELSE 3
+          END,
+          passes_filters DESC,
+          scraped_at DESC
+        LIMIT 8
         """,
-        (needle, needle, f"%{needle}%", f"%{needle}%", needle, needle),
-    ).fetchone()
+        (
+            needle, needle, needle,
+            like, like, like, like, like, like,
+            needle, needle, needle,
+            like, like, like,
+            like,
+        ),
+    ).fetchall()
     conn.close()
-    if row is None:
-        return {"found": False, "query": needle}
-    return {"found": True, "id": int(row["id"]), "query": needle}
+    matches = [
+        {
+            "id": int(r["id"]),
+            "title": r["title"],
+            "address_jibun": r["address_jibun"],
+            "building_name": r["building_name"],
+            "cltr_mnmt_no": r["cltr_mnmt_no"],
+            "court_case_no": r["court_case_no"],
+            "source": r["source"],
+        }
+        for r in rows
+    ]
+    top = matches[0]["id"] if matches else None
+    return {"found": top is not None, "id": top, "matches": matches, "query": needle}
 
 
 @app.get("/api/properties/{prop_id}", response_model=PropertyDetail)
