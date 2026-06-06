@@ -71,6 +71,9 @@ Append-Output (& $python -m scripts.backfill_analysis 2>&1)
 Write-Log '[4.5/5] Sweep filters — drop drift rows (stricter criteria.yaml)'
 Append-Output (& $python -m scripts.sweep_filters --apply --delete 2>&1)
 
+Write-Log '[4.7/5] Discord notify — 지분 투자 추천 (권리 안전 + 시세/감정가 대비 저가 + 지역 호재)'
+Append-Output (& $python -m scripts.notify_share_investment 2>&1)
+
 $sw.Stop()
 # NOTE: TimeSpan.Minutes returns ONLY the minute component (0-59).
 # Without including Hours, a 72-min job would print as '12m' (1h.Minutes=12).
