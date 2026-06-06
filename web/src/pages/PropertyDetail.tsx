@@ -263,6 +263,59 @@ function naverLinkUrl(prop: Property): string {
   return `https://m.land.naver.com/search/result/${encodeURIComponent(q)}`;
 }
 
+/** 국토부 실거래가 공개시스템 — SPA 라 URL 파라미터로 자동 prefill 불가, 진입점만 제공. */
+const MOLIT_RT_URL = "https://rt.molit.go.kr/";
+
+/** 시세 외부 사이트 검색 링크 묶음 — KB / 네이버 / 국토부 실거래가. */
+function MarketSearchLinks({ prop }: { prop: Property }) {
+  const kbUrl = kbLinkUrl(prop);
+  const naverUrl = naverLinkUrl(prop);
+  const descName = prop.building_name
+    ? `「${prop.building_name}」`
+    : _cleanRoad(prop.address_road) || "단지";
+  const kbByCoord = prop.geo_lat != null && prop.geo_lng != null;
+  return (
+    <div className="market-links">
+      <a
+        href={kbUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="market-link kb"
+        title={
+          kbByCoord
+            ? `지도 좌표: ${prop.geo_lat},${prop.geo_lng}`
+            : "검색창에서 직접 단지명/도로명 입력해야 할 수 있음"
+        }
+      >
+        <span className="market-name">KB부동산</span>
+        <span className="market-desc">
+          {kbByCoord ? "지도 위치로 이동" : `${descName} 검색`}
+        </span>
+      </a>
+      <a
+        href={naverUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="market-link naver"
+        title={`검색: ${prop.building_name || _cleanRoad(prop.address_road)}\n단지명 매칭되면 단지 카드 직진, 미매칭은 매물유형 필터 확인 필요`}
+      >
+        <span className="market-name">네이버 부동산</span>
+        <span className="market-desc">{descName} 매물 검색</span>
+      </a>
+      <a
+        href={MOLIT_RT_URL}
+        target="_blank"
+        rel="noreferrer"
+        className="market-link molit"
+        title="국토부 실거래가 공개시스템 — 카테고리(아파트/연립다세대/오피스텔 등) 탭에서 단지명 직접 검색"
+      >
+        <span className="market-name">국토부 실거래가</span>
+        <span className="market-desc">단지명 직접 검색</span>
+      </a>
+    </div>
+  );
+}
+
 export default function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const [prop, setProp] = useState<Property | null>(null);
@@ -754,56 +807,22 @@ export default function PropertyDetail() {
                 <p className="section-hint" style={{ marginTop: "0.75rem" }}>
                   추가 검증 (KB / 네이버는 자동 시세 비공개) — 외부 사이트 직접 확인 권장
                 </p>
+                <MarketSearchLinks prop={prop} />
               </>
             ) : (
-              <p className="section-hint market-empty">
-                <strong>신뢰할 만한 실거래가 없음</strong>
-                <br />
-                12개월 내 <strong>같은 단지·인근 지번</strong> 거래가 없어 시세를 표시하지 않습니다.
-                <br />
-                <span className="market-empty-sub">
-                  (동 전체 평균은 다른 단지가 섞여 범위가 넓어 제외)
-                </span>
-              </p>
+              <div className="market-empty-row">
+                <p className="section-hint market-empty">
+                  <strong>신뢰할 만한 실거래가 없음</strong>
+                  <br />
+                  12개월 내 <strong>같은 단지·인근 지번</strong> 거래가 없어 시세를 표시하지 않습니다.
+                  <br />
+                  <span className="market-empty-sub">
+                    (동 전체 평균은 다른 단지가 섞여 범위가 넓어 제외)
+                  </span>
+                </p>
+                <MarketSearchLinks prop={prop} />
+              </div>
             )}
-            {(() => {
-              const kbUrl = kbLinkUrl(prop);
-              const naverUrl = naverLinkUrl(prop);
-              const descName = prop.building_name
-                ? `「${prop.building_name}」`
-                : _cleanRoad(prop.address_road) || "단지";
-              const kbByCoord = prop.geo_lat != null && prop.geo_lng != null;
-              return (
-                <div className="market-links">
-                  <a
-                    href={kbUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="market-link kb"
-                    title={
-                      kbByCoord
-                        ? `지도 좌표: ${prop.geo_lat},${prop.geo_lng}`
-                        : "검색창에서 직접 단지명/도로명 입력해야 할 수 있음"
-                    }
-                  >
-                    <span className="market-name">KB부동산</span>
-                    <span className="market-desc">
-                      {kbByCoord ? "지도 위치로 이동" : `${descName} 검색`}
-                    </span>
-                  </a>
-                  <a
-                    href={naverUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="market-link naver"
-                    title={`검색: ${prop.building_name || _cleanRoad(prop.address_road)}\n단지명 매칭되면 단지 카드 직진, 미매칭은 매물유형 필터 확인 필요`}
-                  >
-                    <span className="market-name">네이버 부동산</span>
-                    <span className="market-desc">{descName} 매물 검색</span>
-                  </a>
-                </div>
-              );
-            })()}
           </section>
 
           {prop.rental_yield_percent != null && (

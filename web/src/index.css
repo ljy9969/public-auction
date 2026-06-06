@@ -749,6 +749,25 @@ button.secondary {
   line-height: 1.7;
 }
 
+/* '신뢰할 만한 실거래가 없음' 메시지 + 외부 검색 링크를 같은 줄에 좌/우 배치. */
+.market-empty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.market-empty-row > .market-empty {
+  flex: 1 1 16rem;
+  margin: 0;
+}
+
+.market-empty-row > .market-links {
+  flex: 0 1 auto;
+  min-width: 22rem;
+}
+
 .market-empty-sub {
   font-size: 0.82rem;
   color: #94a3b8;
