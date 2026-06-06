@@ -55,7 +55,7 @@ export default function PropertyList() {
   const [subCategory, setSubCategory] = usePersistentState<string>("auction:subCategory", "all");
   const [tenantRisk, setTenantRisk] = usePersistentState<"all" | "yes" | "no">("auction:tenantRisk", "all");
   const [sourceFilter, setSourceFilter] = usePersistentState<"all" | "onbid" | "court">("auction:sourceFilter", "all");
-  const [sortKey, setSortKey] = usePersistentState<"default" | "price" | "area" | "transit" | "bidStart" | "fail" | "buildAge">("auction:sortKey", "default");
+  const [sortKey, setSortKey] = usePersistentState<"default" | "price" | "area" | "transit" | "bidStart" | "fail" | "buildAge" | "shareRatio">("auction:sortKey", "default");
   const [sortAsc, setSortAsc] = usePersistentState("auction:sortAsc", true);
   const cardListRef = useRef<HTMLDivElement | null>(null);
   const [scrollTargetId, setScrollTargetId] = useState<number | null>(null);
@@ -214,6 +214,10 @@ export default function PropertyList() {
         // 건물 연식 정렬 — 준공일(YYYYMMDD)을 숫자로. 오름차순=오래된 건물 먼저.
         const d = p.use_apr_day;
         return d && /^\d{8}$/.test(d) ? parseInt(d, 10) : null;
+      }
+      if (sortKey === "shareRatio") {
+        // 지분 % — 주거는 building_share_ratio, 토지는 land_share_ratio.
+        return p.building_share_ratio ?? p.land_share_ratio ?? null;
       }
       return p.transit_minutes ?? null;
     };
@@ -443,14 +447,21 @@ export default function PropertyList() {
         <div className="filter-break" />
         <div className="filter-sort" role="group" aria-label="정렬">
           <span className="filter-sort-label">정렬</span>
-          {([
-            ["price", "최저가"],
-            ["area", "건물 면적"],
-            ["buildAge", "건물 연식"],
-            ["fail", "유찰횟수"],
-            ["transit", "직장까지"],
-            ["bidStart", "입찰 시작"],
-          ] as const).map(([key, label]) => (
+          {(() => {
+            const buttons: Array<[typeof sortKey, string]> = [
+              ["price", "최저가"],
+              ["area", "건물 면적"],
+              ["buildAge", "건물 연식"],
+              ["fail", "유찰횟수"],
+              ["transit", "직장까지"],
+              ["bidStart", "입찰 시작"],
+            ];
+            // '지분 %' 는 주거/토지 지분 탭에서만 의미가 있어 그 탭에서만 노출.
+            if (tab === "주거 지분" || tab === "토지 지분") {
+              buttons.push(["shareRatio", "지분 %"]);
+            }
+            return buttons;
+          })().map(([key, label]) => (
             <button
               key={key}
               type="button"
