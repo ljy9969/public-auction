@@ -16,10 +16,13 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scraper.db import get_connection
-from scraper.filters.realprice import estimate_market, estimate_rental
+from scraper.filters.realprice import clear_trade_cache, estimate_market, estimate_rental
 
 
 def main() -> None:
+    # 거래 캐시 비우기 — long-running backend(지금 수집 반복)에서 전날 거래가
+    # 모듈 캐시에 남아 stale 시세를 쓰는 것 방지. (캐시는 1회 백필 단위로만 유효)
+    clear_trade_cache()
     conn = get_connection()
     rows = conn.execute(
         """SELECT id, category, address_jibun, building_name, title, area_build_m2,

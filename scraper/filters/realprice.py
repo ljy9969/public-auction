@@ -172,6 +172,9 @@ def _normalize_name(s: str) -> str:
 # 같은 단지가 없을 때 '주변'으로 인정할 지번 본번 차이. MOLIT엔 좌표가 없어
 # 진짜 반경(m) 대신 지번 본번 근접도를 위치 근사로 사용 (본번은 대체로 순차 배정).
 JIBUN_NEAR_BONBUN = 10
+# 인근 지번 티어 면적 허용 오차. 같은 단지가 아닌 '주변 다른 건물'이라 면적은
+# 보수적으로(±10%, 같은 단지 티어와 동일) — 평형 다른 매물 혼입 방지 (2026-06-06).
+JIBUN_AREA_TOL = 0.10
 
 
 def _bonbun(s: Any) -> int | None:
@@ -318,7 +321,7 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
         if not my or not ta:
             return False
         try:
-            return abs(float(ta) - float(my)) / float(my) <= 0.15
+            return abs(float(ta) - float(my)) / float(my) <= JIBUN_AREA_TOL
         except (ValueError, TypeError):
             return False
 
@@ -460,6 +463,7 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
             {
                 "name": s.get("offiNm") or s.get("aptNm") or s.get("mhouseNm") or "",
                 "dong": s.get("umdNm") or "",
+                "jibun": s.get("jibun") or "",  # 지도 지오코딩용 (프론트에서 동+지번으로 네이버 지오코딩)
                 "area_m2": s.get("excluUseAr"),
                 "floor": s.get("floor"),
                 "deal_amount": _parse_amount(s.get("dealAmount")),
