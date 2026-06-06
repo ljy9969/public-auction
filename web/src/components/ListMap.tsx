@@ -60,6 +60,9 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
   // 사용자가 Naver 기본 컨트롤로 토글한 mapType (예: '위성') 을 보존해, init 이 다시
   // 트리거(필터 변경 등으로 markers 새 identity) 되어도 이전 선택을 그대로 복원.
   const mapTypeRef = useRef<string | null>(null);
+  // 직전에 그렸던 markers 의 id 시퀀스. 진짜 markers 내용이 변했을 때만 fitBounds —
+  // 카드 hover 로 markers 가 같은 set 으로 재생성돼도 zoom/center/mapType 유지.
+  const prevMarkerIdsRef = useRef<string>("");
   // onMarkerClick은 부모(PropertyList)에서 인라인 화살표로 넘어와 매 렌더마다 identity가 바뀐다.
   // 이걸 아래 init useEffect deps에 직접 넣으면: 마커 클릭 → 부모 리렌더 → 핸들러 identity 변경
   // → 맵 재초기화(fitBounds) → 줌이 서울 전체로 리셋되는 버그가 생긴다.
@@ -76,42 +79,36 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
       const naver = (window as NaverWindow).naver?.maps;
       if (!naver || !mapDiv.current) return;
 
+      // 첫 호출이면 Map 인스턴스 생성 + maptype listener 등록. 이후 호출은 같은
+      // Map 을 재사용 — mapType/zoom/center 가 보존되어 hover 등으로 마커가
+      // 새 identity 가 되어도 시각 상태가 그대로 유지된다.
+      const isFirstInit = !mapInstance.current;
+      if (isFirstInit) {
+        const map = new naver.Map(mapDiv.current, {
+          zoom: 14,
+          mapTypeControl: true, // 일반 ↔ 위성 토글 (Naver 기본 컨트롤)
+        });
+        mapInstance.current = map;
+        const mapAny = map as unknown as {
+          setMapTypeId: (id: string) => void;
+          getMapTypeId: () => string;
+          addListener: (ev: string, fn: () => void) => void;
+        };
+        if (mapTypeRef.current) {
+          mapAny.setMapTypeId(mapTypeRef.current);
+        }
+        mapAny.addListener("maptypeid_changed", () => {
+          try {
+            mapTypeRef.current = mapAny.getMapTypeId();
+          } catch {
+            /* ignore */
+          }
+        });
+      }
+      const map = mapInstance.current!;
+
+      // 마커는 매번 다시 그림 (강조 상태/순번 변화 반영).
       markerInstances.current.forEach((m) => m.setMap(null));
-      markerInstances.current = [];
-
-      const bounds = new naver.LatLngBounds();
-      markers.forEach((m) => bounds.extend(new naver.LatLng(m.lat, m.lng)));
-
-      const map = new naver.Map(mapDiv.current, {
-        zoom: 14,
-        mapTypeControl: true, // 일반 ↔ 위성 토글 (Naver 기본 컨트롤)
-      });
-      mapInstance.current = map;
-      // 이전에 보존한 mapType 이 있으면 복원 — markers 변경으로 새 Map 인스턴스가
-      // 만들어져도 사용자가 켜둔 '위성' 등이 유지된다.
-      const mapsAny = naver as unknown as {
-        Event?: { addListener: (target: unknown, ev: string, fn: () => void) => void };
-      };
-      const mapAny = map as unknown as {
-        setMapTypeId: (id: string) => void;
-        getMapTypeId: () => string;
-      };
-      if (mapTypeRef.current) {
-        mapAny.setMapTypeId(mapTypeRef.current);
-      }
-      mapsAny.Event?.addListener(map, "maptypeid_changed", () => {
-        mapTypeRef.current = mapAny.getMapTypeId();
-      });
-
-      if (markers.length === 1) {
-        // 좌표 1개만 있을 때 너무 줌인되면 'X 위치 고정'처럼 보임 (특히 토지 탭처럼
-        // 대부분 row가 Kakao 백필 전이라 좌표 1개뿐인 케이스). 도시 단위 zoom으로.
-        map.setCenter(new naver.LatLng(markers[0].lat, markers[0].lng));
-        map.setZoom(11);
-      } else {
-        map.fitBounds(bounds);
-      }
-
       markerInstances.current = markers.map((m) => {
         const marker = new naver.Marker({
           position: new naver.LatLng(m.lat, m.lng),
@@ -123,6 +120,21 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
         marker.addListener("click", () => onMarkerClickRef.current?.(m.id));
         return marker;
       });
+
+      // markers 내용이 진짜 바뀐 첫 init 일 때만 fitBounds — 같은 set 으로 hover
+      // 인해 ref 만 새로워진 경우엔 zoom/center 유지.
+      const idsKey = markers.map((m) => m.id).join(",");
+      if (isFirstInit || idsKey !== prevMarkerIdsRef.current) {
+        if (markers.length === 1) {
+          map.setCenter(new naver.LatLng(markers[0].lat, markers[0].lng));
+          map.setZoom(11);
+        } else {
+          const bounds = new naver.LatLngBounds();
+          markers.forEach((m) => bounds.extend(new naver.LatLng(m.lat, m.lng)));
+          map.fitBounds(bounds);
+        }
+        prevMarkerIdsRef.current = idsKey;
+      }
     };
 
     const w = window as NaverWindow;
