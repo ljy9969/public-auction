@@ -696,7 +696,7 @@ button.secondary {
   transition: all 0.15s;
   background: #fff;
   text-align: center;
-  width: 7.5rem;             /* 좌측 메시지와 한 줄에 들어갈 수 있도록 축소 */
+  width: 8.5rem;             /* 좌측 메시지와 한 줄에 들어갈 수 있도록 축소 */
   flex-shrink: 0;
   min-width: 0;
 }

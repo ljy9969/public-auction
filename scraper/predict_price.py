@@ -86,6 +86,22 @@ def predict_price(prop: dict[str, Any]) -> dict[str, Any] | None:
     market_min = prop.get("market_min_price")
     market_max = prop.get("market_max_price")
 
+    # 지분 물건: 감정가·최저가는 지분 몫(court는 등기부 'M분의 K')이지만 시세(market_*)는
+    # 전체 면적(100%) 기준이다. 지분 비율을 곱해 같은 스케일로 맞춰야 블렌딩이 왜곡되지 않는다.
+    share_ratio = None
+    if prop.get("share_yn") == "Y":
+        share_ratio = prop.get("building_share_ratio")
+        if share_ratio is None:
+            share_ratio = prop.get("land_share_ratio")
+    is_share = share_ratio is not None and 0 < share_ratio < 1
+    if is_share:
+        if market:
+            market = market * share_ratio
+        if market_min:
+            market_min = market_min * share_ratio
+        if market_max:
+            market_max = market_max * share_ratio
+
     if market and market > 0 and market_n > 0:
         if market_n >= 10:
             w, confidence = 0.70, "high"
@@ -101,6 +117,7 @@ def predict_price(prop: dict[str, Any]) -> dict[str, Any] | None:
         basis = (
             f"감정가 잔존가율({int(ratio*100)}%) + 국토부 실거래가 "
             f"{market_n}건 가중({int(w*100)}%)"
+            + (f" · 시세 지분 {share_ratio*100:.1f}% 환산" if is_share else "")
         )
     else:
         w, confidence = 0.0, "none"

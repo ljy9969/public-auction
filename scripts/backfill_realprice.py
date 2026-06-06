@@ -23,7 +23,8 @@ def main() -> None:
     conn = get_connection()
     rows = conn.execute(
         """SELECT id, category, address_jibun, building_name, title, area_build_m2,
-                  min_price, main_purps
+                  min_price, main_purps, use_apr_day, appraisal_price,
+                  share_yn, building_share_ratio, land_share_ratio
            FROM properties WHERE passes_filters = 1"""
     ).fetchall()
     updated = 0
@@ -36,6 +37,11 @@ def main() -> None:
             "area_build_m2": r["area_build_m2"],
             "min_price": r["min_price"],
             "main_purps": r["main_purps"],
+            "use_apr_day": r["use_apr_day"],
+            "appraisal_price": r["appraisal_price"],
+            "share_yn": r["share_yn"],
+            "building_share_ratio": r["building_share_ratio"],
+            "land_share_ratio": r["land_share_ratio"],
         }
         stats = estimate_market(prop, months=12)
         if not stats:

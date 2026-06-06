@@ -93,10 +93,24 @@ def _recent_months(n: int = 6, today: date | None = None) -> list[str]:
     return out
 
 
+# (endpoint, 시군구, 연월) → 거래 리스트 캐시. 멀티 endpoint 도입 후 같은
+# 시군구/월을 매 매물마다 재호출하던 중복을 제거해 백필 속도/안정성 향상.
+# 프로세스 수명 동안만 유지(백필 1회 단위). 비우려면 clear_trade_cache().
+_TRADE_CACHE: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+
+
+def clear_trade_cache() -> None:
+    _TRADE_CACHE.clear()
+
+
 def fetch_monthly_trades(
     endpoint_path: str, sggCd: str, ymd: str, api_key: str
 ) -> list[dict[str, Any]]:
-    """단일 (시군구, 연월) 매매 거래 페이징 호출."""
+    """단일 (시군구, 연월) 매매 거래 페이징 호출. (endpoint·시군구·월 단위 캐시)"""
+    ckey = (endpoint_path, sggCd, ymd)
+    cached = _TRADE_CACHE.get(ckey)
+    if cached is not None:
+        return cached
     url = f"{BASE}/{endpoint_path}"
     items: list[dict[str, Any]] = []
     page = 1
@@ -133,6 +147,7 @@ def fetch_monthly_trades(
                 page += 1
     except Exception as exc:
         logger.debug("realprice fetch failed: %s", exc)
+    _TRADE_CACHE[ckey] = items
     return items
 
 
@@ -315,6 +330,32 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
             and abs(tb - my_bonbun) <= JIBUN_NEAR_BONBUN
         )
 
+    # 폴백 매칭(jibun/dong+area)은 같은 동의 '다른 단지'를 잡아 가격대가 안 맞을 수 있다
+    # (2026-06-05 평택 서정동 1021: 구축 지분 매물에 신축 롯데캐슬 시세가 붙어 3배 과대).
+    # 1순위 건물 연식(±3년 — 보수적으로 비슷한 연식만), 매물 연식 모르면 2순위 감정가
+    # 가격대(지분은 전체 환산 0.5~2.0배)로 동떨어진 거래를 제외. 둘 다 모르면 통과(현행).
+    # 같은 단지(building) 매칭은 면제(진짜 같은 단지라 연식 자동 일치).
+    _apr = str(prop.get("use_apr_day") or "")
+    _my_year = int(_apr[:4]) if _apr[:4].isdigit() else None
+    _appr = prop.get("appraisal_price") or 0
+    _sr = (prop.get("building_share_ratio") or prop.get("land_share_ratio")) \
+        if prop.get("share_yn") == "Y" else None
+    _appr_full = (_appr / _sr) if (_appr and _sr and 0 < _sr < 1) else _appr
+
+    def _fallback_comp_ok(t: dict[str, Any]) -> bool:
+        ty = t.get("buildYear")
+        try:
+            ty = int(ty) if ty not in (None, "") else None
+        except (ValueError, TypeError):
+            ty = None
+        if _my_year and ty:
+            return abs(ty - _my_year) <= 3
+        if _appr_full:
+            cp = _parse_amount(t.get("dealAmount"))
+            if cp:
+                return 0.5 * _appr_full <= cp <= 2.0 * _appr_full
+        return True
+
     # 우선순위:
     #  1) 같은 단지 + 면적 (score≥11)   2) 같은 단지 (score≥9)
     #  3) 인근 지번(본번±N) + 면적 + 같은 동 ← 같은 단지 없을 때 '주변'으로 제한
@@ -333,8 +374,11 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
         t for t, s in scored
         if s > 0 and _jibun_near(t) and _area_ok(t) and _is_primary(t)
         and str(t.get("umdNm") or "") and str(t.get("umdNm") or "") in addr
+        and _fallback_comp_ok(t)
     ]
-    tier_dong_area = [t for t, s in scored if s >= 5 and _is_primary(t)]
+    tier_dong_area = [
+        t for t, s in scored if s >= 5 and _is_primary(t) and _fallback_comp_ok(t)
+    ]
 
     if tier_bld_area:
         sample, match_kind = tier_bld_area, "building+area"
@@ -376,22 +420,20 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
             weighted_median = p
             break
     median = weighted_median
-    # min/max — 절대 극단값 대신 분위수(10~90%)로 이상치 제거. 동 전체 폴백 시
-    # 1.45~6.23억 같은 비현실적 범위를 막는다. 표본이 적으면(<10) 절대값 유지.
+    # 표시 min/max는 실제 매칭 거래의 최저/최고 — 아래 거래 샘플 목록과 정확히
+    # 일치(차트 최고 != 목록 최고 불일치 방지, 2026-06-05).
     ps = sorted(prices)
-    if len(ps) >= 10:
+    min_p, max_p = ps[0], ps[-1]
+
+    # 단, dong+area(동 전체)는 다른 단지가 섞여 범위가 과대해지기 쉽다. 이상치를
+    # 제거한 분위수(10~90%) 범위로 '신뢰도'를 판정 — 그래도 max>min*1.6 이면 시세
+    # 없음(NULL). 같은 단지/인근 지번 매칭은 면제(진짜 시세로 인정).
+    if match_kind == "dong+area" and len(ps) >= 5:
         lo_i = int(len(ps) * 0.10)
         hi_i = min(len(ps) - 1, math.ceil(len(ps) * 0.90) - 1)
-        min_p, max_p = ps[lo_i], ps[hi_i]
-    else:
-        min_p, max_p = ps[0], ps[-1]
-
-    # 동 전체(dong+area) 매칭은 다른 단지가 섞여, 분위수 트리밍 후에도 범위가
-    # 과대(예: 천호동 청광노블하임 2.4~5.0억)하면 그 매물의 '시세'로 신뢰할 수
-    # 없다. max가 min의 1.6배를 넘으면 시세 없음(NULL) 처리 — 같은 단지/인근
-    # 지번만 진짜 시세로 인정(사용자 정책 2026-06-05). 단지·지번 매칭은 면제.
-    if match_kind == "dong+area" and min_p and max_p and max_p > min_p * 1.6:
-        return None
+        trim_min, trim_max = ps[lo_i], ps[hi_i]
+        if trim_min and trim_max and trim_max > trim_min * 1.6:
+            return None
 
     my_min = prop.get("min_price")
     diff_pct: float | None = None

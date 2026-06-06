@@ -35,7 +35,8 @@ def main() -> int:
     conn = get_connection()
     rows = conn.execute(
         "SELECT id, title, category, detail_json, rights_json, share_yn, "
-        "building_shared, appraisal_price, min_price, fail_count, "
+        "building_shared, building_share_ratio, land_share_ratio, "
+        "appraisal_price, min_price, fail_count, "
         "market_median_price, market_sample_count, market_min_price, market_max_price "
         "FROM properties WHERE passes_filters = 1"
     ).fetchall()
@@ -49,6 +50,8 @@ def main() -> int:
             "rights_json": _decode_json(r["rights_json"]),
             "share_yn": r["share_yn"],
             "building_shared": bool(r["building_shared"]) if r["building_shared"] is not None else None,
+            "building_share_ratio": r["building_share_ratio"],
+            "land_share_ratio": r["land_share_ratio"],
             "appraisal_price": r["appraisal_price"],
             "min_price": r["min_price"],
             "fail_count": r["fail_count"],
