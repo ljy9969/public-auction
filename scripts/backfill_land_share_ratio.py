@@ -5,8 +5,8 @@
 "갑구 N번 M분의 K ... 지분 전부" 형식으로 들어 있다 → _parse_land_share_ratio
 정규식이 그대로 매칭.
 
-대상: source='court' AND share_yn='Y' AND category LIKE '토지%' AND
-      land_share_ratio IS NULL.
+대상: source='court' AND share_yn='Y' AND land_share_ratio IS NULL
+      (토지·건물 지분 모두 — 주거 지분 아파트도 등기부 'M분의 K'로 동일 파싱).
 
 상세 호출은 court session(2초/req) 기준 30건 ≈ 1분. ipcheck 자극 안 함.
 
@@ -46,7 +46,6 @@ def main() -> int:
            FROM properties
            WHERE source='court'
              AND share_yn='Y'
-             AND category LIKE '토지%'
              AND land_share_ratio IS NULL"""
     ).fetchall()
     print(f"대상: {len(rows)}건 (court 상세 호출 2초/req → 약 {len(rows)*2/60:.1f}분)")

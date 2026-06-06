@@ -267,9 +267,11 @@ def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:
 
     cat = _category_label(row)
     share_yn = _is_share(row, title)
-    # 토지 지분 비율 — share_yn=Y이고 lcls=10000(토지)일 때만. buldList/mulBigo 둘 다 후보.
+    # 지분 비율 — share_yn=Y면 토지·건물(주거 지분) 모두. 등기부 'M분의 K'(갑구) 패턴.
+    # land_share_ratio 컬럼을 court 공통 '지분 비율'로 재사용(건물도 동일 필드).
+    # 검색 row(buldList/mulBigo)에 없으면 None → backfill_land_share_ratio가 상세에서 채움.
     land_share_ratio: float | None = None
-    if share_yn == "Y" and lcls == "10000":
+    if share_yn == "Y":
         land_share_ratio = _parse_land_share_ratio(
             row.get("buldList") or "",
             row.get("mulBigo") or "",

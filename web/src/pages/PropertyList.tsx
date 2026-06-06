@@ -598,10 +598,9 @@ export default function PropertyList() {
                     <dd>
                       {formatArea(p.area_build_m2)}
                       {p.share_yn === "Y" && p.area_build_m2 != null && (() => {
-                        // 토지 지분은 land_share_ratio, 주거(건물) 지분은 building_share_ratio
-                        const ratio = isLandCategory(p)
-                          ? p.land_share_ratio
-                          : p.building_share_ratio;
+                        // 공매 건물 지분은 building_share_ratio, 그 외(공매 토지·경매 토지/주거)는
+                        // land_share_ratio에 저장 → 건물 우선, 없으면 공통 지분 비율로 폴백.
+                        const ratio = p.building_share_ratio ?? p.land_share_ratio;
                         if (ratio == null || !formatSharePct(ratio)) return null;
                         const shareM2 = p.area_build_m2 * ratio;
                         return (
