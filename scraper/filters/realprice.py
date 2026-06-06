@@ -31,38 +31,45 @@ RENT_ENDPOINTS = {
 }
 
 
-def _select_endpoints(category: str, area_m2: float | None = None) -> list[tuple[str, str]]:
-    """카테고리(+면적) → 시도할 [(label, endpoint)] 리스트.
+def _select_endpoints(
+    category: str,
+    area_m2: float | None = None,
+    main_purps: str | None = None,
+) -> list[tuple[str, str]]:
+    """용도 → 시도할 [(label, endpoint)] 리스트. 첫 항목이 primary(주 용도).
 
-    ★ 도시형생활주택은 MOLIT 분류상 '연립다세대' 로 거래되지만, 우리 court
-       분류는 같은 단지를 '단독주택'(sclsUtilCd 20104) 으로 잘못 분류하는
-       경우가 빈번 — 단독다가구 endpoint 만 가면 거래 0건. 길동청광플러스원
-       큐브 사례(2026-06-04).
-       작은 평형(≤60㎡) 단독주택은 도시형생활주택 가능성 ↑ → 연립다세대도
-       같이 시도해 매칭 통합.
+    ★ 경매/공매 카테고리는 부정확하다(건축물대장 업무시설=오피스텔 매물이
+       '주거용건물/빌라'로 잡히는 등). 그래서 건축물대장 표제부 주용도
+       (main_purps)를 우선 신호로 쓴다.
+    ★ 같은 단지가 MOLIT의 여러 데이터셋에 등록된다(예: 청광플러스원큐브가
+       [아파트]·[오피스텔] 양쪽). 그래서 주거/업무 소형은 오피스텔·아파트·
+       연립다세대를 모두 조회해 단지명 매칭으로 어느 데이터셋이든 잡는다.
+       동/지번 폴백(면적 기반)은 호출자가 primary endpoint로 제한한다.
     """
-    cat = category or ""
-    if "오피스텔" in cat or "용도복합" in cat:
-        return [("오피스텔", ENDPOINTS["오피스텔"])]
-    if "아파트" in cat:
-        return [("아파트", ENDPOINTS["아파트"])]
-    if "도시형생활주택" in cat or "다세대" in cat or "연립" in cat or "빌라" in cat:
-        return [("연립다세대", ENDPOINTS["연립다세대"])]
-    if "토지" in cat or "도로" in cat or "대지" in cat or "전 /" in cat or "답 /" in cat:
+    sig = f"{category or ''} {main_purps or ''}"
+    OFFI = ("오피스텔", ENDPOINTS["오피스텔"])
+    APT = ("아파트", ENDPOINTS["아파트"])
+    RH = ("연립다세대", ENDPOINTS["연립다세대"])
+    SH = ("단독다가구", ENDPOINTS["단독다가구"])
+
+    # 토지 먼저 (주거 키워드와 겹치지 않게)
+    if any(k in sig for k in ("토지", "도로", "임야", "잡종지", "주차장")) or \
+            "전 /" in sig or "답 /" in sig or "대지" in sig:
         return [("토지", ENDPOINTS["토지"])]
-    if "단독" in cat or "다가구" in cat:
-        # ★ 작은 평형(≤60㎡) 단독주택은 도시형생활주택일 가능성 ↑.
-        # MOLIT 분류는 연립다세대 또는 오피스텔에 등록되는 경우가 많아
-        # 단독다가구만 보면 16㎡ 매물에 30~50㎡ 단독 거래가 잘못 매칭됨.
-        # 세 endpoint 모두 시도해 단지명 매칭되는 거래를 잡는다.
+    # 업무시설(=오피스텔) / 오피스텔 / 용도복합 → 오피스텔 primary
+    if any(k in sig for k in ("오피스텔", "용도복합", "업무시설")):
+        return [OFFI, APT, RH]
+    # 아파트 / 주상복합
+    if "아파트" in sig or "주상복합" in sig:
+        return [APT, RH, OFFI]
+    # 도시형생활주택·다세대·연립·빌라·공동주택 → 연립다세대 primary
+    if any(k in sig for k in ("도시형", "다세대", "연립", "빌라", "공동주택")):
+        return [RH, APT, OFFI]
+    # 단독/다가구 — 소형은 도시형생활주택 가능성↑ → 여러 데이터셋
+    if "단독" in sig or "다가구" in sig:
         if area_m2 is not None and area_m2 <= 60:
-            return [
-                ("단독다가구", ENDPOINTS["단독다가구"]),
-                ("연립다세대", ENDPOINTS["연립다세대"]),
-                ("오피스텔", ENDPOINTS["오피스텔"]),
-                ("아파트", ENDPOINTS["아파트"]),
-            ]
-        return [("단독다가구", ENDPOINTS["단독다가구"])]
+            return [SH, RH, OFFI, APT]
+        return [SH]
     return []
 
 
@@ -248,9 +255,12 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
     if not api_key:
         return None
 
-    candidates = _select_endpoints(prop.get("category") or "", prop.get("area_build_m2"))
+    candidates = _select_endpoints(
+        prop.get("category") or "", prop.get("area_build_m2"), prop.get("main_purps")
+    )
     if not candidates:
         return None
+    primary_label = candidates[0][0]  # 주 용도 endpoint — 동/지번 폴백은 여기로만 제한
 
     # 시군구코드 — Kakao b_code 앞 5자리에서 추출
     sgg_cd: str | None = None
@@ -311,14 +321,20 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
     #  4) 같은 동 + 면적 (마지막 폴백) — min/max는 이상치 제거(분위수)로 보정
     # ★ 동 only(면적 매칭 없음)는 제거(2026-06-04). dong+area도 동 전체라
     #   범위가 비현실적(1.45~6.23억)이라 3) 인근 지번을 우선 도입(2026-06-05).
+    # 단지명 매칭(building)은 어느 데이터셋이든 인정(같은 단지가 아파트·오피스텔
+    # 양쪽에 등록될 수 있음). 면적 기반 폴백(jibun/dong)은 다른 용도가 섞이지
+    # 않도록 primary endpoint 거래로만 제한.
+    def _is_primary(t: dict[str, Any]) -> bool:
+        return label_by_trade.get(id(t)) == primary_label
+
     tier_bld_area = [t for t, s in scored if s >= 11]
     tier_bld = [t for t, s in scored if s >= 9]
     tier_jibun = [
         t for t, s in scored
-        if s > 0 and _jibun_near(t) and _area_ok(t)
+        if s > 0 and _jibun_near(t) and _area_ok(t) and _is_primary(t)
         and str(t.get("umdNm") or "") and str(t.get("umdNm") or "") in addr
     ]
-    tier_dong_area = [t for t, s in scored if s >= 5]
+    tier_dong_area = [t for t, s in scored if s >= 5 and _is_primary(t)]
 
     if tier_bld_area:
         sample, match_kind = tier_bld_area, "building+area"

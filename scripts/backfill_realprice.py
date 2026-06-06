@@ -22,7 +22,8 @@ from scraper.filters.realprice import estimate_market, estimate_rental
 def main() -> None:
     conn = get_connection()
     rows = conn.execute(
-        """SELECT id, category, address_jibun, building_name, title, area_build_m2, min_price
+        """SELECT id, category, address_jibun, building_name, title, area_build_m2,
+                  min_price, main_purps
            FROM properties WHERE passes_filters = 1"""
     ).fetchall()
     updated = 0
@@ -34,6 +35,7 @@ def main() -> None:
             "title": r["title"],
             "area_build_m2": r["area_build_m2"],
             "min_price": r["min_price"],
+            "main_purps": r["main_purps"],
         }
         stats = estimate_market(prop, months=12)
         if not stats:
