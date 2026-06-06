@@ -274,6 +274,9 @@ function MarketSearchLinks({ prop }: { prop: Property }) {
     ? `「${prop.building_name}」`
     : _cleanRoad(prop.address_road) || "단지";
   const kbByCoord = prop.geo_lat != null && prop.geo_lng != null;
+  // 토지 지분 매물은 단지명 없음 → 국토부에선 지번주소로 검색해야 한다.
+  const isLandShare = isLandCategory(prop) && prop.share_yn === "Y";
+  const molitDesc = isLandShare ? "지번주소 직접 검색" : "단지명 직접 검색";
   return (
     <div className="market-links">
       <a
@@ -310,7 +313,7 @@ function MarketSearchLinks({ prop }: { prop: Property }) {
         title="국토부 실거래가 공개시스템 — 카테고리(아파트/연립다세대/오피스텔 등) 탭에서 단지명 직접 검색"
       >
         <span className="market-name">국토부 실거래가</span>
-        <span className="market-desc">단지명 직접 검색</span>
+        <span className="market-desc">{molitDesc}</span>
       </a>
     </div>
   );
