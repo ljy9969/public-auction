@@ -252,6 +252,18 @@ def _floor_diff(prop: dict[str, Any], trade: dict[str, Any]) -> int | None:
         return None
 
 
+def _is_basement(trade: dict[str, Any]) -> bool:
+    """거래가 지하층인지 (floor < 1). MOLIT floor는 지하면 음수(-1 등).
+    우리는 수집 단계부터 지층 매물을 제외하므로 시세 비교에서도 빼야 함."""
+    f = trade.get("floor")
+    if f is None or str(f).strip() == "":
+        return False  # 층 정보 없으면 제외 안 함 (과도 배제 방지)
+    try:
+        return int(float(f)) < 1
+    except (ValueError, TypeError):
+        return False
+
+
 def _match(prop: dict[str, Any], trade: dict[str, Any], area_tol: float = 0.10) -> int:
     """매물 vs 거래 유사도 점수 (높을수록 유사). 0이면 같은 동도 아님.
 
@@ -355,6 +367,8 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
     for label, endpoint in candidates:
         for ymd in _recent_months(months):
             for t in fetch_monthly_trades(endpoint, sgg_cd, ymd, api_key):
+                if _is_basement(t):
+                    continue  # 지하층 거래 제외 — 우리는 지층 매물을 수집하지 않음
                 all_trades.append(t)
                 label_by_trade[id(t)] = label
     if not all_trades:
@@ -608,8 +622,11 @@ def estimate_rental(prop: dict[str, Any], months: int = 12) -> dict[str, Any] | 
     for ymd in _recent_months(months):
         all_trades.extend(fetch_monthly_trades(endpoint, sgg_cd, ymd, api_key))
 
-    # 월세 거래만 + 매칭
-    rented = [t for t in all_trades if _parse_amount(t.get("monthlyRent"))]
+    # 월세 거래만 + 매칭 (지하층 제외 — 우리는 지층 매물 미수집)
+    rented = [
+        t for t in all_trades
+        if _parse_amount(t.get("monthlyRent")) and not _is_basement(t)
+    ]
     if not rented:
         return None
 
