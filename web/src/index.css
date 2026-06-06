@@ -772,6 +772,11 @@ button.secondary {
 .market-empty-row > .market-empty {
   flex: 1 1 16rem;
   margin: 0;
+  /* 좌측 메시지는 항상 3줄로 고정. 좁은 폭에서 4줄+ 늘어나지 않도록 line-clamp. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .market-empty-row > .market-links {
