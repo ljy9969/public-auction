@@ -98,9 +98,39 @@ def _recent_months(n: int = 6, today: date | None = None) -> list[str]:
 # 프로세스 수명 동안만 유지(백필 1회 단위). 비우려면 clear_trade_cache().
 _TRADE_CACHE: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
 
+# 주소 → (lat, lng) 지오코딩 캐시. 비교 거래 마커용 좌표를 백필 때 한 번만 구해
+# 저장한다(프론트는 저장된 좌표만 사용 — 상세 열 때마다 지오코딩하던 클라이언트
+# 방식 대비 호출/쿼터 절감). 좌표는 불변이라 프로세스 수명 동안 재사용.
+_GEOCODE_CACHE: dict[str, tuple[float, float] | None] = {}
+
 
 def clear_trade_cache() -> None:
     _TRADE_CACHE.clear()
+
+
+def _geocode_addr(address: str, kakao_key: str) -> tuple[float, float] | None:
+    """지번 주소 → (위도, 경도). Kakao 주소검색(x=경도, y=위도). 프로세스 캐시."""
+    if not address or not kakao_key:
+        return None
+    if address in _GEOCODE_CACHE:
+        return _GEOCODE_CACHE[address]
+    from scraper.filters.building import _lookup_kakao_address
+    coord: tuple[float, float] | None = None
+    info = _lookup_kakao_address(address, kakao_key)
+    if info:
+        try:
+            coord = (float(info["y"]), float(info["x"]))
+        except (TypeError, ValueError, KeyError):
+            coord = None
+    _GEOCODE_CACHE[address] = coord
+    return coord
+
+
+def _region_prefix(addr: str) -> str:
+    """주소에서 시도·시군구 접두만 — 비교거래(동+지번) 지오코딩 주소 조합용.
+    '경기도 평택시 서정동 1021' → '경기도 평택시'."""
+    m = re.match(r"^(.*?)\s*[가-힣0-9]+(?:동|읍|면|리)\b", addr or "")
+    return m.group(1).strip() if m else (addr or "")
 
 
 def fetch_monthly_trades(
@@ -450,6 +480,31 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
         reverse=True,
     )
 
+    # 비교 거래 마커용 좌표 — 동+지번을 Kakao로 지오코딩해 저장(프론트는 저장 좌표만 사용).
+    region_pref = _region_prefix(addr)
+
+    def _mk_sample(s: dict[str, Any]) -> dict[str, Any]:
+        dong = s.get("umdNm") or ""
+        jb = s.get("jibun") or ""
+        lat = lng = None
+        if kakao_key and region_pref and dong and jb:
+            coord = _geocode_addr(f"{region_pref} {dong} {jb}", kakao_key)
+            if coord:
+                lat, lng = coord
+        return {
+            "name": s.get("offiNm") or s.get("aptNm") or s.get("mhouseNm") or "",
+            "dong": dong,
+            "jibun": jb,
+            "lat": lat,
+            "lng": lng,
+            "area_m2": s.get("excluUseAr"),
+            "floor": s.get("floor"),
+            "deal_amount": _parse_amount(s.get("dealAmount")),
+            "deal_date": f"{s.get('dealYear')}-{s.get('dealMonth'):02d}-{s.get('dealDay'):02d}"
+            if s.get("dealYear")
+            else "",
+        }
+
     return {
         "market_median_price": median,
         "market_min_price": min_p,
@@ -459,20 +514,7 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
         "market_diff_percent": diff_pct,
         "market_endpoint_label": label,
         "market_match_kind": match_kind,
-        "market_samples": [
-            {
-                "name": s.get("offiNm") or s.get("aptNm") or s.get("mhouseNm") or "",
-                "dong": s.get("umdNm") or "",
-                "jibun": s.get("jibun") or "",  # 지도 지오코딩용 (프론트에서 동+지번으로 네이버 지오코딩)
-                "area_m2": s.get("excluUseAr"),
-                "floor": s.get("floor"),
-                "deal_amount": _parse_amount(s.get("dealAmount")),
-                "deal_date": f"{s.get('dealYear')}-{s.get('dealMonth'):02d}-{s.get('dealDay'):02d}"
-                if s.get("dealYear")
-                else "",
-            }
-            for s in sample_sorted
-        ],
+        "market_samples": [_mk_sample(s) for s in sample_sorted],
     }
 
 

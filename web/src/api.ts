@@ -102,6 +102,8 @@ export interface MarketSample {
   name: string;
   dong: string;
   jibun?: string;
+  lat?: number | null;
+  lng?: number | null;
   area_m2: number | null;
   floor: number | null;
   deal_amount: number | null;

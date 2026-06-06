@@ -5,10 +5,8 @@ interface PropertyMapProps {
   lat: number;
   lng: number;
   title?: string;
-  /** 시세 검증 비교 거래 — 동+지번을 지오코딩해 '주변' 검증용 마커로 표시 */
+  /** 시세 검증 비교 거래 — 백필 때 저장한 좌표(lat/lng)로 '주변' 검증 마커 표시 */
   comps?: MarketSample[];
-  /** 비교 거래 주소 조합용 시도·시군구 접두 (예: "경기도 평택시") */
-  regionPrefix?: string;
 }
 
 type NaverWindow = Window & { naver?: { maps?: Record<string, unknown> } };
@@ -27,7 +25,7 @@ function compPin(label: string): string {
 }
 
 /** Naver Maps embed (requires VITE_NAVER_MAP_CLIENT_ID). Falls back to OSM iframe. */
-export default function PropertyMap({ lat, lng, title, comps, regionPrefix }: PropertyMapProps) {
+export default function PropertyMap({ lat, lng, title, comps }: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const naverKey = (import.meta.env.VITE_NAVER_MAP_CLIENT_ID as string | undefined)?.trim();
 
@@ -50,57 +48,50 @@ export default function PropertyMap({ lat, lng, title, comps, regionPrefix }: Pr
         icon: { content: propPin(), anchor: new maps.Point(0, 0) },
       });
 
-      // 비교 거래 마커 — 동+지번 지오코딩 (지오코더 서브모듈 필요)
-      if (comps && comps.length && regionPrefix && maps.Service?.geocode) {
-        // 같은 동·지번(같은 단지/건물)끼리 묶어 마커 1개 — 단지명/거래건수/가격대 표기
-        const byKey = new Map<
-          string,
-          { dong: string; jibun: string; name: string; prices: number[] }
-        >();
-        for (const c of comps) {
-          if (!c.jibun || !c.dong) continue;
-          const k = `${c.dong}|${c.jibun}`;
-          if (!byKey.has(k)) byKey.set(k, { dong: c.dong, jibun: c.jibun, name: c.name, prices: [] });
-          if (c.deal_amount) byKey.get(k)!.prices.push(c.deal_amount);
-        }
-        if (byKey.size === 0) return;
+      // 비교 거래 마커 — 백필 때 저장한 좌표 사용 (같은 동·지번끼리 묶어 1개)
+      const withCoord = (comps || []).filter(
+        (c) => c.lat != null && c.lng != null
+      );
+      if (withCoord.length === 0) return;
 
-        const bounds = new maps.LatLngBounds();
-        bounds.extend(center);
-        let pending = byKey.size;
-        const settle = () => {
-          pending -= 1;
-          if (pending <= 0) map.fitBounds(bounds);
-        };
-
-        byKey.forEach((v) => {
-          const addr = `${regionPrefix} ${v.dong} ${v.jibun}`.trim();
-          maps.Service.geocode({ query: addr }, (status: string, resp: any) => {
-            try {
-              if (status !== maps.Service.Status.OK) return;
-              const item = resp?.v2?.addresses?.[0];
-              if (!item) return;
-              const ll = new maps.LatLng(parseFloat(item.y), parseFloat(item.x));
-              const cnt = v.prices.length;
-              const lo = cnt ? Math.min(...v.prices) : 0;
-              const hi = cnt ? Math.max(...v.prices) : 0;
-              const priceTxt = cnt
-                ? ` · ${cnt}건 ${formatPrice(lo)}${hi !== lo ? `~${formatPrice(hi)}` : ""}`
-                : "";
-              new maps.Marker({
-                position: ll,
-                map,
-                zIndex: 100,
-                title: `${v.name || v.dong} ${v.jibun}${priceTxt}`,
-                icon: { content: compPin(v.name || v.dong), anchor: new maps.Point(0, 0) },
-              });
-              bounds.extend(ll);
-            } finally {
-              settle();
-            }
+      const byKey = new Map<
+        string,
+        { lat: number; lng: number; name: string; dong: string; jibun: string; prices: number[] }
+      >();
+      for (const c of withCoord) {
+        const k = `${c.lat},${c.lng}`;
+        if (!byKey.has(k))
+          byKey.set(k, {
+            lat: c.lat as number,
+            lng: c.lng as number,
+            name: c.name,
+            dong: c.dong,
+            jibun: c.jibun || "",
+            prices: [],
           });
-        });
+        if (c.deal_amount) byKey.get(k)!.prices.push(c.deal_amount);
       }
+
+      const bounds = new maps.LatLngBounds();
+      bounds.extend(center);
+      byKey.forEach((v) => {
+        const ll = new maps.LatLng(v.lat, v.lng);
+        const cnt = v.prices.length;
+        const lo = cnt ? Math.min(...v.prices) : 0;
+        const hi = cnt ? Math.max(...v.prices) : 0;
+        const priceTxt = cnt
+          ? ` · ${cnt}건 ${formatPrice(lo)}${hi !== lo ? `~${formatPrice(hi)}` : ""}`
+          : "";
+        new maps.Marker({
+          position: ll,
+          map,
+          zIndex: 100,
+          title: `${v.name || v.dong} ${v.jibun}${priceTxt}`,
+          icon: { content: compPin(v.name || v.dong), anchor: new maps.Point(0, 0) },
+        });
+        bounds.extend(ll);
+      });
+      map.fitBounds(bounds);
     };
 
     if ((window as NaverWindow).naver?.maps) {
@@ -118,12 +109,11 @@ export default function PropertyMap({ lat, lng, title, comps, regionPrefix }: Pr
     }
     const s = document.createElement("script");
     s.id = SCRIPT_ID;
-    // submodules=geocoder — 비교 거래 주소 지오코딩에 필요
-    s.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${encodeURIComponent(naverKey)}&submodules=geocoder`;
+    s.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${encodeURIComponent(naverKey)}`;
     s.async = true;
     s.onload = init;
     document.head.appendChild(s);
-  }, [lat, lng, naverKey, comps, regionPrefix, title]);
+  }, [lat, lng, naverKey, comps, title]);
 
   if (naverKey) {
     return (

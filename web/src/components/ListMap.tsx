@@ -120,7 +120,7 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
     }
     const s = document.createElement("script");
     s.id = SCRIPT_ID;
-    s.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${encodeURIComponent(naverKey)}&submodules=geocoder`;
+    s.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${encodeURIComponent(naverKey)}`;
     s.async = true;
     s.onload = init;
     document.head.appendChild(s);
