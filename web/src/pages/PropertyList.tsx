@@ -4,6 +4,7 @@ import ListMap, { type ListMarker } from "../components/ListMap";
 import {
   buildingAge,
   buildingAgeCategory,
+  courtBidEndInfo,
   dDayLevel,
   fetchProperties,
   formatArea,
@@ -538,6 +539,8 @@ export default function PropertyList() {
               const visibleNotes = (p.filter_notes || []).filter((t) => !isRedundantTag(t));
               const hasCaution = visibleNotes.some(isCautionTag);
               const floor = parseFloor(p.title, p.floor_total);
+              // 경매 기일입찰: 시작==마감이면 통상 1시간 뒤 마감으로 보정 (상세 페이지와 통일)
+              const bidEnd = courtBidEndInfo(p.source, p.bid_start, p.bid_end);
               return (
                 <article
                   key={p.id ?? p.cltr_no}
@@ -648,7 +651,7 @@ export default function PropertyList() {
                       )}
                     </dd>
                     <dt>입찰 마감</dt>
-                    <dd>{formatDateTime(p.bid_end)}</dd>
+                    <dd>{bidEnd.value ? formatDateTime(bidEnd.value) : "-"}</dd>
                     {p.transit_minutes != null && (
                       <>
                         <dt>직장까지</dt>

@@ -37,6 +37,15 @@ def main() -> None:
         }
         stats = estimate_market(prop, months=12)
         if not stats:
+            # 새(엄격) 매칭에서 비교 거래 0건 → 옛 로직 시세가 남지 않도록 초기화.
+            #   (miss인데 기존 값을 유지하면 stale 시세가 그대로 노출됨)
+            conn.execute(
+                "UPDATE properties SET market_median_price=NULL, market_min_price=NULL, "
+                "market_max_price=NULL, market_sample_count=NULL, market_period_months=NULL, "
+                "market_diff_percent=NULL, market_endpoint_label=NULL, market_match_kind=NULL, "
+                "market_samples=NULL WHERE id=?",
+                (r["id"],),
+            )
             print(f"[miss] id={r['id']} {r['title'][:40]}")
             continue
         conn.execute(

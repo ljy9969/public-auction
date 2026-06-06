@@ -1605,6 +1605,16 @@ button.secondary {
   background: linear-gradient(135deg, #38bdf8, #0ea5e9);
 }
 
+/* 경매 기일입찰 마감 추정 안내 — 본문 옆 작은 회색 보조 문구 */
+.bid-end-note {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted, #94a3b8);
+  vertical-align: middle;
+}
+
 /* 임박도별 그라데이션 — 멀수록 청량, 가까울수록 진한 경고색 */
 .dday-far {
   background: linear-gradient(135deg, #5eead4, #14b8a6);

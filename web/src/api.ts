@@ -370,6 +370,26 @@ export function formatDateTime(v: string | Date | null | undefined): string {
   return `${date} ${ampm} ${h12}:${String(m).padStart(2, "0")}`;
 }
 
+/**
+ * 경매(법원) 기일입찰 마감 시각 보정.
+ * 상세 페이지 원본에는 입찰 시작/마감이 같은 시각으로 들어오는데,
+ * 실제로는 시작 1시간 뒤에 마감하는 것이 통상이다(법원마다 다를 수 있음).
+ * 시작==마감인 경매 물건에 한해 1시간 뒤로 추정해 돌려주고, 추정 여부도 함께 반환.
+ */
+export function courtBidEndInfo(
+  source: string | null | undefined,
+  bidStart: string | Date | null | undefined,
+  bidEnd: string | Date | null | undefined,
+): { value: Date | null; estimated: boolean } {
+  const end = _parseDate(bidEnd);
+  if (source !== "court") return { value: end, estimated: false };
+  const start = _parseDate(bidStart);
+  if (start && end && start.getTime() === end.getTime()) {
+    return { value: new Date(end.getTime() + 60 * 60 * 1000), estimated: true };
+  }
+  return { value: end, estimated: false };
+}
+
 /** 필터 메모(영문)를 한국어로 변환. 모르는 라벨은 원문 반환. */
 export function translateTag(tag: string): string {
   // (쪈)/(쪠) zone suffix 분리 후 본문만 번역, suffix는 그대로 유지

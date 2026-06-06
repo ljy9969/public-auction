@@ -8,6 +8,7 @@ import {
   bidDeposit,
   buildingAge,
   buildingAgeCategory,
+  courtBidEndInfo,
   dDayLevel,
   fetchCachedAiEstimate,
   fetchProperties,
@@ -325,6 +326,9 @@ export default function PropertyDetail() {
   const rights = prop.rights_json || {};
   const schedule = prop.schedule_json || {};
 
+  // 경매 기일입찰: 원본은 시작/마감이 같은 시각 → 통상 1시간 뒤 마감으로 보정해 표시.
+  const bidEnd = courtBidEndInfo(prop.source, prop.bid_start, prop.bid_end);
+
   const discount = discountPercent(prop.min_price, prop.appraisal_price);
   const statusKlass = statusVariant(prop.status);
   const floor = parseFloor(prop.title, prop.floor_total);
@@ -511,12 +515,17 @@ export default function PropertyDetail() {
                 },
                 {
                   label: "입찰 마감",
-                  value: prop.bid_end ? (
+                  value: bidEnd.value ? (
                     <>
-                      {formatDateTime(prop.bid_end)}
-                      {formatDDay(prop.bid_end) && (
-                        <span className={`dday-pill dday-${dDayLevel(prop.bid_end)}`}>
-                          {formatDDay(prop.bid_end)}
+                      {formatDateTime(bidEnd.value)}
+                      {formatDDay(bidEnd.value) && (
+                        <span className={`dday-pill dday-${dDayLevel(bidEnd.value)}`}>
+                          {formatDDay(bidEnd.value)}
+                        </span>
+                      )}
+                      {bidEnd.estimated && (
+                        <span className="bid-end-note">
+                          (통상 1시간 뒤 마감. 법원마다 다를 수 있음)
                         </span>
                       )}
                     </>
@@ -595,9 +604,14 @@ export default function PropertyDetail() {
               <>
                 <p className="section-hint">
                   국토부 실거래가 {prop.market_endpoint_label} {prop.market_period_months}개월 윈도우 ·{" "}
-                  {prop.market_match_kind === "building"
-                    ? `같은 단지 ${prop.market_sample_count}건`
-                    : `같은 동 ${prop.market_sample_count}건`}
+                  {(() => {
+                    const k = prop.market_match_kind;
+                    const n = prop.market_sample_count;
+                    if (k === "building" || k === "building+area")
+                      return `같은 단지 ${n}건`;
+                    if (k === "jibun") return `인근 지번 ${n}건`;
+                    return `같은 동 ${n}건`;
+                  })()}
                 </p>
                 <div className="market-summary">
                   <div className="market-stat">
@@ -610,7 +624,12 @@ export default function PropertyDetail() {
                     </span>
                   </div>
                   <div className="market-stat">
-                    <span className="market-stat-label">최저~최고</span>
+                    <span className="market-stat-label">
+                      최저~최고
+                      {(prop.market_sample_count ?? 0) >= 10 && (
+                        <span className="market-stat-note"> (상·하위 10% 제외)</span>
+                      )}
+                    </span>
                     <span className="market-stat-value market-range">
                       {formatPrice(prop.market_min_price)} ~ {formatPrice(prop.market_max_price)}
                     </span>

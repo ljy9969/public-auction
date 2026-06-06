@@ -147,6 +147,17 @@ def _normalize_name(s: str) -> str:
     return re.sub(r"[\s\-·_/()\[\]]+", "", s or "").lower()
 
 
+# 같은 단지가 없을 때 '주변'으로 인정할 지번 본번 차이. MOLIT엔 좌표가 없어
+# 진짜 반경(m) 대신 지번 본번 근접도를 위치 근사로 사용 (본번은 대체로 순차 배정).
+JIBUN_NEAR_BONBUN = 10
+
+
+def _bonbun(s: Any) -> int | None:
+    """주소/지번에서 본번 추출. '...길동 387-5'→387, '179'→179, '179-3'→179."""
+    m = re.search(r"(\d+)(?:-\d+)?\s*$", str(s or "").strip())
+    return int(m.group(1)) if m else None
+
+
 def _floor_diff(prop: dict[str, Any], trade: dict[str, Any]) -> int | None:
     """현재 매물 층과 거래 층 차이 (절대값). 둘 중 하나라도 없으면 None."""
     my_floor = None
@@ -273,27 +284,50 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
 
     # 매물과 매칭 점수 산출
     scored = [(t, _match(prop, t)) for t in all_trades]
-    # Tier 1: 같은 단지 + 면적 매칭 (score >= 11) — 최우선
-    # Tier 2: 같은 단지 (score >= 9)
-    # Tier 3: 같은 동 + 면적 매칭 (score >= 5)
-    # Tier 4: 같은 동만 (score >= 3)
-    tier1 = [t for t, s in scored if s >= 11]
-    tier2 = [t for t, s in scored if s >= 9]
-    tier3 = [t for t, s in scored if s >= 5]
+    addr = prop.get("address_jibun") or ""
+    my_bonbun = _bonbun(addr)
 
-    # Tier 1 (같은 단지 + 면적 매칭) 은 1건만 있어도 가장 신뢰.
-    # ★ Tier 4 (dong only, score≥3) 제거 — 면적 매칭 없는 동 평균은 평형
-    # 차이로 오염되기 쉬워 사용자 신뢰도 ↓ (길동 16㎡ 매물에 30평 아파트
-    # 시세가 노출되던 사례). 면적 매칭 못 한 매물은 시세 없음(NULL) 으로.
-    if tier1:
-        sample = tier1
-        match_kind = "building+area"
-    elif tier2:
-        sample = tier2
-        match_kind = "building"
-    elif tier3:
-        sample = tier3
-        match_kind = "dong+area"
+    def _area_ok(t: dict[str, Any]) -> bool:
+        my = prop.get("area_build_m2")
+        ta = t.get("excluUseAr") or t.get("totalFloorAr")
+        if not my or not ta:
+            return False
+        try:
+            return abs(float(ta) - float(my)) / float(my) <= 0.15
+        except (ValueError, TypeError):
+            return False
+
+    def _jibun_near(t: dict[str, Any]) -> bool:
+        tb = _bonbun(t.get("jibun"))
+        return (
+            my_bonbun is not None
+            and tb is not None
+            and abs(tb - my_bonbun) <= JIBUN_NEAR_BONBUN
+        )
+
+    # 우선순위:
+    #  1) 같은 단지 + 면적 (score≥11)   2) 같은 단지 (score≥9)
+    #  3) 인근 지번(본번±N) + 면적 + 같은 동 ← 같은 단지 없을 때 '주변'으로 제한
+    #  4) 같은 동 + 면적 (마지막 폴백) — min/max는 이상치 제거(분위수)로 보정
+    # ★ 동 only(면적 매칭 없음)는 제거(2026-06-04). dong+area도 동 전체라
+    #   범위가 비현실적(1.45~6.23억)이라 3) 인근 지번을 우선 도입(2026-06-05).
+    tier_bld_area = [t for t, s in scored if s >= 11]
+    tier_bld = [t for t, s in scored if s >= 9]
+    tier_jibun = [
+        t for t, s in scored
+        if s > 0 and _jibun_near(t) and _area_ok(t)
+        and str(t.get("umdNm") or "") and str(t.get("umdNm") or "") in addr
+    ]
+    tier_dong_area = [t for t, s in scored if s >= 5]
+
+    if tier_bld_area:
+        sample, match_kind = tier_bld_area, "building+area"
+    elif tier_bld:
+        sample, match_kind = tier_bld, "building"
+    elif tier_jibun:
+        sample, match_kind = tier_jibun, "jibun"
+    elif tier_dong_area:
+        sample, match_kind = tier_dong_area, "dong+area"
     else:
         return None
 
@@ -326,8 +360,23 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
             weighted_median = p
             break
     median = weighted_median
-    min_p = min(prices)
-    max_p = max(prices)
+    # min/max — 절대 극단값 대신 분위수(10~90%)로 이상치 제거. 동 전체 폴백 시
+    # 1.45~6.23억 같은 비현실적 범위를 막는다. 표본이 적으면(<10) 절대값 유지.
+    ps = sorted(prices)
+    if len(ps) >= 10:
+        lo_i = int(len(ps) * 0.10)
+        hi_i = min(len(ps) - 1, math.ceil(len(ps) * 0.90) - 1)
+        min_p, max_p = ps[lo_i], ps[hi_i]
+    else:
+        min_p, max_p = ps[0], ps[-1]
+
+    # 동 전체(dong+area) 매칭은 다른 단지가 섞여, 분위수 트리밍 후에도 범위가
+    # 과대(예: 천호동 청광노블하임 2.4~5.0억)하면 그 매물의 '시세'로 신뢰할 수
+    # 없다. max가 min의 1.6배를 넘으면 시세 없음(NULL) 처리 — 같은 단지/인근
+    # 지번만 진짜 시세로 인정(사용자 정책 2026-06-05). 단지·지번 매칭은 면제.
+    if match_kind == "dong+area" and min_p and max_p and max_p > min_p * 1.6:
+        return None
+
     my_min = prop.get("min_price")
     diff_pct: float | None = None
     if my_min and median:
