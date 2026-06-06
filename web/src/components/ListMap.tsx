@@ -79,7 +79,10 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
       const bounds = new naver.LatLngBounds();
       markers.forEach((m) => bounds.extend(new naver.LatLng(m.lat, m.lng)));
 
-      const map = new naver.Map(mapDiv.current, { zoom: 14 });
+      const map = new naver.Map(mapDiv.current, {
+        zoom: 14,
+        mapTypeControl: true, // 일반 ↔ 위성 토글 (Naver 기본 컨트롤)
+      });
       mapInstance.current = map;
 
       if (markers.length === 1) {

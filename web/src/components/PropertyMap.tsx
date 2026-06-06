@@ -38,7 +38,11 @@ export default function PropertyMap({ lat, lng, title, comps }: PropertyMapProps
       if (!maps || !mapRef.current) return;
 
       const center = new maps.LatLng(lat, lng);
-      const map = new maps.Map(mapRef.current, { center, zoom: 15 });
+      const map = new maps.Map(mapRef.current, {
+        center,
+        zoom: 15,
+        mapTypeControl: true, // 일반 ↔ 위성 토글 (Naver 기본 컨트롤)
+      });
       // 매물 본 마커 (빨강 핀)
       new maps.Marker({
         position: center,
