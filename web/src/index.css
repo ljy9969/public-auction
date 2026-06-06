@@ -740,6 +740,20 @@ button.secondary {
   font-weight: 500;
 }
 
+.market-stat-note {
+  font-weight: 400;
+  color: #94a3b8;
+}
+
+.market-empty {
+  line-height: 1.7;
+}
+
+.market-empty-sub {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
 .market-stat-value {
   font-size: 1rem;
   font-weight: 700;

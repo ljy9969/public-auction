@@ -753,9 +753,14 @@ export default function PropertyDetail() {
                 </p>
               </>
             ) : (
-              <p className="section-hint">
-                신뢰할 만한 실거래가 없음 — 12개월 내 <strong>같은 단지·인근 지번</strong> 거래가
-                없어 시세를 표시하지 않습니다. (동 전체 평균은 다른 단지가 섞여 범위가 넓어 제외)
+              <p className="section-hint market-empty">
+                <strong>신뢰할 만한 실거래가 없음</strong>
+                <br />
+                12개월 내 <strong>같은 단지·인근 지번</strong> 거래가 없어 시세를 표시하지 않습니다.
+                <br />
+                <span className="market-empty-sub">
+                  (동 전체 평균은 다른 단지가 섞여 범위가 넓어 제외)
+                </span>
               </p>
             )}
             {(() => {
