@@ -580,16 +580,7 @@ export default function PropertyList() {
                   </header>
                   <dl className="card-table">
                     <dt>용도</dt>
-                    <dd>
-                      {p.category || "-"}
-                      {p.share_yn === "Y"
-                        && !isLandCategory(p)
-                        && formatSharePct(p.building_share_ratio) && (
-                          <span className="share-pill">
-                            지분 {formatSharePct(p.building_share_ratio)}
-                          </span>
-                        )}
-                    </dd>
+                    <dd>{p.category || "-"}</dd>
                     <dt>최저가</dt>
                     <dd>
                       {formatPriceFull(p.min_price)}
@@ -603,14 +594,19 @@ export default function PropertyList() {
                     <dt>{isLandCategory(p) ? "토지면적" : "건물면적"}</dt>
                     <dd>
                       {formatArea(p.area_build_m2)}
-                      {p.share_yn === "Y"
-                        && p.land_share_ratio != null
-                        && p.area_build_m2 != null
-                        && formatSharePct(p.land_share_ratio) && (
+                      {p.share_yn === "Y" && p.area_build_m2 != null && (() => {
+                        // 토지 지분은 land_share_ratio, 주거(건물) 지분은 building_share_ratio
+                        const ratio = isLandCategory(p)
+                          ? p.land_share_ratio
+                          : p.building_share_ratio;
+                        if (ratio == null || !formatSharePct(ratio)) return null;
+                        const shareM2 = p.area_build_m2 * ratio;
+                        return (
                           <span className="share-pill">
-                            지분 {Math.round(p.area_build_m2 * p.land_share_ratio)}㎡ ({((p.area_build_m2 * p.land_share_ratio) / 3.3058).toFixed(1)}평, {formatSharePct(p.land_share_ratio)})
+                            지분 {Math.round(shareM2)}㎡ ({(shareM2 / 3.3058).toFixed(1)}평, {formatSharePct(ratio)})
                           </span>
-                        )}
+                        );
+                      })()}
                     </dd>
                     {floor.current != null && (
                       <>
