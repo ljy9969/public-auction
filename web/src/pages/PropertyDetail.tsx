@@ -327,6 +327,7 @@ export default function PropertyDetail() {
   const [aiEstimate, setAiEstimate] = useState<AiEstimate | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [mapType, setMapType] = useState<"normal" | "satellite">("normal");
   const fav = useFavorites();
 
   const runAiEstimate = async (refresh = false) => {
@@ -1155,12 +1156,33 @@ export default function PropertyDetail() {
         <aside className="detail-aside">
           {prop.geo_lat != null && prop.geo_lng != null ? (
             <div className="detail-map-wrap">
-              <h3 className="section-title">위치</h3>
+              <div className="map-title-row">
+                <h3 className="section-title">위치</h3>
+                <div className="map-type-toggle" role="group" aria-label="지도 종류">
+                  <button
+                    type="button"
+                    className={`map-type-btn ${mapType === "normal" ? "on" : ""}`}
+                    aria-pressed={mapType === "normal"}
+                    onClick={() => setMapType("normal")}
+                  >
+                    일반
+                  </button>
+                  <button
+                    type="button"
+                    className={`map-type-btn ${mapType === "satellite" ? "on" : ""}`}
+                    aria-pressed={mapType === "satellite"}
+                    onClick={() => setMapType("satellite")}
+                  >
+                    위성
+                  </button>
+                </div>
+              </div>
               <PropertyMap
                 lat={prop.geo_lat}
                 lng={prop.geo_lng}
                 title={prop.address_jibun || prop.title}
                 comps={prop.market_samples ?? undefined}
+                mapType={mapType}
               />
               {prop.market_samples && prop.market_samples.length > 0 && (
                 <p className="section-hint" style={{ marginTop: "0.4rem" }}>

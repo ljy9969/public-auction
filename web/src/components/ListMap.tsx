@@ -57,6 +57,9 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
   const mapDiv = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<NaverMap | null>(null);
   const markerInstances = useRef<NaverMarker[]>([]);
+  // 사용자가 Naver 기본 컨트롤로 토글한 mapType (예: '위성') 을 보존해, init 이 다시
+  // 트리거(필터 변경 등으로 markers 새 identity) 되어도 이전 선택을 그대로 복원.
+  const mapTypeRef = useRef<string | null>(null);
   // onMarkerClick은 부모(PropertyList)에서 인라인 화살표로 넘어와 매 렌더마다 identity가 바뀐다.
   // 이걸 아래 init useEffect deps에 직접 넣으면: 마커 클릭 → 부모 리렌더 → 핸들러 identity 변경
   // → 맵 재초기화(fitBounds) → 줌이 서울 전체로 리셋되는 버그가 생긴다.
@@ -84,6 +87,21 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
         mapTypeControl: true, // 일반 ↔ 위성 토글 (Naver 기본 컨트롤)
       });
       mapInstance.current = map;
+      // 이전에 보존한 mapType 이 있으면 복원 — markers 변경으로 새 Map 인스턴스가
+      // 만들어져도 사용자가 켜둔 '위성' 등이 유지된다.
+      const mapsAny = naver as unknown as {
+        Event?: { addListener: (target: unknown, ev: string, fn: () => void) => void };
+      };
+      const mapAny = map as unknown as {
+        setMapTypeId: (id: string) => void;
+        getMapTypeId: () => string;
+      };
+      if (mapTypeRef.current) {
+        mapAny.setMapTypeId(mapTypeRef.current);
+      }
+      mapsAny.Event?.addListener(map, "maptypeid_changed", () => {
+        mapTypeRef.current = mapAny.getMapTypeId();
+      });
 
       if (markers.length === 1) {
         // 좌표 1개만 있을 때 너무 줌인되면 'X 위치 고정'처럼 보임 (특히 토지 탭처럼

@@ -7,6 +7,9 @@ interface PropertyMapProps {
   title?: string;
   /** 시세 검증 비교 거래 — 백필 때 저장한 좌표(lat/lng)로 '주변' 검증 마커 표시 */
   comps?: MarketSample[];
+  /** 일반 ↔ 위성(하이브리드) 토글. 외부 버튼이 우측 상단 H3 옆에 별도 배치되므로 */
+  /*  Naver 기본 mapTypeControl 은 꺼두고 이 prop 으로만 제어. */
+  mapType?: "normal" | "satellite";
 }
 
 type NaverWindow = Window & { naver?: { maps?: Record<string, unknown> } };
@@ -25,8 +28,10 @@ function compPin(label: string): string {
 }
 
 /** Naver Maps embed (requires VITE_NAVER_MAP_CLIENT_ID). Falls back to OSM iframe. */
-export default function PropertyMap({ lat, lng, title, comps }: PropertyMapProps) {
+export default function PropertyMap({ lat, lng, title, comps, mapType = "normal" }: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
+  // SDK 객체에 정적 타입이 없어 런타임 ref 로만 보관 — mapType 변경 시 setMapTypeId 호출.
+  const mapInstanceRef = useRef<any>(null);
   const naverKey = (import.meta.env.VITE_NAVER_MAP_CLIENT_ID as string | undefined)?.trim();
 
   useEffect(() => {
@@ -41,8 +46,9 @@ export default function PropertyMap({ lat, lng, title, comps }: PropertyMapProps
       const map = new maps.Map(mapRef.current, {
         center,
         zoom: 15,
-        mapTypeControl: true, // 일반 ↔ 위성 토글 (Naver 기본 컨트롤)
+        mapTypeControl: false, // 외부 토글 버튼이 H3 옆에 별도로 있음
       });
+      mapInstanceRef.current = map;
       // 매물 본 마커 (빨강 핀)
       new maps.Marker({
         position: center,
@@ -118,6 +124,17 @@ export default function PropertyMap({ lat, lng, title, comps }: PropertyMapProps
     s.onload = init;
     document.head.appendChild(s);
   }, [lat, lng, naverKey, comps, title]);
+
+  // 외부 토글이 mapType 을 바꾸면 지도에 반영. 'satellite' 는 라벨 포함된 HYBRID 로
+  // (도로명/지번이 보여 위치 파악이 쉬움). 'normal' 은 NORMAL.
+  useEffect(() => {
+    const maps = (window as NaverWindow).naver?.maps as any;
+    const map = mapInstanceRef.current;
+    if (!map || !maps?.MapTypeId) return;
+    map.setMapTypeId(
+      mapType === "satellite" ? maps.MapTypeId.HYBRID : maps.MapTypeId.NORMAL
+    );
+  }, [mapType]);
 
   if (naverKey) {
     return (
