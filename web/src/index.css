@@ -677,8 +677,9 @@ button.secondary {
 }
 
 .market-links {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.5rem;
 }
 
@@ -695,7 +696,9 @@ button.secondary {
   transition: all 0.15s;
   background: #fff;
   text-align: center;
-  min-width: 0;              /* grid item 이 컨테이너 폭 넘지 않도록 */
+  width: 9rem;               /* 3개 카드 사이즈 고정 — 콘텐츠에 따라 늘어나지 않음 */
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .market-link:hover {
@@ -773,7 +776,6 @@ button.secondary {
 
 .market-empty-row > .market-links {
   flex: 0 1 auto;
-  min-width: 22rem;
 }
 
 .market-empty-sub {
