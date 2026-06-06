@@ -205,6 +205,29 @@ JIBUN_NEAR_BONBUN = 10
 # 인근 지번 티어 면적 허용 오차. 같은 단지가 아닌 '주변 다른 건물'이라 면적은
 # 보수적으로(±10%, 같은 단지 티어와 동일) — 평형 다른 매물 혼입 방지 (2026-06-06).
 JIBUN_AREA_TOL = 0.10
+# 인근 지번 거래의 실제 반경(m) 상한. 매물 좌표가 있으면 본번 근접에 더해, 거래
+# 지번을 지오코딩한 위치가 이 반경 안인 것만 인정 — 큰 동 안에서 멀리 떨어진 다른
+# 역세권 단지가 섞이는 문제 방지 (2026-06-06 천호동 대동피렌체리버 ~1km 사례).
+JIBUN_RADIUS_M = 700
+_GEOCODE_CACHE: dict[str, tuple[float, float] | None] = {}
+
+
+def _geocode_jibun(address: str, kakao_key: str) -> tuple[float, float] | None:
+    """주소 → (lat, lng). Kakao 지오코딩 + 캐시 (백필 1회 단위)."""
+    if not address or not kakao_key:
+        return None
+    if address in _GEOCODE_CACHE:
+        return _GEOCODE_CACHE[address]
+    from scraper.filters.building import _lookup_kakao_address
+    info = _lookup_kakao_address(address, kakao_key)
+    coord: tuple[float, float] | None = None
+    if info:
+        try:
+            coord = (float(info["y"]), float(info["x"]))  # y=lat, x=lng
+        except (KeyError, ValueError, TypeError):
+            coord = None
+    _GEOCODE_CACHE[address] = coord
+    return coord
 
 
 def _bonbun(s: Any) -> int | None:
@@ -401,13 +424,30 @@ def estimate_market(prop: dict[str, Any], months: int = 6) -> dict[str, Any] | N
     def _is_primary(t: dict[str, Any]) -> bool:
         return label_by_trade.get(id(t)) == primary_label
 
+    # 인근 지번: 본번 근접에 더해 '실제 거리'로 한 번 더 좁힌다(좌표 있을 때).
+    _prop_lat, _prop_lng = prop.get("geo_lat"), prop.get("geo_lng")
+    _sido_sigungu = " ".join((addr or "").split()[:2])  # "서울특별시 강동구"
+
+    def _jibun_geo_ok(t: dict[str, Any]) -> bool:
+        if _prop_lat is None or _prop_lng is None:
+            return True  # 매물 좌표 없으면 본번 근접만으로 (폴백)
+        umd = str(t.get("umdNm") or "")
+        jibun = str(t.get("jibun") or "")
+        if not umd or not jibun:
+            return True
+        coord = _geocode_jibun(f"{_sido_sigungu} {umd} {jibun}", kakao_key)
+        if not coord:
+            return True  # 지오코딩 실패 → 본번 근접 신뢰(과도 제외 방지)
+        from scraper.filters.coords import haversine_km
+        return haversine_km(_prop_lat, _prop_lng, coord[0], coord[1]) * 1000 <= JIBUN_RADIUS_M
+
     tier_bld_area = [t for t, s in scored if s >= 11]
     tier_bld = [t for t, s in scored if s >= 9]
     tier_jibun = [
         t for t, s in scored
         if s > 0 and _jibun_near(t) and _area_ok(t) and _is_primary(t)
         and str(t.get("umdNm") or "") and str(t.get("umdNm") or "") in addr
-        and _fallback_comp_ok(t)
+        and _fallback_comp_ok(t) and _jibun_geo_ok(t)
     ]
     tier_dong_area = [
         t for t, s in scored if s >= 5 and _is_primary(t) and _fallback_comp_ok(t)
