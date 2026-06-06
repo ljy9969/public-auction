@@ -101,6 +101,7 @@ export interface RentalSample {
 export interface MarketSample {
   name: string;
   dong: string;
+  jibun?: string;
   area_m2: number | null;
   floor: number | null;
   deal_amount: number | null;

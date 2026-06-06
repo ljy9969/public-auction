@@ -221,6 +221,15 @@ function _dongOf(addr: string | null | undefined): string | null {
   return m ? m[1] : null;
 }
 
+/** 주소에서 시도·시군구 접두만 추출 — 비교 거래(동+지번) 주소 조합용.
+ * "경기도 평택시 서정동 1021" → "경기도 평택시"
+ * "경기도 안산시 단원구 고잔동 ..." → "경기도 안산시 단원구" (구 포함) */
+function _regionPrefix(addr: string | null | undefined): string {
+  if (!addr) return "";
+  const m = addr.match(/^(.*?)\s*[가-힣0-9]+(?:동|읍|면|리)\b/);
+  return m ? m[1].trim() : "";
+}
+
 /** 도로명 주소 정제 — 검색 정확도 향상.
  * - 끝 괄호 동 표기 제거: "선릉로89길 16 (역삼동)" → "선릉로89길 16"
  * - 앞 시·도 접두 제거: "서울특별시 강남구 ..." → "강남구 ..."
@@ -1160,7 +1169,17 @@ export default function PropertyDetail() {
                 lat={prop.geo_lat}
                 lng={prop.geo_lng}
                 title={prop.address_jibun || prop.title}
+                comps={prop.market_samples ?? undefined}
+                regionPrefix={_regionPrefix(prop.address_jibun)}
               />
+              {prop.market_samples && prop.market_samples.length > 0 && (
+                <p className="section-hint" style={{ marginTop: "0.4rem" }}>
+                  <span style={{ color: "#ef4444", fontWeight: 700 }}>● 매물</span>
+                  {" · "}
+                  <span style={{ color: "#2563eb", fontWeight: 700 }}>● 시세 비교 거래</span>
+                  {" — 비교 거래가 실제 인근인지 위치로 확인하세요."}
+                </p>
+              )}
             </div>
           ) : (
             <div className="detail-map-empty">위치 정보가 없습니다.</div>
