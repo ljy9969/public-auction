@@ -685,6 +685,7 @@ button.secondary {
 .market-link {
   display: flex;
   flex-direction: column;
+  align-items: center;       /* 카드 내부 가운데 정렬 — 3개 박스 시각 통일 */
   gap: 0.15rem;
   padding: 0.65rem 0.85rem;
   border: 1px solid #e2e8f0;
@@ -693,6 +694,8 @@ button.secondary {
   text-decoration: none;
   transition: all 0.15s;
   background: #fff;
+  text-align: center;
+  min-width: 0;              /* grid item 이 컨테이너 폭 넘지 않도록 */
 }
 
 .market-link:hover {
@@ -715,6 +718,11 @@ button.secondary {
 .market-desc {
   font-size: 0.75rem;
   color: #64748b;
+  /* 텍스트 길어도 줄바꿈 대신 한 줄 + ellipsis. 카드 폭 안에서 잘림. */
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .market-summary {
