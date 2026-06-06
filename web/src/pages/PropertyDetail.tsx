@@ -391,6 +391,21 @@ export default function PropertyDetail() {
   const isSisterZone = propertyTab(prop) === "용도복합·오피스텔 쪠";
   const isMeZone = propertyTab(prop) === "용도복합·오피스텔 쪈";
 
+  // 지분 물건 시세 환산 — 실거래가(시세)는 전체 면적(100%) 기준이라, 지분(예: 28.6%)
+  // 최저입찰가와 직접 비교하면 -95%처럼 왜곡된다. 지분 비율을 곱해 '지분 환산 시세'로 표시.
+  // (비-지분은 shareScale=1 → 원본 그대로)
+  const shareRatio =
+    prop.share_yn === "Y" ? (prop.building_share_ratio ?? prop.land_share_ratio) : null;
+  const isShare = shareRatio != null && shareRatio > 0 && shareRatio < 1;
+  const shareScale = isShare ? shareRatio! : 1;
+  const mktMedian = prop.market_median_price != null ? Math.round(prop.market_median_price * shareScale) : null;
+  const mktMin = prop.market_min_price != null ? Math.round(prop.market_min_price * shareScale) : null;
+  const mktMax = prop.market_max_price != null ? Math.round(prop.market_max_price * shareScale) : null;
+  const mktDiffPct =
+    isShare && mktMedian && mktMedian > 0 && prop.min_price != null
+      ? Math.round(((prop.min_price - mktMedian) / mktMedian) * 1000) / 10
+      : prop.market_diff_percent ?? null;
+
   return (
     <div className="detail-page">
       <header className="detail-hero">
@@ -672,61 +687,68 @@ export default function PropertyDetail() {
                     return `같은 동 ${n}건`;
                   })()}
                 </p>
+                {isShare && (
+                  <p className="section-hint" style={{ color: "#7c3aed", fontWeight: 600 }}>
+                    💡 지분 {formatSharePct(shareRatio)} 환산 — 아래 시세·거래가는 전체 면적 거래가에
+                    지분 비율을 곱한 값입니다(지분 단독 매매가와 다를 수 있음).
+                  </p>
+                )}
                 <div className="market-summary">
                   <div className="market-stat">
-                    <span className="market-stat-label">시세 중앙값</span>
+                    <span className="market-stat-label">
+                      시세 중앙값{isShare ? " (지분 환산)" : ""}
+                    </span>
                     <span className="market-stat-value">
-                      {formatPriceFull(prop.market_median_price)}
+                      {formatPriceFull(mktMedian)}
                     </span>
                     <span className="market-stat-sub">
-                      {formatPrice(prop.market_median_price)}
+                      {formatPrice(mktMedian)}
+                      {isShare && ` · 전체 ${formatPrice(prop.market_median_price)}`}
                     </span>
                   </div>
                   <div className="market-stat">
                     <span className="market-stat-label">
-                      최저~최고
-                      {(prop.market_sample_count ?? 0) >= 10 && (
-                        <span className="market-stat-note"> (상·하위 10% 제외)</span>
-                      )}
+                      최저~최고{isShare ? " (지분 환산)" : ""}
                     </span>
                     <span className="market-stat-value market-range">
-                      {formatPrice(prop.market_min_price)} ~ {formatPrice(prop.market_max_price)}
+                      {formatPrice(mktMin)} ~ {formatPrice(mktMax)}
                     </span>
                   </div>
                   <div className="market-stat">
                     <span className="market-stat-label">우리 매물 vs 시세</span>
-                    {prop.market_diff_percent != null && (
+                    {mktDiffPct != null && (
                       <span
                         className={`market-diff ${
-                          prop.market_diff_percent < -3
+                          mktDiffPct < -3
                             ? "good"
-                            : prop.market_diff_percent > 3
+                            : mktDiffPct > 3
                             ? "warn"
                             : "neutral"
                         }`}
                       >
-                        {prop.market_diff_percent > 0 ? "+" : ""}
-                        {prop.market_diff_percent}%{" "}
-                        {prop.market_diff_percent < -3
+                        {mktDiffPct > 0 ? "+" : ""}
+                        {mktDiffPct}%{" "}
+                        {mktDiffPct < -3
                           ? "(저렴)"
-                          : prop.market_diff_percent > 3
+                          : mktDiffPct > 3
                           ? "(시세 상회)"
                           : "(시세 근접)"}
                       </span>
                     )}
                   </div>
                 </div>
-                {prop.market_min_price != null &&
-                  prop.market_max_price != null &&
-                  prop.market_median_price != null && (
-                    <MarketRangeChart
-                      min={prop.market_min_price}
-                      median={prop.market_median_price}
-                      max={prop.market_max_price}
-                      ourPrice={prop.min_price}
-                      samples={prop.market_samples}
-                    />
-                  )}
+                {mktMin != null && mktMax != null && mktMedian != null && (
+                  <MarketRangeChart
+                    min={mktMin}
+                    median={mktMedian}
+                    max={mktMax}
+                    ourPrice={prop.min_price}
+                    samples={prop.market_samples.map((s) => ({
+                      ...s,
+                      deal_amount: s.deal_amount != null ? Math.round(s.deal_amount * shareScale) : s.deal_amount,
+                    }))}
+                  />
+                )}
                 {prop.market_samples.length > 0 && (() => {
                   const prices = prop.market_samples
                     .map((s) => s.deal_amount)
@@ -757,7 +779,7 @@ export default function PropertyDetail() {
                             <th>단지</th>
                             <th>면적</th>
                             <th>층</th>
-                            <th>거래가</th>
+                            <th>거래가{isShare ? " (지분 환산)" : ""}</th>
                             <th>거래일</th>
                           </tr>
                         </thead>
@@ -776,6 +798,8 @@ export default function PropertyDetail() {
                             if (isMin) titleParts.push("이 기간 매매 최저가");
                             if (isMax) titleParts.push("이 기간 매매 최고가");
                             if (exactMatch) titleParts.push("같은 단지·면적·층 일치");
+                            if (isShare && s.deal_amount != null)
+                              titleParts.push(`전체 거래가 ${formatPrice(s.deal_amount)}`);
                             const titleStr = titleParts.join(" · ") || undefined;
                             return (
                               <tr key={i} className={exactMatch ? "row-exact-match" : ""}>
@@ -783,7 +807,11 @@ export default function PropertyDetail() {
                                 <td>{formatArea(s.area_m2)}</td>
                                 <td>{s.floor != null ? `${s.floor}층` : "-"}</td>
                                 <td className={classes} title={titleStr}>
-                                  {formatPrice(s.deal_amount)}
+                                  {formatPrice(
+                                    s.deal_amount != null
+                                      ? Math.round(s.deal_amount * shareScale)
+                                      : s.deal_amount
+                                  )}
                                 </td>
                                 <td>{formatDate(s.deal_date)}</td>
                               </tr>
