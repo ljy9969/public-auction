@@ -43,6 +43,9 @@ WEBHOOK = os.environ.get("DISCORD_WEBHOOK", "").strip()
 DB_PATH = ROOT / os.environ.get("ONBID_DB_PATH", "data/onbid.db")
 CATALYSTS_PATH = ROOT / "scraper" / "config" / "regional_catalysts.yaml"
 
+# 호재의 '매도가 상승 기여도'(impact) → 이모지. 상=큰 상승, 중=보통, 하=제한적.
+IMPACT_EMOJI = {"상": "🔴", "중": "🟠", "하": "🟡"}
+
 
 def _load_catalysts() -> list[dict]:
     try:
@@ -173,15 +176,18 @@ def build_message(threshold: float, limit: int) -> str | None:
     lines = [
         f"💎 **지분 투자 추천 {len(picks)}건** — 권리 안전 · {basis_label(threshold)} · 지역 호재",
         "_매일 수집 후 자동 선별. 호재는 화이트리스트 매칭 — 추진 여부·현장은 직접 확인하세요._",
+        "_호재 옆 매도가 상승 기여도: 🔴상 · 🟠중 · 🟡하_",
     ]
     for i, x in enumerate(picks, 1):
         cat = x["catalyst"]
         share = f"지분 {x['share_pct']}% · " if x["share_pct"] is not None else ""
+        impact = cat.get("impact")
+        impact_tag = f" {IMPACT_EMOJI.get(impact, '')}{impact}" if impact else ""
         lines.append(
             f"\n**{i}. {x['address']}**  ·  {x['category']}"
             f"\n   💰 최저 {_format_won(x['min_price'])} · {x['basis']} 대비 **{x['pct']}%** (유찰 {x['fail_count']}회)"
             f"\n   🧩 {share}권리 안전"
-            f"\n   📈 호재: {cat['name']} ({cat.get('type', '')})"
+            f"\n   📈 호재: {cat['name']} ({cat.get('type', '')}){impact_tag}"
             + (f"\n   🔎 검색: `{x['search_no']}`" if x["search_no"] else "")
         )
     return "\n".join(lines)
