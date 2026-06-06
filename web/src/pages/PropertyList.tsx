@@ -608,7 +608,7 @@ export default function PropertyList() {
                         && p.area_build_m2 != null
                         && formatSharePct(p.land_share_ratio) && (
                           <span className="share-pill">
-                            지분 {Math.round(p.area_build_m2 * p.land_share_ratio)}㎡ ({formatSharePct(p.land_share_ratio)})
+                            지분 {Math.round(p.area_build_m2 * p.land_share_ratio)}㎡ ({((p.area_build_m2 * p.land_share_ratio) / 3.3058).toFixed(1)}평, {formatSharePct(p.land_share_ratio)})
                           </span>
                         )}
                     </dd>
