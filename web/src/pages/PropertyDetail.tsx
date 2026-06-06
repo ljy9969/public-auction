@@ -479,10 +479,13 @@ export default function PropertyDetail() {
                   value:
                     prop.share_yn === "Y"
                       ? (() => {
-                          const pct = formatSharePct(prop.building_share_ratio ?? prop.land_share_ratio);
-                          return pct
-                            ? `지분 (총 면적의 ${pct})`
-                            : "지분";
+                          const ratio = prop.building_share_ratio ?? prop.land_share_ratio;
+                          const pct = formatSharePct(ratio);
+                          if (pct && ratio != null && prop.area_build_m2 != null) {
+                            const shareArea = Math.round(prop.area_build_m2 * ratio);
+                            return `지분 ${formatArea(shareArea)} (총 면적의 ${pct})`;
+                          }
+                          return pct ? `지분 (총 면적의 ${pct})` : "지분";
                         })()
                       : prop.share_yn === "N"
                       ? "단독"
