@@ -923,18 +923,19 @@ export default function PropertyDetail() {
             const low = prop.predicted_price_low ?? med;
             const high = prop.predicted_price_high ?? med;
             const min = prop.min_price ?? 0;
-            const vsMin = min > 0 ? ((med - min) / min) * 100 : null;
+            const ratio = min > 0 ? med / min : null; // 예상 중앙값이 최저입찰가의 몇 배
             let judgmentLabel: string | null = null;
             let judgmentClass = "judgment-mid";
-            if (vsMin != null) {
+            if (ratio != null) {
+              const minLabel = `최저입찰가(${formatPrice(min)})`;
               if (med < min * 0.97) {
-                judgmentLabel = `현재 최저가보다 ${Math.abs(vsMin).toFixed(1)}% 낮음 (다음 회차 대기 고려)`;
+                judgmentLabel = `중앙값이 ${minLabel}의 약 ${ratio.toFixed(1)}배 (낮음 · 다음 회차 대기 고려)`;
                 judgmentClass = "judgment-low";
               } else if (med > min * 1.10) {
-                judgmentLabel = `현재 최저가보다 ${vsMin.toFixed(1)}% 높음 (입찰 경쟁 강할 가능성)`;
+                judgmentLabel = `중앙값이 ${minLabel}의 약 ${ratio.toFixed(1)}배 (높음 · 입찰 경쟁 강할 가능성)`;
                 judgmentClass = "judgment-high";
               } else {
-                judgmentLabel = "최저가 ≈ 예상 낙찰가 (적정 구간)";
+                judgmentLabel = `중앙값 ≈ ${minLabel} (적정 구간)`;
                 judgmentClass = "judgment-mid";
               }
             }
@@ -1108,9 +1109,16 @@ export default function PropertyDetail() {
         </section>
       )}
 
-      <RawDictSection title="입찰 일정 (온비드 원본)" data={schedule as Record<string, string>} />
+      {/* 경매(court)는 법원경매정보, 공매(onbid)는 온비드가 원본 출처 */}
+      <RawDictSection
+        title={`입찰 일정 (${prop.source === "court" ? "법원경매정보" : "온비드"} 원본)`}
+        data={schedule as Record<string, string>}
+      />
       <RightsSection data={rights as Record<string, string>} />
-      <RawDictSection title="상세 정보 (온비드 원본)" data={detail as Record<string, string>} />
+      <RawDictSection
+        title={`상세 정보 (${prop.source === "court" ? "법원경매정보" : "온비드"} 원본)`}
+        data={detail as Record<string, string>}
+      />
     </div>
   );
 }
