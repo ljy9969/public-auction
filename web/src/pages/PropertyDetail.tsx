@@ -494,51 +494,20 @@ export default function PropertyDetail() {
               </button>
             )}
             {prop.id != null && (
-              <div className="bl-control">
-                <button
-                  type="button"
-                  className={`bl-toggle ${blacklisted ? "on" : ""}`}
-                  onClick={toggleBlacklist}
-                  disabled={blLoading}
-                  aria-pressed={blacklisted}
-                  title={
-                    blacklisted
-                      ? "알림 블랙리스트 해제 — 지분 투자 알림에 다시 포함"
-                      : "알림에서 제외 — 지분 투자 Discord 알림에 뜨지 않게"
-                  }
-                >
-                  {blacklisted ? "🚫 추천 알림 제외됨" : "추천 알림 제외"}
-                </button>
-                {blacklisted && (
-                  <div className="bl-reason-row">
-                    <input
-                      type="text"
-                      className="bl-reason-input"
-                      maxLength={50}
-                      placeholder="사유 (예: 가격 메리트 적음 — 공유자 우선매수)"
-                      value={blReason}
-                      onChange={(e) => setBlReason(e.target.value)}
-                      onBlur={saveBlReason}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.currentTarget.blur();
-                        }
-                      }}
-                      disabled={blLoading}
-                      title="목록의 '블랙리스트' 칩에 hover 하면 이 사유가 툴팁으로 보입니다 (최대 50자)"
-                    />
-                    <button
-                      type="button"
-                      className="bl-reason-save"
-                      onClick={saveBlReason}
-                      disabled={blLoading || blReason === blReasonSaved}
-                      title="사유 저장"
-                    >
-                      {blReason === blReasonSaved ? "저장됨" : "저장"}
-                    </button>
-                  </div>
-                )}
-              </div>
+              <button
+                type="button"
+                className={`bl-toggle ${blacklisted ? "on" : ""}`}
+                onClick={toggleBlacklist}
+                disabled={blLoading}
+                aria-pressed={blacklisted}
+                title={
+                  blacklisted
+                    ? "알림 블랙리스트 해제 — 지분 투자 알림에 다시 포함"
+                    : "알림에서 제외 — 지분 투자 Discord 알림에 뜨지 않게"
+                }
+              >
+                {blacklisted ? "🚫 추천 알림 제외됨" : "추천 알림 제외"}
+              </button>
             )}
             {prop.status && (
               <span className={`status-badge ${statusKlass}`}>{formatStatus(prop.status)}</span>
@@ -552,23 +521,54 @@ export default function PropertyDetail() {
               <p className="hero-address">{prop.address_jibun || prop.region_line}</p>
             )}
           </div>
-          {prop.source === "court" ? (
-            <CourtOriginCta
-              caseNo={prop.court_case_no}
-              sourceUrl={prop.source_url}
-            />
-          ) : (
-            prop.source_url && (
-              <a
-                href={prop.source_url}
-                target="_blank"
-                rel="noreferrer"
-                className="cta-button cta-hero"
-              >
-                온비드 원문 보기 →
-              </a>
-            )
-          )}
+          <div className="hero-right">
+            {blacklisted && prop.id != null && (
+              <div className="bl-reason-row">
+                <input
+                  type="text"
+                  className="bl-reason-input"
+                  maxLength={50}
+                  placeholder="사유 (예: 가격 메리트 적음 — 공유자 우선매수)"
+                  value={blReason}
+                  onChange={(e) => setBlReason(e.target.value)}
+                  onBlur={saveBlReason}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  disabled={blLoading}
+                  title="목록의 '블랙리스트' 칩에 hover 하면 이 사유가 툴팁으로 보입니다 (최대 50자)"
+                />
+                <button
+                  type="button"
+                  className="bl-reason-save"
+                  onClick={saveBlReason}
+                  disabled={blLoading || blReason === blReasonSaved}
+                  title="사유 저장"
+                >
+                  {blReason === blReasonSaved ? "저장됨" : "저장"}
+                </button>
+              </div>
+            )}
+            {prop.source === "court" ? (
+              <CourtOriginCta
+                caseNo={prop.court_case_no}
+                sourceUrl={prop.source_url}
+              />
+            ) : (
+              prop.source_url && (
+                <a
+                  href={prop.source_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="cta-button cta-hero"
+                >
+                  온비드 원문 보기 →
+                </a>
+              )
+            )}
+          </div>
         </div>
       </header>
 
