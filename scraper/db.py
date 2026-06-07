@@ -74,6 +74,7 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     ("building_shared", "INTEGER"),
     ("building_share_ratio", "REAL"),  # 건물 지분 비율 (0~1)
     ("land_share_ratio", "REAL"),      # 토지 지분 비율 (0~1) — court buldList의 "N분의 M" → M/N
+    ("land_area_m2", "REAL"),          # 토지면적 (일괄매각 토지+건물일 때, 건물면적과 별도 보존)
     ("distance_sister_km", "REAL"),    # 서대문역까지 직선거리 (언니/쪠 영역 판정)
     # 국토부 실거래가 기반 시세 통계
     ("market_median_price", "INTEGER"),
@@ -115,6 +116,10 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     ("ai_provider", "TEXT"),         # 'claude' | 'gemini'
     ("ai_model", "TEXT"),            # 'claude-sonnet-4-6' 등
     ("ai_estimated_at", "TEXT"),     # ISO8601 (캐시 신선도 판단)
+    # 사용자가 상세 페이지에서 직접 분류한 알림 블랙리스트(1=제외).
+    # 지분 매물은 거의 항상 공유자 우선매수권이 있어 자동 룰로 컷할 수 없다 →
+    # 사용자가 개별 물건 메리트를 판단해 알림에서만 빼는 수동 플래그(2026-06-07).
+    ("alert_blacklist", "INTEGER NOT NULL DEFAULT 0"),
 ]
 
 
@@ -185,6 +190,7 @@ def upsert_property(prop: dict[str, Any], db_path: Path | None = None) -> int:
         "min_price": prop.get("min_price"),
         "appraisal_price": prop.get("appraisal_price"),
         "area_build_m2": prop.get("area_build_m2"),
+        "land_area_m2": prop.get("land_area_m2"),
         "share_yn": prop.get("share_yn"),
         "building_shared": (
             1 if prop.get("building_shared") is True
@@ -318,6 +324,21 @@ def get_property(prop_id: int, db_path: Path | None = None) -> dict[str, Any] | 
     row = conn.execute("SELECT * FROM properties WHERE id = ?", (prop_id,)).fetchone()
     conn.close()
     return _row_to_dict(row) if row else None
+
+
+def set_alert_blacklist(
+    prop_id: int, value: bool, db_path: Path | None = None
+) -> bool | None:
+    """알림 블랙리스트 플래그 토글. 매물이 없으면 None, 있으면 적용된 bool 반환."""
+    conn = get_connection(db_path)
+    cur = conn.execute(
+        "UPDATE properties SET alert_blacklist = ? WHERE id = ?",
+        (1 if value else 0, prop_id),
+    )
+    conn.commit()
+    changed = cur.rowcount
+    conn.close()
+    return bool(value) if changed else None
 
 
 def count_properties(passes_only: bool = True, db_path: Path | None = None) -> int:

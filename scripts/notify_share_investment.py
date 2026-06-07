@@ -88,6 +88,11 @@ def _share_ratio(p: dict) -> float | None:
 # 지분 매물의 '본질적' flag — 매물이 지분이라는 사실 자체로 거의 항상 붙는다.
 # 이 두 가지만 켜져 있는 medium 은 '인수 위험 없음' 으로 간주, 알림 대상에 포함.
 # (이걸 인수 위험으로 보면 모든 지분 매물이 컷돼 알림이 0건이 되는 문제 — 2026-06-07)
+#
+# ※ co_owner_priority(공유자 우선매수권)도 본질 flag 다 — 공유지분 매각은 거의 항상
+#   다른 공유자가 우선매수권을 가진다(예: 상속 공유자 4인). 이걸로 일괄 제외하면 알림의
+#   존재 의미가 사라진다. 개별 물건의 메리트 판단은 사용자가 블랙리스트로 직접 제외한다
+#   (alert_blacklist 컬럼 / 상세 페이지 토글 — 2026-06-07 안중읍 211-15 정정).
 _SHARE_INTRINSIC_FLAGS = frozenset({"co_owner_priority", "minority_share"})
 
 
@@ -169,6 +174,7 @@ def build_message(threshold: float, limit: int) -> str | None:
                cltr_mnmt_no, court_case_no
         FROM properties
         WHERE passes_filters = 1 AND share_yn = 'Y'
+          AND COALESCE(alert_blacklist, 0) = 0
         """
     ).fetchall()
     con.close()

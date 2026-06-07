@@ -11,6 +11,7 @@ export interface Property {
   min_price: number | null;
   appraisal_price: number | null;
   area_build_m2: number | null;
+  land_area_m2: number | null;
   share_yn: string | null;
   building_shared: boolean | null;
   building_share_ratio: number | null;
@@ -66,6 +67,7 @@ export interface Property {
   predicted_price_high: number | null;
   predicted_price_basis: string | null;
   asset_type: string | null;
+  alert_blacklist: boolean;
   source: "onbid" | "court";
   court_case_no: string | null;
   court_office_cd: string | null;
@@ -168,6 +170,17 @@ export async function requestAiEstimate(id: number, refresh = false): Promise<Ai
     throw new Error(detail);
   }
   return res.json();
+}
+
+/** 알림 블랙리스트 토글 — 지분 투자 Discord 알림에서만 제외. 서버 DB에 영속. */
+export async function setBlacklist(id: number, blacklisted: boolean): Promise<boolean> {
+  const res = await fetch(
+    `/api/properties/${id}/blacklist?blacklisted=${blacklisted}`,
+    { method: "POST" }
+  );
+  if (!res.ok) throw new Error("블랙리스트 변경 실패");
+  const data = await res.json();
+  return data.alert_blacklist as boolean;
 }
 
 export interface StatsSummary {

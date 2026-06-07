@@ -25,6 +25,7 @@ import {
   isRedundantTag,
   propertyTab,
   requestAiEstimate,
+  setBlacklist,
   storeTab,
   parseFloor,
   tagCategory,
@@ -329,6 +330,26 @@ export default function PropertyDetail() {
   const [aiError, setAiError] = useState<string | null>(null);
   const [mapType, setMapType] = useState<"normal" | "satellite">("normal");
   const fav = useFavorites();
+  // 알림 블랙리스트 — 서버 영속. prop 로드/변경 시 서버 값으로 동기화.
+  const [blacklisted, setBlacklisted] = useState(false);
+  const [blLoading, setBlLoading] = useState(false);
+  useEffect(() => {
+    setBlacklisted(prop?.alert_blacklist ?? false);
+  }, [prop?.id, prop?.alert_blacklist]);
+
+  const toggleBlacklist = async () => {
+    if (prop?.id == null || blLoading) return;
+    setBlLoading(true);
+    const next = !blacklisted;
+    setBlacklisted(next); // 낙관적 업데이트
+    try {
+      setBlacklisted(await setBlacklist(prop.id, next));
+    } catch {
+      setBlacklisted(!next); // 실패 시 롤백
+    } finally {
+      setBlLoading(false);
+    }
+  };
 
   const runAiEstimate = async (refresh = false) => {
     if (!prop?.id) return;
@@ -427,6 +448,11 @@ export default function PropertyDetail() {
             </span>
           )}
           {prop.bid_method && <span className="hero-method">{prop.bid_method}</span>}
+          {blacklisted && (
+            <span className="bl-chip" title="지분 투자 Discord 알림에서 제외된 매물">
+              블랙리스트
+            </span>
+          )}
           <div className="hero-meta-right">
             {prop.id != null && (
               <button
@@ -437,6 +463,22 @@ export default function PropertyDetail() {
                 title={fav.has(prop.id) ? "즐겨찾기 해제" : "즐겨찾기 추가"}
               >
                 {fav.has(prop.id) ? "★ 즐겨찾기" : "☆ 즐겨찾기"}
+              </button>
+            )}
+            {prop.id != null && (
+              <button
+                type="button"
+                className={`bl-toggle ${blacklisted ? "on" : ""}`}
+                onClick={toggleBlacklist}
+                disabled={blLoading}
+                aria-pressed={blacklisted}
+                title={
+                  blacklisted
+                    ? "알림 블랙리스트 해제 — 지분 투자 알림에 다시 포함"
+                    : "알림에서 제외 — 지분 투자 Discord 알림에 뜨지 않게"
+                }
+              >
+                {blacklisted ? "🚫 추천 알림 제외됨" : "추천 알림 제외"}
               </button>
             )}
             {prop.status && (
@@ -516,7 +558,18 @@ export default function PropertyDetail() {
                 { label: "소재지 (지번)", value: prop.address_jibun },
                 { label: "소재지 (도로명)", value: prop.address_road },
                 { label: "용도", value: prop.category },
-                { label: isLandCategory(prop) ? "토지면적" : "건물면적", value: formatArea(prop.area_build_m2) },
+                // 일괄매각(토지+건물): 토지면적을 건물면적 위에 별도 행으로 — 건물면적 누락 방지
+                ...(prop.land_area_m2 != null
+                  ? [
+                      { label: "토지면적", value: formatArea(prop.land_area_m2) },
+                      { label: "건물면적", value: formatArea(prop.area_build_m2) },
+                    ]
+                  : [
+                      {
+                        label: isLandCategory(prop) ? "토지면적" : "건물면적",
+                        value: formatArea(prop.area_build_m2),
+                      },
+                    ]),
                 {
                   label: "층수",
                   value:
@@ -558,6 +611,15 @@ export default function PropertyDetail() {
                       ? (() => {
                           const ratio = prop.building_share_ratio ?? prop.land_share_ratio;
                           const pct = formatSharePct(ratio);
+                          // 일괄매각(토지+건물): 토지·주거(건물) 지분 둘 다 표시
+                          if (prop.land_area_m2 != null && ratio != null) {
+                            const landShare = Math.round(prop.land_area_m2 * ratio);
+                            const bld =
+                              prop.area_build_m2 != null
+                                ? ` + 건물 ${formatArea(Math.round(prop.area_build_m2 * ratio))}`
+                                : "";
+                            return `토지 ${formatArea(landShare)}${bld} (각 ${pct ?? ""})`;
+                          }
                           if (pct && ratio != null && prop.area_build_m2 != null) {
                             const shareArea = Math.round(prop.area_build_m2 * ratio);
                             return `지분 ${formatArea(shareArea)} (총 면적의 ${pct})`;

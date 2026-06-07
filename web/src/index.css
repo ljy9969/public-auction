@@ -1771,6 +1771,54 @@ button.secondary {
   background: #fde68a;
 }
 
+/* 알림 블랙리스트 토글 — 즐겨찾기 옆, 제외 성격이라 적색 계열 */
+.bl-toggle {
+  background: #fff;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.bl-toggle:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.bl-toggle.on {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #f87171;
+}
+
+.bl-toggle.on:hover {
+  background: #fecaca;
+}
+
+.bl-toggle:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* 블랙리스트 칩 — 목록 카드/상세 hero 공통. 추천 알림 제외 표식 */
+.bl-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #f87171;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .similar-list {
   list-style: none;
   padding: 0;
@@ -1815,6 +1863,7 @@ button.secondary {
   .back-link,
   .list-map-pane,
   .fav-toggle,
+  .bl-toggle,
   .cta-button,
   .similar-list {
     display: none !important;

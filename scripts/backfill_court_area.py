@@ -30,7 +30,7 @@ if str(ROOT) not in sys.path:
 
 from scraper.db import get_connection  # noqa: E402
 from scraper_court.detail import fetch_detail  # noqa: E402
-from scraper_court.parse import extract_object_area_m2  # noqa: E402
+from scraper_court.parse import extract_areas  # noqa: E402
 from scraper_court.session import CourtSession  # noqa: E402
 
 
@@ -44,7 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
         """SELECT id, cltr_no, court_case_no, court_office_cd, court_item_seq,
-                  area_build_m2, title
+                  area_build_m2, land_area_m2, title
            FROM properties
            WHERE source='court' AND court_case_no IS NOT NULL AND court_office_cd IS NOT NULL
            ORDER BY id"""
@@ -68,20 +68,30 @@ def main(argv: list[str] | None = None) -> int:
                 errors += 1
                 print(f"  [err] id={pid} {cs_no}-{seq}: {exc}")
                 continue
-            new_area = extract_object_area_m2(d)
+            new_area, new_land = extract_areas(d)
             if new_area is None:
                 missing += 1
                 print(f"  [no-area] id={pid} {cs_no}-{seq}")
                 continue
             old = r["area_build_m2"]
-            if old is not None and abs(old - new_area) < 0.01:
+            old_land = r["land_area_m2"]
+            area_same = old is not None and abs(old - new_area) < 0.01
+            land_same = (new_land is None) or (
+                old_land is not None and abs(old_land - new_land) < 0.01
+            )
+            if area_same and land_same:
                 unchanged += 1
                 print(f"  [ok] id={pid} {cs_no}-{seq} {new_area}㎡ (변경 없음)")
                 continue
-            conn.execute("UPDATE properties SET area_build_m2=? WHERE id=?", (new_area, pid))
+            # land 는 일괄매각에서만 잡힘 — None 이면 기존값 보존(COALESCE 의미)
+            conn.execute(
+                "UPDATE properties SET area_build_m2=?, land_area_m2=COALESCE(?, land_area_m2) WHERE id=?",
+                (new_area, new_land, pid),
+            )
             updated += 1
             old_s = f"{old}㎡" if old is not None else "None"
-            print(f"  [upd] id={pid} {cs_no}-{seq} {old_s} → {new_area}㎡")
+            land_s = f" · 토지 {new_land}㎡" if new_land is not None else ""
+            print(f"  [upd] id={pid} {cs_no}-{seq} {old_s} → {new_area}㎡{land_s}")
     conn.commit()
     conn.close()
     print()

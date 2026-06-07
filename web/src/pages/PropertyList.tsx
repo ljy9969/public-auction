@@ -548,6 +548,9 @@ export default function PropertyList() {
             {sortedItems.map((p, idx) => {
               const isActive = p.id != null && p.id === highlightedId;
               const visibleNotes = (p.filter_notes || []).filter((t) => !isRedundantTag(t));
+              // 주황 스트라이프 = filter_notes 주의 태그(맹지·분묘 등)만.
+              // 공유자 우선매수권·지분은 공유지분 매각에 필연이라 위험 신호로 안 쓴다
+              // (모든 지분 카드가 주황이 되면 변별력 0 — 2026-06-07 정정).
               const hasCaution = visibleNotes.some(isCautionTag);
               const floor = parseFloor(p.title, p.floor_total);
               // 경매 기일입찰: 시작==마감이면 통상 1시간 뒤 마감으로 보정 (상세 페이지와 통일)
@@ -577,6 +580,11 @@ export default function PropertyList() {
                       {p.source === "court" ? "경매" : "공매"}
                     </span>
                     <h2 className="card-title">{p.title}</h2>
+                    {p.alert_blacklist && (
+                      <span className="bl-chip" title="추천 알림에서 제외된 매물">
+                        블랙리스트
+                      </span>
+                    )}
                     {p.id != null && (
                       <button
                         type="button"

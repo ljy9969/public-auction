@@ -105,21 +105,12 @@ def _category_label(row: dict[str, Any]) -> str:
     return lcl_label or scl_label or "기타"
 
 
-def extract_object_area_m2(dma_result: dict[str, Any]) -> float | None:
-    """detail 의 gdsDspslObjctLst[0].objctArDts 에서 호수/필지의 진짜 면적(㎡) 추출.
-
-    search API 의 minArea 는 동 전체(예: 1536㎡) 가 들어와 호수 전용면적
-    (예: 16.685㎡) 과 60배 차이가 나는 케이스 발생 — detail 의 objctArDts
-    가 "철근콘크리트구조 16.685㎡" 같이 호수 단위 면적을 갖고 있다.
-
-    토지 매물도 같은 키에 "대지 25㎡" 같은 형식으로 채워져 있을 것으로
-    가정 — 패턴은 단순히 "숫자㎡" 정규식.
-    """
-    objs = dma_result.get("gdsDspslObjctLst") or []
-    if not objs or not isinstance(objs[0], dict):
-        return None
-    txt = objs[0].get("objctArDts") or ""
-    m = re.search(r"(\d+(?:\.\d+)?)\s*㎡", txt)
+def _obj_area_m2(obj: dict[str, Any]) -> float | None:
+    """detail 객체 1건의 면적(㎡). 건물은 pjbBuldList(전용면적) 우선, 없으면 objctArDts."""
+    bld = _building_area(obj)  # pjbBuldList 의 "…99.78㎡" 합
+    if bld:
+        return bld
+    m = re.search(r"(\d+(?:\.\d+)?)\s*㎡", str(obj.get("objctArDts") or ""))
     if not m:
         return None
     try:
@@ -127,6 +118,41 @@ def extract_object_area_m2(dma_result: dict[str, Any]) -> float | None:
     except ValueError:
         return None
     return v if v > 0 else None
+
+
+def _obj_is_land(obj: dict[str, Any]) -> bool:
+    """detail 객체가 토지인지. usg 대분류/소분류 1xxxx=토지, 2xxxx=건물.
+    코드 없으면 pjbBuldList(건물) / ldcgDts(지목=토지) 로 폴백."""
+    code = str(obj.get("lclDspslGdsLstUsgCd") or obj.get("sclDspslGdsLstUsgCd") or "")
+    if code.startswith("1"):
+        return True
+    if code.startswith("2"):
+        return False
+    if _building_area(obj):
+        return False
+    return bool(obj.get("ldcgDts"))
+
+
+def extract_areas(dma_result: dict[str, Any]) -> tuple[float | None, float | None]:
+    """detail gdsDspslObjctLst → (건물면적, 토지면적).
+
+    일괄매각(토지+건물)이면 종류별로 분리해 둘 다 채운다 — 건물면적이 토지면적에
+    덮여 누락되는 사고 방지(2026-06-07 2024타경52930: 토지 406㎡ + 건물 99.78㎡).
+    단일 종류(토지만/건물만)면 (대표면적, None) — 기존 단건 동작 유지.
+    """
+    objs = [o for o in (dma_result.get("gdsDspslObjctLst") or []) if isinstance(o, dict)]
+    if not objs:
+        return None, None
+    lands = [a for o in objs if _obj_is_land(o) and (a := _obj_area_m2(o))]
+    blds = [a for o in objs if not _obj_is_land(o) and (a := _obj_area_m2(o))]
+    if lands and blds:
+        return round(sum(blds), 2), round(sum(lands), 2)
+    return _obj_area_m2(objs[0]), None
+
+
+def extract_object_area_m2(dma_result: dict[str, Any]) -> float | None:
+    """detail 에서 호수/필지의 진짜 면적(㎡). 일괄이면 건물면적. (extract_areas 위임)"""
+    return extract_areas(dma_result)[0]
 
 
 def extract_current_min_price(dma_result: dict[str, Any]) -> int | None:
@@ -179,6 +205,22 @@ def _parse_land_share_ratio(*texts: str) -> float | None:
             continue
         return numer / denom
     return None
+
+
+def _building_area(row: dict[str, Any]) -> float | None:
+    """pjbBuldList에서 건물 전용면적(㎡) 추출.
+    예: '경량철골구조 판넬지붕 단층 단독주택 99.78㎡' → 99.78.
+    일괄매각(토지+건물)에서 검색 row의 minArea는 물건 대표(보통 토지) 면적이라,
+    건물 실제 면적은 pjbBuldList에서 뽑아야 한다 (2026-06-07 2024타경52930 사례)."""
+    txt = str(row.get("pjbBuldList") or "")
+    nums = re.findall(r"(\d+(?:\.\d+)?)\s*㎡", txt)
+    if not nums:
+        return None
+    try:
+        # 여러 개면 합산(복수 동·층) — 단일이면 그대로
+        return round(sum(float(n) for n in nums), 2)
+    except ValueError:
+        return None
 
 
 def _is_share(row: dict[str, Any], title: str) -> str:
@@ -260,7 +302,17 @@ def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:
     mokmul_ser = row.get("mokmulSer") or "1"
     cltr_no = f"{sa_no}-{mokmul_ser}" if sa_no else (row.get("docid") or "")
     address_jibun, address_road = _build_address(row)
-    bld_area = _format_area(row.get("minArea"))
+    # 면적: 검색 row의 minArea는 '물건 대표'(일괄이면 토지) 면적. 건물 실제 면적은
+    # pjbBuldList에 있다. 건물 면적이 잡히고 대표 면적이 그보다 충분히 크면 토지
+    # 일괄로 보고 토지면적(land_area_m2)을 별도 보존 — 건물면적 누락 방지.
+    rep_area = _format_area(row.get("minArea"))
+    bld_from_pjb = _building_area(row)
+    if bld_from_pjb:
+        bld_area = bld_from_pjb
+        land_area = rep_area if (rep_area and rep_area > bld_from_pjb * 1.05) else None
+    else:
+        bld_area = rep_area
+        land_area = None
 
     title_parts = [
         address_jibun,
@@ -299,6 +351,7 @@ def parse_court_row(row: dict[str, Any]) -> dict[str, Any] | None:
         "min_price": _format_price(row.get("minmaePrice")),
         "appraisal_price": _format_price(row.get("gamevalAmt")),
         "area_build_m2": bld_area,
+        "land_area_m2": land_area,
         "share_yn": share_yn,
         "land_share_ratio": land_share_ratio,
         "fail_count": _format_int(row.get("yuchalCnt")),

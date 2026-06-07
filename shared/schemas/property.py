@@ -20,6 +20,7 @@ class PropertyBase(BaseModel):
     min_price: int | None = None
     appraisal_price: int | None = None
     area_build_m2: float | None = None
+    land_area_m2: float | None = None
     share_yn: str | None = None
     building_shared: bool | None = None
     building_share_ratio: float | None = None
@@ -70,6 +71,7 @@ class PropertyBase(BaseModel):
     predicted_price_high: int | None = None
     predicted_price_basis: str | None = None
     asset_type: str | None = None
+    alert_blacklist: bool = False
     source: str = "onbid"
     court_case_no: str | None = None
     court_office_cd: str | None = None

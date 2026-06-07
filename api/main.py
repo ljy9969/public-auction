@@ -214,6 +214,19 @@ def get_property(prop_id: int) -> PropertyDetail:
     return PropertyDetail(**_public_fields(row))
 
 
+@app.post("/api/properties/{prop_id}/blacklist")
+def set_blacklist(prop_id: int, blacklisted: bool) -> dict[str, Any]:
+    """알림 블랙리스트 토글 — 상세 페이지에서 사용자가 직접 분류.
+
+    지분 매물은 공유자 우선매수권이 거의 항상 붙어 자동 룰로 못 거른다 →
+    개별 물건 메리트를 사용자가 판단해 지분 투자 Discord 알림에서만 제외.
+    """
+    result = scraper_db.set_alert_blacklist(prop_id, blacklisted)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+    return {"id": prop_id, "alert_blacklist": result}
+
+
 @app.get("/api/properties/{prop_id}/ai-estimate")
 def ai_estimate_cached(prop_id: int) -> Response:
     """페이지 진입 시 자동 호출용 — 캐시된 AI 예상이 있으면 반환, 없으면 204.
