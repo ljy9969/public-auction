@@ -332,10 +332,16 @@ export default function PropertyDetail() {
   const fav = useFavorites();
   // 알림 블랙리스트 — 서버 영속. prop 로드/변경 시 서버 값으로 동기화.
   const [blacklisted, setBlacklisted] = useState(false);
+  const [blReason, setBlReason] = useState("");
+  // 사유 입력 후 마지막으로 서버에 보낸 값 — 변경 감지(저장 버튼 활성/비활성)에 사용.
+  const [blReasonSaved, setBlReasonSaved] = useState("");
   const [blLoading, setBlLoading] = useState(false);
   useEffect(() => {
     setBlacklisted(prop?.alert_blacklist ?? false);
-  }, [prop?.id, prop?.alert_blacklist]);
+    const r = prop?.alert_blacklist_reason ?? "";
+    setBlReason(r);
+    setBlReasonSaved(r);
+  }, [prop?.id, prop?.alert_blacklist, prop?.alert_blacklist_reason]);
 
   const toggleBlacklist = async () => {
     if (prop?.id == null || blLoading) return;
@@ -343,9 +349,31 @@ export default function PropertyDetail() {
     const next = !blacklisted;
     setBlacklisted(next); // 낙관적 업데이트
     try {
-      setBlacklisted(await setBlacklist(prop.id, next));
+      // 토글 ON 시 현재 사유도 같이, OFF 시 서버에서 자동으로 비움.
+      const res = await setBlacklist(prop.id, next, next ? blReason : null);
+      setBlacklisted(res.blacklisted);
+      const r = res.reason ?? "";
+      setBlReason(r);
+      setBlReasonSaved(r);
     } catch {
       setBlacklisted(!next); // 실패 시 롤백
+    } finally {
+      setBlLoading(false);
+    }
+  };
+
+  // 사유만 별도 저장 — 토글은 그대로 유지, reason 만 갱신.
+  const saveBlReason = async () => {
+    if (prop?.id == null || blLoading || !blacklisted) return;
+    if (blReason === blReasonSaved) return;
+    setBlLoading(true);
+    try {
+      const res = await setBlacklist(prop.id, true, blReason);
+      const r = res.reason ?? "";
+      setBlReason(r);
+      setBlReasonSaved(r);
+    } catch {
+      /* 변경 실패 시 그대로 둠 (사용자가 다시 시도) */
     } finally {
       setBlLoading(false);
     }
@@ -466,20 +494,51 @@ export default function PropertyDetail() {
               </button>
             )}
             {prop.id != null && (
-              <button
-                type="button"
-                className={`bl-toggle ${blacklisted ? "on" : ""}`}
-                onClick={toggleBlacklist}
-                disabled={blLoading}
-                aria-pressed={blacklisted}
-                title={
-                  blacklisted
-                    ? "알림 블랙리스트 해제 — 지분 투자 알림에 다시 포함"
-                    : "알림에서 제외 — 지분 투자 Discord 알림에 뜨지 않게"
-                }
-              >
-                {blacklisted ? "🚫 추천 알림 제외됨" : "추천 알림 제외"}
-              </button>
+              <div className="bl-control">
+                <button
+                  type="button"
+                  className={`bl-toggle ${blacklisted ? "on" : ""}`}
+                  onClick={toggleBlacklist}
+                  disabled={blLoading}
+                  aria-pressed={blacklisted}
+                  title={
+                    blacklisted
+                      ? "알림 블랙리스트 해제 — 지분 투자 알림에 다시 포함"
+                      : "알림에서 제외 — 지분 투자 Discord 알림에 뜨지 않게"
+                  }
+                >
+                  {blacklisted ? "🚫 추천 알림 제외됨" : "추천 알림 제외"}
+                </button>
+                {blacklisted && (
+                  <div className="bl-reason-row">
+                    <input
+                      type="text"
+                      className="bl-reason-input"
+                      maxLength={50}
+                      placeholder="사유 (예: 가격 메리트 적음 — 공유자 우선매수)"
+                      value={blReason}
+                      onChange={(e) => setBlReason(e.target.value)}
+                      onBlur={saveBlReason}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.currentTarget.blur();
+                        }
+                      }}
+                      disabled={blLoading}
+                      title="목록의 '블랙리스트' 칩에 hover 하면 이 사유가 툴팁으로 보입니다 (최대 50자)"
+                    />
+                    <button
+                      type="button"
+                      className="bl-reason-save"
+                      onClick={saveBlReason}
+                      disabled={blLoading || blReason === blReasonSaved}
+                      title="사유 저장"
+                    >
+                      {blReason === blReasonSaved ? "저장됨" : "저장"}
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
             {prop.status && (
               <span className={`status-badge ${statusKlass}`}>{formatStatus(prop.status)}</span>

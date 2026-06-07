@@ -215,16 +215,22 @@ def get_property(prop_id: int) -> PropertyDetail:
 
 
 @app.post("/api/properties/{prop_id}/blacklist")
-def set_blacklist(prop_id: int, blacklisted: bool) -> dict[str, Any]:
+def set_blacklist(
+    prop_id: int,
+    blacklisted: bool,
+    reason: str | None = None,
+) -> dict[str, Any]:
     """알림 블랙리스트 토글 — 상세 페이지에서 사용자가 직접 분류.
 
     지분 매물은 공유자 우선매수권이 거의 항상 붙어 자동 룰로 못 거른다 →
     개별 물건 메리트를 사용자가 판단해 지분 투자 Discord 알림에서만 제외.
+    reason 은 ≤50자 자유 텍스트, 목록의 'blacklist' 칩 hover 시 툴팁으로 노출.
+    blacklisted=False 면 reason 도 함께 비워짐.
     """
-    result = scraper_db.set_alert_blacklist(prop_id, blacklisted)
+    result = scraper_db.set_alert_blacklist(prop_id, blacklisted, reason)
     if result is None:
         raise HTTPException(status_code=404, detail="Property not found")
-    return {"id": prop_id, "alert_blacklist": result}
+    return {"id": prop_id, **result}
 
 
 @app.get("/api/properties/{prop_id}/ai-estimate")

@@ -72,6 +72,7 @@ class PropertyBase(BaseModel):
     predicted_price_basis: str | None = None
     asset_type: str | None = None
     alert_blacklist: bool = False
+    alert_blacklist_reason: str | None = None
     source: str = "onbid"
     court_case_no: str | None = None
     court_office_cd: str | None = None

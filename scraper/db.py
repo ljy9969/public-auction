@@ -120,6 +120,9 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     # 지분 매물은 거의 항상 공유자 우선매수권이 있어 자동 룰로 컷할 수 없다 →
     # 사용자가 개별 물건 메리트를 판단해 알림에서만 빼는 수동 플래그(2026-06-07).
     ("alert_blacklist", "INTEGER NOT NULL DEFAULT 0"),
+    # 블랙리스트 사유 — 사용자가 상세 페이지에서 입력(≤50자). 목록의
+    # 'blacklist' 칩 hover 시 툴팁으로 노출 (2026-06-07).
+    ("alert_blacklist_reason", "TEXT"),
 ]
 
 
@@ -327,18 +330,46 @@ def get_property(prop_id: int, db_path: Path | None = None) -> dict[str, Any] | 
 
 
 def set_alert_blacklist(
-    prop_id: int, value: bool, db_path: Path | None = None
-) -> bool | None:
-    """알림 블랙리스트 플래그 토글. 매물이 없으면 None, 있으면 적용된 bool 반환."""
+    prop_id: int,
+    value: bool,
+    reason: str | None = None,
+    db_path: Path | None = None,
+) -> dict | None:
+    """알림 블랙리스트 플래그 + 사유 토글. 매물이 없으면 None.
+
+    - value=False 이면 사유도 함께 비움(NULL).
+    - value=True 인데 reason 이 None 이면 기존 사유 보존(COALESCE 동작 X — 명시적
+      None 이면 비움). 호출자가 사유 갱신 없이 토글만 하고 싶을 때를 위해 빈 문자열은
+      비우는 것으로 통일.
+    """
     conn = get_connection(db_path)
-    cur = conn.execute(
-        "UPDATE properties SET alert_blacklist = ? WHERE id = ?",
-        (1 if value else 0, prop_id),
-    )
+    if value:
+        clean = (reason or "").strip()[:50] or None
+        cur = conn.execute(
+            "UPDATE properties SET alert_blacklist = 1, alert_blacklist_reason = ? "
+            "WHERE id = ?",
+            (clean, prop_id),
+        )
+    else:
+        cur = conn.execute(
+            "UPDATE properties SET alert_blacklist = 0, alert_blacklist_reason = NULL "
+            "WHERE id = ?",
+            (prop_id,),
+        )
     conn.commit()
     changed = cur.rowcount
+    if not changed:
+        conn.close()
+        return None
+    row = conn.execute(
+        "SELECT alert_blacklist, alert_blacklist_reason FROM properties WHERE id = ?",
+        (prop_id,),
+    ).fetchone()
     conn.close()
-    return bool(value) if changed else None
+    return {
+        "alert_blacklist": bool(row["alert_blacklist"]),
+        "alert_blacklist_reason": row["alert_blacklist_reason"],
+    }
 
 
 def count_properties(passes_only: bool = True, db_path: Path | None = None) -> int:

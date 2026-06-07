@@ -68,6 +68,7 @@ export interface Property {
   predicted_price_basis: string | null;
   asset_type: string | null;
   alert_blacklist: boolean;
+  alert_blacklist_reason: string | null;
   source: "onbid" | "court";
   court_case_no: string | null;
   court_office_cd: string | null;
@@ -172,15 +173,26 @@ export async function requestAiEstimate(id: number, refresh = false): Promise<Ai
   return res.json();
 }
 
-/** 알림 블랙리스트 토글 — 지분 투자 Discord 알림에서만 제외. 서버 DB에 영속. */
-export async function setBlacklist(id: number, blacklisted: boolean): Promise<boolean> {
-  const res = await fetch(
-    `/api/properties/${id}/blacklist?blacklisted=${blacklisted}`,
-    { method: "POST" }
-  );
+/** 알림 블랙리스트 토글 — 지분 투자 Discord 알림에서만 제외. 서버 DB에 영속.
+ *  reason 은 ≤50자, 목록의 'blacklist' 칩 hover 시 툴팁으로 노출.
+ *  blacklisted=false 면 사유는 서버에서 자동으로 NULL.
+ */
+export async function setBlacklist(
+  id: number,
+  blacklisted: boolean,
+  reason?: string | null,
+): Promise<{ blacklisted: boolean; reason: string | null }> {
+  const q = new URLSearchParams({ blacklisted: String(blacklisted) });
+  if (blacklisted && reason != null) q.set("reason", reason);
+  const res = await fetch(`/api/properties/${id}/blacklist?${q}`, {
+    method: "POST",
+  });
   if (!res.ok) throw new Error("블랙리스트 변경 실패");
   const data = await res.json();
-  return data.alert_blacklist as boolean;
+  return {
+    blacklisted: data.alert_blacklist as boolean,
+    reason: (data.alert_blacklist_reason ?? null) as string | null,
+  };
 }
 
 export interface StatsSummary {

@@ -581,7 +581,14 @@ export default function PropertyList() {
                     </span>
                     <h2 className="card-title">{p.title}</h2>
                     {p.alert_blacklist && (
-                      <span className="bl-chip" title="추천 알림에서 제외된 매물">
+                      <span
+                        className="bl-chip"
+                        title={
+                          p.alert_blacklist_reason
+                            ? `블랙리스트 사유: ${p.alert_blacklist_reason}`
+                            : "추천 알림에서 제외된 매물 (사유 미입력)"
+                        }
+                      >
                         블랙리스트
                       </span>
                     )}
