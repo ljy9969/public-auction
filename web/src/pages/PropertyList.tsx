@@ -580,6 +580,14 @@ export default function PropertyList() {
                       {p.source === "court" ? "경매" : "공매"}
                     </span>
                     <h2 className="card-title">{p.title}</h2>
+                    {p.land_area_m2 != null && (
+                      <span
+                        className="bundle-chip"
+                        title="토지+건물(주거)을 묶어 한 번에 파는 일괄매각 지분 물건"
+                      >
+                        토지+건물 일괄
+                      </span>
+                    )}
                     {p.alert_blacklist && (
                       <span
                         className="bl-chip"
@@ -619,7 +627,32 @@ export default function PropertyList() {
                       {formatPriceFull(p.appraisal_price)}
                       <span className="price-sub">{formatPrice(p.appraisal_price)}</span>
                     </dd>
-                    <dt>{isLandCategory(p) ? "토지면적" : "건물면적"}</dt>
+                    {/* 일괄매각(토지+건물): 토지면적 행을 건물면적 위에 별도 표시 */}
+                    {p.land_area_m2 != null && (
+                      <>
+                        <dt>토지면적</dt>
+                        <dd>
+                          {formatArea(p.land_area_m2)}
+                          {p.share_yn === "Y" && (() => {
+                            const ratio = p.land_share_ratio ?? p.building_share_ratio;
+                            if (ratio == null || !formatSharePct(ratio)) return null;
+                            const shareM2 = p.land_area_m2! * ratio;
+                            return (
+                              <span className="share-pill">
+                                지분 {Math.round(shareM2)}㎡ ({(shareM2 / 3.3058).toFixed(1)}평, {formatSharePct(ratio)})
+                              </span>
+                            );
+                          })()}
+                        </dd>
+                      </>
+                    )}
+                    <dt>
+                      {p.land_area_m2 != null
+                        ? "건물면적"
+                        : isLandCategory(p)
+                        ? "토지면적"
+                        : "건물면적"}
+                    </dt>
                     <dd>
                       {formatArea(p.area_build_m2)}
                       {p.share_yn === "Y" && p.area_build_m2 != null && (() => {

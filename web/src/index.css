@@ -1898,6 +1898,20 @@ button.secondary {
   border-color: #4b5563;
 }
 
+/* 토지+건물 일괄매각 지분 구분 칩 — 청록 계열 */
+.bundle-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #cffafe;
+  color: #0e7490;
+  border: 1px solid #67e8f9;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .similar-list {
   list-style: none;
   padding: 0;
