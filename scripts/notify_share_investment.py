@@ -85,19 +85,34 @@ def _share_ratio(p: dict) -> float | None:
     return r if (r is not None and 0 < r < 1) else None
 
 
-def _risk_level(p: dict) -> str | None:
+# 지분 매물의 '본질적' flag — 매물이 지분이라는 사실 자체로 거의 항상 붙는다.
+# 이 두 가지만 켜져 있는 medium 은 '인수 위험 없음' 으로 간주, 알림 대상에 포함.
+# (이걸 인수 위험으로 보면 모든 지분 매물이 컷돼 알림이 0건이 되는 문제 — 2026-06-07)
+_SHARE_INTRINSIC_FLAGS = frozenset({"co_owner_priority", "minority_share"})
+
+
+def _risk_ok_for_share(p: dict) -> bool:
+    """지분 알림 통과 기준 — low 면 무조건 통과, medium 은 본질 flag 만 있으면 통과."""
     ra = p.get("rights_analysis")
-    if isinstance(ra, str) and ra:
-        try:
-            return (json.loads(ra) or {}).get("risk_level")
-        except json.JSONDecodeError:
-            return None
-    return None
+    if not isinstance(ra, str) or not ra:
+        return False
+    try:
+        a = json.loads(ra) or {}
+    except json.JSONDecodeError:
+        return False
+    level = a.get("risk_level")
+    if level == "low":
+        return True
+    if level == "medium":
+        flags = a.get("flags") or []
+        other = [f for f in flags if f.get("kind") not in _SHARE_INTRINSIC_FLAGS]
+        return not other
+    return False
 
 
 def _pick(p: dict, threshold: float) -> dict | None:
     """3조건 평가 → 통과 시 알림용 dict, 아니면 None."""
-    if _risk_level(p) != "low":
+    if not _risk_ok_for_share(p):
         return None
 
     cat = p.get("_catalyst")
