@@ -1805,7 +1805,7 @@ button.secondary {
   cursor: default;
 }
 
-/* 블랙리스트 칩 — 목록 카드/상세 hero 공통. 추천 알림 제외 표식 */
+/* 블랙리스트 칩 — 상세 hero 는 적색, 추천 알림 제외 표식 */
 .bl-chip {
   display: inline-flex;
   align-items: center;
@@ -1817,6 +1817,13 @@ button.secondary {
   font-size: 0.72rem;
   font-weight: 600;
   white-space: nowrap;
+}
+
+/* 목록 카드는 어두운 회색 배경 + 흰 글씨 */
+.card-header .bl-chip {
+  background: #4b5563;
+  color: #fff;
+  border-color: #4b5563;
 }
 
 .similar-list {
