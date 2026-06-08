@@ -40,17 +40,23 @@ logger = logging.getLogger(__name__)
 
 PHOTO_DIR = ROOT / "data" / "court_photos"
 URL_PREFIX = "/api/court-photos"
-MAX_PHOTOS = 5
+MAX_PHOTOS = None  # 물건별 사진 전부 (법원경매정보에 올라온 만큼)
 
 
 def _dspsl_gds_seq(cltr_no: str | None, court_item_seq: int | None) -> str:
-    """cltr_no = '2023타경6292-1' → 끝 '-N'이 물건순번(dspslGdsSeq). 폴백 court_item_seq→1."""
+    """detail 호출용 물건순번(dspslGdsSeq).
+
+    court_item_seq(=maemulSer, 물건번호)가 dspslGdsSeq 와 일치한다 — 우선 사용.
+    cltr_no 의 끝 '-N'은 mokmulSer(목적물 순번)이라 일괄매각 등에서 물건번호와
+    어긋난다(예: 2024타경52930 토지+건물 일괄은 cltr_no '-2'지만 dspslGdsSeq=1).
+    이 경우 '-2'로 호출하면 빈 물건이 와 사진이 안 잡힘(2026-06-08). 폴백만 cltr_no 끝.
+    """
+    if court_item_seq:
+        return str(court_item_seq)
     if cltr_no and "-" in cltr_no:
         tail = cltr_no.rsplit("-", 1)[-1]
         if tail.isdigit():
             return tail
-    if court_item_seq:
-        return str(court_item_seq)
     return "1"
 
 

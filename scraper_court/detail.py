@@ -54,9 +54,12 @@ def fetch_detail(
     return (data.get("data") or {}).get("dma_result") or {}
 
 
-def extract_photos(dma_result: dict[str, Any], max_count: int = 5) -> list[dict[str, str]]:
-    """csPicLst → [{title, b64}] (대표 분류 우선, 최대 max_count장).
+def extract_photos(
+    dma_result: dict[str, Any], max_count: int | None = None
+) -> list[dict[str, str]]:
+    """csPicLst → [{title, b64}] (대표 분류 우선 정렬).
 
+    max_count=None이면 물건의 모든 사진을 반환(법원경매정보에 올라온 전부).
     각 항목 b64는 순수 base64 문자열(접두 'data:' 없음).
     """
     pic_lst = dma_result.get("csPicLst") or []
@@ -81,6 +84,6 @@ def extract_photos(dma_result: dict[str, Any], max_count: int = 5) -> list[dict[
         if not b64:
             continue
         out.append({"title": p.get("picTitlNm") or f"{len(out) + 1}.jpg", "b64": b64})
-        if len(out) >= max_count:
+        if max_count is not None and len(out) >= max_count:
             break
     return out
