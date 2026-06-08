@@ -115,9 +115,30 @@ def _risk_ok_for_share(p: dict) -> bool:
     return False
 
 
+# 토지 가치를 치명적으로 깎는 결함 — 추천에서 제외(필터 노트 키워드).
+# 맹지(도로 미접·차량 접근 불가)는 환금성·개발 가능성이 크게 떨어져 호재가 있어도 제외.
+_DISQUALIFY_NOTE_KW = ("맹지",)
+
+
+def _disqualified(p: dict) -> bool:
+    fn = p.get("filter_notes")
+    if isinstance(fn, str) and fn:
+        try:
+            notes = json.loads(fn)
+        except json.JSONDecodeError:
+            notes = []
+    elif isinstance(fn, list):
+        notes = fn
+    else:
+        notes = []
+    return any(any(kw in str(n) for kw in _DISQUALIFY_NOTE_KW) for n in notes)
+
+
 def _pick(p: dict, threshold: float) -> dict | None:
     """3조건 평가 → 통과 시 알림용 dict, 아니면 None."""
     if not _risk_ok_for_share(p):
+        return None
+    if _disqualified(p):  # 맹지 등 치명 결함
         return None
 
     cat = p.get("_catalyst")
@@ -170,7 +191,7 @@ def build_message(threshold: float, limit: int) -> str | None:
         """
         SELECT id, title, address_jibun, category, source, share_yn,
                building_share_ratio, land_share_ratio, min_price, appraisal_price,
-               market_median_price, fail_count, rights_analysis,
+               market_median_price, fail_count, rights_analysis, filter_notes,
                cltr_mnmt_no, court_case_no
         FROM properties
         WHERE passes_filters = 1 AND share_yn = 'Y'
