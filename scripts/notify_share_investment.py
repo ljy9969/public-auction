@@ -211,7 +211,9 @@ def build_message(threshold: float, limit: int) -> str | None:
             f"\n   📈 호재: {cat['name']} ({cat.get('type', '')}){impact_tag}"
             + (f"\n   🔎 검색: `{x['search_no']}`" if x["search_no"] else "")
         )
-    return "\n".join(lines)
+    # 다음 디스코드 메시지(재수집 완료 요약)와 시각적으로 구분되도록 끝에 빈 줄 하나.
+    # Discord가 메시지 끝 공백을 트림하므로 zero-width space(​)로 빈 줄을 강제한다.
+    return "\n".join(lines) + "\n​"
 
 
 def basis_label(threshold: float) -> str:
