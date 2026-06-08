@@ -563,8 +563,8 @@ export default function PropertyList() {
                   role="button"
                   tabIndex={0}
                   className={`card ${hasCaution ? "warn" : ""} ${
-                    isActive ? "active" : ""
-                  }`}
+                    p.catalyst ? "has-catalyst" : ""
+                  } ${isActive ? "active" : ""}`}
                   onClick={() => p.id != null && navigate(`/properties/${p.id}`)}
                   onKeyDown={(e) => {
                     if ((e.key === "Enter" || e.key === " ") && p.id != null) {

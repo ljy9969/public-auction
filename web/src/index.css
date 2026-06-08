@@ -1568,6 +1568,11 @@ button.secondary {
   border-left: 4px solid #f59e0b;
 }
 
+/* 호재 매칭 카드 — 우측 초록 스트라이프로 강조 (주의=좌측 주황과 좌우 분리) */
+.card.has-catalyst {
+  border-right: 4px solid #10b981;
+}
+
 .card-header {
   display: flex;
   align-items: flex-start;
