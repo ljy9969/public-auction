@@ -4,6 +4,7 @@ import ListMap, { type ListMarker } from "../components/ListMap";
 import {
   buildingAge,
   buildingAgeCategory,
+  catalystImpactEmoji,
   courtBidEndInfo,
   dDayLevel,
   fetchProperties,
@@ -615,6 +616,19 @@ export default function PropertyList() {
                     )}
                   </header>
                   <dl className="card-table">
+                    {p.catalyst && (
+                      <>
+                        <dt>호재</dt>
+                        <dd className="catalyst-dd">
+                          {p.catalyst.name}
+                          {p.catalyst.type ? ` (${p.catalyst.type})` : ""}{" "}
+                          <strong>
+                            {catalystImpactEmoji(p.catalyst.impact)}
+                            {p.catalyst.impact ?? ""}
+                          </strong>
+                        </dd>
+                      </>
+                    )}
                     <dt>용도</dt>
                     <dd>{p.category || "-"}</dd>
                     <dt>최저가</dt>

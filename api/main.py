@@ -398,4 +398,8 @@ def _public_fields(row: dict[str, Any]) -> dict[str, Any]:
             out["scraped_at"] = datetime.fromisoformat(out["scraped_at"].replace("Z", "+00:00"))
         except ValueError:
             pass
+    # 지역 호재 — 주소 기반 화이트리스트 매칭 (DB 컬럼 아님, 서빙 시 계산)
+    if "catalyst" in allowed:
+        from scraper.catalysts import match_catalyst
+        out["catalyst"] = match_catalyst(row.get("address_jibun"))
     return out

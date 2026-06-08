@@ -67,6 +67,7 @@ export interface Property {
   predicted_price_high: number | null;
   predicted_price_basis: string | null;
   asset_type: string | null;
+  catalyst: Catalyst | null;
   alert_blacklist: boolean;
   alert_blacklist_reason: string | null;
   source: "onbid" | "court";
@@ -99,6 +100,18 @@ export interface RentalSample {
   monthly: number;
   deposit: number;
   deal_date: string;
+}
+
+export interface Catalyst {
+  name: string;
+  type: string | null;
+  impact: string | null; // 상/중/하 — 매도가 상승 기여도
+  confidence: string | null; // high/medium/low — 추진 확실성
+}
+
+/** 호재 매도가 상승 기여도(impact) → 이모지 (상🔴·중🟠·하🟡) */
+export function catalystImpactEmoji(impact: string | null | undefined): string {
+  return impact === "상" ? "🔴" : impact === "중" ? "🟠" : impact === "하" ? "🟡" : "";
 }
 
 export interface MarketSample {

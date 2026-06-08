@@ -71,6 +71,8 @@ class PropertyBase(BaseModel):
     predicted_price_high: int | None = None
     predicted_price_basis: str | None = None
     asset_type: str | None = None
+    # 지역 호재 매칭 (주소 기반, regional_catalysts.yaml). {name, type, impact, confidence}
+    catalyst: dict[str, Any] | None = None
     alert_blacklist: bool = False
     alert_blacklist_reason: str | None = None
     source: str = "onbid"

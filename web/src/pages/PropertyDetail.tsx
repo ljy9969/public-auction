@@ -8,6 +8,7 @@ import {
   bidDeposit,
   buildingAge,
   buildingAgeCategory,
+  catalystImpactEmoji,
   courtBidEndInfo,
   dDayLevel,
   fetchCachedAiEstimate,
@@ -519,6 +520,16 @@ export default function PropertyDetail() {
             <h1 className="hero-title">{prop.title}</h1>
             {(prop.address_jibun || prop.region_line) && (
               <p className="hero-address">{prop.address_jibun || prop.region_line}</p>
+            )}
+            {prop.catalyst && (
+              <p className="hero-catalyst">
+                📈 호재: {prop.catalyst.name}
+                {prop.catalyst.type ? ` (${prop.catalyst.type})` : ""}{" "}
+                <strong>
+                  {catalystImpactEmoji(prop.catalyst.impact)}
+                  {prop.catalyst.impact ?? ""}
+                </strong>
+              </p>
             )}
           </div>
           <div className="hero-right">
