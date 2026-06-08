@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import type { ParcelGeometry } from "../api";
 
 export interface ListMarker {
   id: number;
@@ -13,6 +14,8 @@ interface Props {
   highlightedId: number | null;
   /** Optional click handler — selects a list item from the map */
   onMarkerClick?: (id: number) => void;
+  /** 지도에 표시 중인 매물들의 지번 경계 폴리곤 (id→geometry). 기본으로 전부 그림. */
+  parcels?: Record<number, ParcelGeometry | null>;
 }
 
 type NaverMap = {
@@ -30,11 +33,35 @@ type NaverMarker = {
   addListener: (ev: string, fn: () => void) => void;
 };
 
+type NaverPolygon = {
+  setMap: (m: NaverMap | null) => void;
+  setStyles: (key: object | string, value?: unknown) => void;
+};
+
+// 폴리곤 스타일 — 기본은 옅게(전체 표시용), 강조는 진하게(hover 대상).
+const PARCEL_BASE = {
+  fillColor: "#2563eb",
+  fillOpacity: 0.08,
+  strokeColor: "#2563eb",
+  strokeOpacity: 0.55,
+  strokeWeight: 1.5,
+  zIndex: 50,
+};
+const PARCEL_ACTIVE = {
+  fillColor: "#2563eb",
+  fillOpacity: 0.28,
+  strokeColor: "#1d4ed8",
+  strokeOpacity: 1,
+  strokeWeight: 2.5,
+  zIndex: 200,
+};
+
 type NaverMaps = {
   Map: new (el: HTMLElement, opts: object) => NaverMap;
   LatLng: new (lat: number, lng: number) => unknown;
   LatLngBounds: new () => { extend: (latlng: unknown) => void };
   Marker: new (opts: object) => NaverMarker;
+  Polygon: new (opts: object) => NaverPolygon;
   Point: new (x: number, y: number) => unknown;
   Size: new (w: number, h: number) => unknown;
 };
@@ -42,6 +69,16 @@ type NaverMaps = {
 type NaverWindow = Window & { naver?: { maps?: NaverMaps } };
 
 const SCRIPT_ID = "naver-map-sdk";
+
+/** GeoJSON Polygon/MultiPolygon → naver LatLng 링 배열 (paths). 좌표는 [lng, lat]. */
+function parcelToPaths(naver: NaverMaps, parcel: ParcelGeometry): unknown[][] {
+  const ring = (r: number[][]) => r.map(([lng, lat]) => new naver.LatLng(lat, lng));
+  if (parcel.type === "MultiPolygon") {
+    // 각 폴리곤의 모든 링을 펼침(필지는 대개 단일 폴리곤이라 실무상 충분).
+    return (parcel.coordinates as number[][][][]).flatMap((poly) => poly.map(ring));
+  }
+  return (parcel.coordinates as number[][][]).map(ring);
+}
 
 function makeIcon(naver: NaverMaps, num: number, active: boolean) {
   const bg = active ? "#ef4444" : "#1d4ed8";
@@ -53,10 +90,13 @@ function makeIcon(naver: NaverMaps, num: number, active: boolean) {
   };
 }
 
-export default function ListMap({ markers, highlightedId, onMarkerClick }: Props) {
+export default function ListMap({ markers, highlightedId, onMarkerClick, parcels }: Props) {
   const mapDiv = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<NaverMap | null>(null);
   const markerInstances = useRef<NaverMarker[]>([]);
+  // id → 폴리곤 인스턴스. 보이는 매물의 필지를 모두 그려두고 hover 시 스타일만 바꾼다.
+  const parcelInstances = useRef<Map<number, NaverPolygon>>(new Map());
+  const prevHighlightRef = useRef<number | null>(null);
   // 사용자가 Naver 기본 컨트롤로 토글한 mapType (예: '위성') 을 보존해, init 이 다시
   // 트리거(필터 변경 등으로 markers 새 identity) 되어도 이전 선택을 그대로 복원.
   const mapTypeRef = useRef<string | null>(null);
@@ -183,6 +223,56 @@ export default function ListMap({ markers, highlightedId, onMarkerClick }: Props
     }, 300);
     return () => window.clearTimeout(timer);
   }, [highlightedId, markers]);
+
+  // 보이는 매물들의 지번 폴리곤을 모두 그림(기본 표시). parcels/markers 변할 때만
+  // 인스턴스를 reconcile — 새 id 추가, 사라진 id 제거. hover(highlightedId)로는 재생성 X.
+  useEffect(() => {
+    const naver = (window as NaverWindow).naver?.maps;
+    const map = mapInstance.current;
+    if (!naver || !map) return;
+    const data = parcels || {};
+    const visibleIds = new Set(markers.map((m) => m.id));
+    const instances = parcelInstances.current;
+
+    // 1) 더 이상 보이지 않거나 데이터가 사라진 폴리곤 제거
+    for (const [id, poly] of instances) {
+      if (!visibleIds.has(id) || !data[id]) {
+        poly.setMap(null);
+        instances.delete(id);
+      }
+    }
+    // 2) 새로 들어온 필지 그리기 (기본 스타일; 강조는 별도 effect 에서)
+    for (const m of markers) {
+      const geo = data[m.id];
+      if (!geo || instances.has(m.id)) continue;
+      try {
+        const poly = new naver.Polygon({
+          map,
+          paths: parcelToPaths(naver, geo),
+          ...PARCEL_BASE,
+          clickable: false,
+        });
+        instances.set(m.id, poly);
+      } catch {
+        /* 좌표 형식 이상 시 해당 필지만 생략 */
+      }
+    }
+    // markers 변경 시 강조 상태도 새로 반영되도록 prev 초기화
+    prevHighlightRef.current = null;
+  }, [parcels, markers]);
+
+  // hover 강조 — 이전 강조는 기본 스타일로, 현재 강조는 진하게. 재생성 없이 스타일만.
+  useEffect(() => {
+    const instances = parcelInstances.current;
+    const prev = prevHighlightRef.current;
+    if (prev != null && prev !== highlightedId) {
+      instances.get(prev)?.setStyles(PARCEL_BASE);
+    }
+    if (highlightedId != null) {
+      instances.get(highlightedId)?.setStyles(PARCEL_ACTIVE);
+    }
+    prevHighlightRef.current = highlightedId;
+  }, [highlightedId, parcels, markers]);
 
   if (!naverKey) {
     return (

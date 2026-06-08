@@ -12,6 +12,7 @@ import {
   courtBidEndInfo,
   dDayLevel,
   fetchCachedAiEstimate,
+  fetchParcel,
   fetchProperties,
   fetchProperty,
   formatArea,
@@ -33,6 +34,7 @@ import {
   translateTag,
   transitModeLabel,
   type AiEstimate,
+  type ParcelGeometry,
   type Property,
 } from "../api";
 import { useFavorites } from "../favorites";
@@ -330,6 +332,7 @@ export default function PropertyDetail() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [mapType, setMapType] = useState<"normal" | "satellite">("normal");
+  const [parcel, setParcel] = useState<ParcelGeometry | null>(null);
   const fav = useFavorites();
   // 알림 블랙리스트 — 서버 영속. prop 로드/변경 시 서버 값으로 동기화.
   const [blacklisted, setBlacklisted] = useState(false);
@@ -410,6 +413,11 @@ export default function PropertyDetail() {
     fetchCachedAiEstimate(Number(id))
       .then((cached) => { if (cached) setAiEstimate(cached); })
       .catch(() => { /* 캐시 없음/오류는 조용히 무시 */ });
+    // 지번 경계 폴리곤 (없으면 null — 마커만 표시).
+    setParcel(null);
+    fetchParcel(Number(id))
+      .then(setParcel)
+      .catch(() => { /* 폴리곤 없음/오류는 무시 */ });
   }, [id]);
 
   // 헤더 '목록' 버튼이 이 물건의 탭으로 돌아가도록 기억 (검색/직링크 진입 포함).
@@ -1320,6 +1328,7 @@ export default function PropertyDetail() {
                 title={prop.address_jibun || prop.title}
                 comps={prop.market_samples ?? undefined}
                 mapType={mapType}
+                parcel={parcel}
               />
               {prop.market_samples && prop.market_samples.length > 0 && (
                 <p className="section-hint" style={{ marginTop: "0.4rem" }}>

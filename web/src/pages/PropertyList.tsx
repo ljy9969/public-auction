@@ -7,6 +7,7 @@ import {
   catalystImpactEmoji,
   courtBidEndInfo,
   dDayLevel,
+  fetchParcel,
   fetchProperties,
   formatArea,
   formatDDay,
@@ -25,6 +26,7 @@ import {
   tagCategory,
   translateTag,
   transitModeLabel,
+  type ParcelGeometry,
   type Property,
   type PropertyTab,
 } from "../api";
@@ -44,11 +46,15 @@ export default function PropertyList() {
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [highlightedId, setHighlightedId] = useState<number | null>(null);
+  // 지도에 보이는 매물들의 지번 경계 폴리곤(id→geometry) — 기본으로 전부 표시.
+  const [parcels, setParcels] = useState<Record<number, ParcelGeometry>>({});
   // 상세에서 '목록'으로 돌아올 때, 직전에 보던/그 물건의 탭으로 복원 (없으면 기본 오피스텔).
   const [tab, setTab] = useState<PropertyTab>(() => readStoredTab() ?? "용도복합·오피스텔 쪈");
   // 필터·정렬은 상세 다녀와도 유지 — sessionStorage 영속화 (탭 닫으면 초기화).
   const [maxFail, setMaxFail] = usePersistentState("auction:maxFail", MAX_FAIL_COUNT);
   const [favOnly, setFavOnly] = usePersistentState("auction:favOnly", false);
+  // 블랙리스트(기획부동산·맹지 등 사용자 수동 제외)는 기본 숨김 — 토글로 표시.
+  const [showBlacklist, setShowBlacklist] = usePersistentState("auction:showBlacklist", false);
   const [regionFilter, setRegionFilter] = usePersistentState<"all" | "gangnam" | "songpa">("auction:regionFilter", "all");
   const [priceMax, setPriceMax] = usePersistentState<"all" | "1" | "2" | "3">("auction:priceMax", "all");
   const [ageMax, setAgeMax] = usePersistentState<"all" | "5" | "10" | "20">("auction:ageMax", "all");
@@ -166,6 +172,7 @@ export default function PropertyList() {
         if (!isNaN(end.getTime()) && end < today) return false;
       }
       if (favOnly && (p.id == null || !fav.has(p.id))) return false;
+      if (!showBlacklist && p.alert_blacklist) return false;
       if (regionFilter !== "all") {
         const addr = p.address_jibun || "";
         if (regionFilter === "gangnam" && !addr.includes("강남구")) return false;
@@ -198,7 +205,7 @@ export default function PropertyList() {
       }
       return true;
     });
-  }, [items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, fav]);
+  }, [items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, fav]);
 
   const sortedItems: Property[] = useMemo(() => {
     if (sortKey === "default") return filteredItems;
@@ -250,8 +257,29 @@ export default function PropertyList() {
     [sortedItems]
   );
 
+  // 지도에 보이는 매물들의 지번 폴리곤을 기본으로 모두 조회 — 동시성 제한(5)으로
+  // VWorld 에 과부하 주지 않게. 결과는 api 레이어에서 id별 캐시되어 탭/필터 재방문 시 즉시.
+  useEffect(() => {
+    let cancelled = false;
+    const ids = markers.map((m) => m.id);
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < ids.length && !cancelled) {
+        const id = ids[cursor++];
+        const geo = await fetchParcel(id);
+        if (geo && !cancelled) {
+          setParcels((prev) => (prev[id] ? prev : { ...prev, [id]: geo }));
+        }
+      }
+    };
+    const pool = Array.from({ length: Math.min(5, ids.length) }, worker);
+    Promise.all(pool).catch(() => { /* 개별 실패는 무시 */ });
+    return () => { cancelled = true; };
+  }, [markers]);
+
   const resetFilters = () => {
     setFavOnly(false);
+    setShowBlacklist(false);
     setRegionFilter("all");
     setPriceMax("all");
     setAgeMax("all");
@@ -264,6 +292,7 @@ export default function PropertyList() {
   };
   const anyFilterActive =
     favOnly ||
+    showBlacklist ||
     regionFilter !== "all" ||
     priceMax !== "all" ||
     ageMax !== "all" ||
@@ -300,6 +329,8 @@ export default function PropertyList() {
     const active: ActiveFilter[] = [];
     if (favOnly)
       active.push({ key: "fav", label: "즐겨찾기만", pred: (p) => p.id != null && fav.has(p.id), clear: () => setFavOnly(false) });
+    if (!showBlacklist)
+      active.push({ key: "blacklist", label: "블랙리스트 숨김", pred: (p) => !p.alert_blacklist, clear: () => setShowBlacklist(true) });
     if (regionFilter !== "all")
       active.push({ key: "region", label: regionFilter === "gangnam" ? "지역: 강남구" : "지역: 송파구", pred: (p) => (p.address_jibun || "").includes(regionFilter === "gangnam" ? "강남구" : "송파구"), clear: () => setRegionFilter("all") });
     if (priceMax !== "all")
@@ -325,7 +356,7 @@ export default function PropertyList() {
       })
       .filter((r) => r.count > 0)
       .sort((a, b) => b.count - a.count);
-  }, [sortedItems, items, tab, favOnly, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, fav]);
+  }, [sortedItems, items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, fav]);
 
   return (
     <>
@@ -363,6 +394,15 @@ export default function PropertyList() {
           aria-pressed={favOnly}
         >
           {favOnly ? "★" : "☆"} 즐겨찾기만
+        </button>
+        <button
+          type="button"
+          className={`filter-chip ${showBlacklist ? "on" : ""}`}
+          onClick={() => setShowBlacklist(!showBlacklist)}
+          aria-pressed={showBlacklist}
+          title="기획부동산·맹지 등 수동 제외한 물건 표시 여부"
+        >
+          {showBlacklist ? "⛔ 블랙리스트 표시" : "⛔ 블랙리스트 숨김"}
         </button>
         <label className="filter-select">
           <span>지역</span>
@@ -539,6 +579,7 @@ export default function PropertyList() {
             <ListMap
               markers={markers}
               highlightedId={highlightedId}
+              parcels={parcels}
               onMarkerClick={(id) => {
                 setHighlightedId(id);
                 setScrollTargetId(id);

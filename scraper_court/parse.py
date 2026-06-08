@@ -240,8 +240,12 @@ def _build_address(row: dict[str, Any]) -> tuple[str, str | None]:
     sido = row.get("hjguSido") or ""
     sigu = row.get("hjguSigu") or ""
     dong = row.get("hjguDong") or ""
+    # hjguRd 는 이름과 달리 도로명이 아니라 법정리(里)명. 면·읍 지역(농지 등)에서만 채워진다.
+    # 누락하면 '경기도 평택시 현덕면 397-1'처럼 리가 빠져 Kakao 지오코딩이 엉뚱한 리로 잡힌다
+    # (2026-06-08 운정리 397-1 → 권관리 오마커 버그).
+    ri = row.get("hjguRd") or ""
     lotno = row.get("daepyoLotno") or ""
-    jibun = " ".join(p for p in (sido, sigu, dong, lotno) if p).strip()
+    jibun = " ".join(p for p in (sido, sigu, dong, ri, lotno) if p).strip()
 
     rd1 = row.get("rd1Nm") or ""
     rd2 = row.get("rd2Nm") or ""

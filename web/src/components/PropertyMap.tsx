@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { formatPrice, type MarketSample } from "../api";
+import { formatPrice, type MarketSample, type ParcelGeometry } from "../api";
 
 interface PropertyMapProps {
   lat: number;
@@ -10,6 +10,8 @@ interface PropertyMapProps {
   /** 일반 ↔ 위성(하이브리드) 토글. 외부 버튼이 우측 상단 H3 옆에 별도 배치되므로 */
   /*  Naver 기본 mapTypeControl 은 꺼두고 이 prop 으로만 제어. */
   mapType?: "normal" | "satellite";
+  /** 지번(번지) 경계 폴리곤 — 마커와 함께 필지 영역 강조 */
+  parcel?: ParcelGeometry | null;
 }
 
 type NaverWindow = Window & { naver?: { maps?: Record<string, unknown> } };
@@ -28,10 +30,11 @@ function compPin(label: string): string {
 }
 
 /** Naver Maps embed (requires VITE_NAVER_MAP_CLIENT_ID). Falls back to OSM iframe. */
-export default function PropertyMap({ lat, lng, title, comps, mapType = "normal" }: PropertyMapProps) {
+export default function PropertyMap({ lat, lng, title, comps, mapType = "normal", parcel }: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   // SDK 객체에 정적 타입이 없어 런타임 ref 로만 보관 — mapType 변경 시 setMapTypeId 호출.
   const mapInstanceRef = useRef<any>(null);
+  const parcelRef = useRef<any>(null);
   const naverKey = (import.meta.env.VITE_NAVER_MAP_CLIENT_ID as string | undefined)?.trim();
 
   useEffect(() => {
@@ -135,6 +138,36 @@ export default function PropertyMap({ lat, lng, title, comps, mapType = "normal"
       mapType === "satellite" ? maps.MapTypeId.HYBRID : maps.MapTypeId.NORMAL
     );
   }, [mapType]);
+
+  // 지번 경계 폴리곤 그리기 — parcel 도착/변경 시. (지도 init 이후 별도 오버레이)
+  useEffect(() => {
+    const maps = (window as NaverWindow).naver?.maps as any;
+    const map = mapInstanceRef.current;
+    if (!maps || !map) return;
+    parcelRef.current?.setMap(null);
+    parcelRef.current = null;
+    if (!parcel) return;
+    const ring = (r: number[][]) => r.map(([lo, la]: number[]) => new maps.LatLng(la, lo));
+    const paths =
+      parcel.type === "MultiPolygon"
+        ? (parcel.coordinates as number[][][][]).flatMap((poly) => poly.map(ring))
+        : (parcel.coordinates as number[][][]).map(ring);
+    try {
+      parcelRef.current = new maps.Polygon({
+        map,
+        paths,
+        fillColor: "#2563eb",
+        fillOpacity: 0.18,
+        strokeColor: "#2563eb",
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        clickable: false,
+        zIndex: 50,
+      });
+    } catch {
+      /* 좌표 형식 이상 시 폴리곤 생략 */
+    }
+  }, [parcel]);
 
   if (naverKey) {
     return (

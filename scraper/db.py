@@ -123,6 +123,11 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     # 블랙리스트 사유 — 사용자가 상세 페이지에서 입력(≤50자). 목록의
     # 'blacklist' 칩 hover 시 툴팁으로 노출 (2026-06-07).
     ("alert_blacklist_reason", "TEXT"),
+    # 지번(번지) 경계 폴리곤 — VWorld 연속지적도(LP_PA_CBND_BUBUN)에서
+    # geo_lat/lng 포인트로 조회한 GeoJSON geometry 캐시. 목록 hover·상세 지도에서
+    # 마커와 함께 필지 영역을 강조 (2026-06-08). on-demand 1회 조회 후 영속.
+    ("parcel_geojson", "TEXT"),       # JSON: {type, coordinates, pnu, jibun}
+    ("parcel_fetched_at", "TEXT"),    # ISO8601 (조회 시각; 빈 결과도 기록해 재호출 방지)
 ]
 
 
@@ -370,6 +375,23 @@ def set_alert_blacklist(
         "alert_blacklist": bool(row["alert_blacklist"]),
         "alert_blacklist_reason": row["alert_blacklist_reason"],
     }
+
+
+def set_parcel(
+    prop_id: int,
+    geojson_str: str | None,
+    fetched_at: str,
+    db_path: Path | None = None,
+) -> None:
+    """지번 경계 폴리곤 GeoJSON 캐시 저장. geojson_str=None 이면 '조회했으나 결과
+    없음'을 의미 — fetched_at 만 기록해 같은 매물을 매번 VWorld 에 재요청하지 않는다."""
+    conn = get_connection(db_path)
+    conn.execute(
+        "UPDATE properties SET parcel_geojson = ?, parcel_fetched_at = ? WHERE id = ?",
+        (geojson_str, fetched_at, prop_id),
+    )
+    conn.commit()
+    conn.close()
 
 
 def count_properties(passes_only: bool = True, db_path: Path | None = None) -> int:

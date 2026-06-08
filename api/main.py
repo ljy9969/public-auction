@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import sys
 import threading
 
@@ -231,6 +232,40 @@ def set_blacklist(
     if result is None:
         raise HTTPException(status_code=404, detail="Property not found")
     return {"id": prop_id, **result}
+
+
+@app.get("/api/properties/{prop_id}/parcel")
+def get_parcel(prop_id: int) -> Response:
+    """지번(번지) 경계 폴리곤 GeoJSON — 지도에서 마커와 함께 필지 영역 강조용.
+
+    캐시 우선: parcel_geojson 이 있으면 그대로 반환. 미조회면 geo_lat/lng 로 VWorld
+    연속지적도를 1회 조회해 캐시. 결과 없음도 캐시(빈 응답)해 재요청 방지.
+    좌표·키 없으면 204(폴리곤 없음 — 프런트는 마커만 표시).
+    """
+    row = scraper_db.get_property(prop_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    # 캐시 hit — 빈 결과 캐시(geojson NULL + fetched_at 존재)면 204.
+    if row.get("parcel_fetched_at"):
+        cached = row.get("parcel_geojson")
+        if not cached:
+            return Response(status_code=204)
+        return Response(content=cached, media_type="application/json")
+
+    lat, lng = row.get("geo_lat"), row.get("geo_lng")
+    if lat is None or lng is None or not os.environ.get("VWORLD_API_KEY", "").strip():
+        return Response(status_code=204)
+
+    from scraper.filters.parcel import fetch_parcel_polygon
+
+    fetched_at = datetime.now(timezone.utc).isoformat()
+    parcel = fetch_parcel_polygon(float(lat), float(lng))
+    payload = json.dumps(parcel, ensure_ascii=False) if parcel else None
+    scraper_db.set_parcel(prop_id, payload, fetched_at)
+    if not payload:
+        return Response(status_code=204)
+    return Response(content=payload, media_type="application/json")
 
 
 @app.get("/api/properties/{prop_id}/ai-estimate")

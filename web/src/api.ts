@@ -149,6 +149,36 @@ export async function fetchProperty(id: number): Promise<Property> {
   return res.json();
 }
 
+/** 지번(번지) 경계 폴리곤 GeoJSON (EPSG:4326, 좌표는 [lng, lat]). 지도 강조용. */
+export interface ParcelGeometry {
+  type: "Polygon" | "MultiPolygon";
+  coordinates: number[][][] | number[][][][];
+  pnu?: string | null;
+  jibun?: string | null;
+}
+
+// id→폴리곤 인메모리 캐시. null = 조회했으나 폴리곤 없음(204) → 재요청 안 함.
+// 목록 hover 가 빠르게 옮겨다녀도 같은 매물은 한 번만 네트워크 호출.
+const _parcelCache = new Map<number, ParcelGeometry | null>();
+
+export async function fetchParcel(id: number): Promise<ParcelGeometry | null> {
+  const cached = _parcelCache.get(id);
+  if (cached !== undefined) return cached;
+  try {
+    const res = await fetch(`/api/properties/${id}/parcel`);
+    if (res.status === 204 || !res.ok) {
+      _parcelCache.set(id, null);
+      return null;
+    }
+    const geo = (await res.json()) as ParcelGeometry;
+    _parcelCache.set(id, geo);
+    return geo;
+  } catch {
+    _parcelCache.set(id, null);
+    return null;
+  }
+}
+
 export interface AiEstimate {
   low: number | null;
   median: number | null;
