@@ -3178,6 +3178,15 @@ button.secondary {
   font-size: 0.76rem;
   color: #64748b;
 }
+.curated-card-catalyst {
+  margin-top: 0.3rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #047857;
+}
+.curated-card-catalyst strong {
+  color: #b45309;
+}
 
 /* ===== 모바일 헤더 정리 ===== */
 @media (max-width: 720px) {

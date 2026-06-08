@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  catalystImpactEmoji,
   dDayLevel,
   fetchProperties,
   formatDDay,
@@ -29,6 +30,30 @@ type Theme = {
 };
 
 const THEMES: Theme[] = [
+  {
+    key: "catalyst-high",
+    emoji: "🔴",
+    title: "호재 상 — 매도가 상승 기여 큼",
+    description: "GTX 개통·대형 산단/신도시 등 매도가 상승 기여도 '상' 호재 지역 매물",
+    filter: (p) => p.catalyst?.impact === "상",
+    sort: (a, b) => (a.min_price ?? 0) - (b.min_price ?? 0),
+  },
+  {
+    key: "catalyst-mid",
+    emoji: "🟠",
+    title: "호재 중 — 매도가 상승 기여 보통",
+    description: "지연 교통·추가택지 등 기여도 '중' 호재 지역 매물",
+    filter: (p) => p.catalyst?.impact === "중",
+    sort: (a, b) => (a.min_price ?? 0) - (b.min_price ?? 0),
+  },
+  {
+    key: "catalyst-low",
+    emoji: "🟡",
+    title: "호재 하 — 매도가 상승 기여 제한적",
+    description: "초기 절차·간접 배후 등 기여도 '하' 호재 지역 매물",
+    filter: (p) => p.catalyst?.impact === "하",
+    sort: (a, b) => (a.min_price ?? 0) - (b.min_price ?? 0),
+  },
   {
     key: "underpriced",
     emoji: "💰",
@@ -123,6 +148,15 @@ function PropCard({ p }: { p: Property }) {
         <span className="curated-card-price">{formatPrice(p.min_price)}</span>
         <span className="curated-card-fail">유찰 {p.fail_count ?? 0}회</span>
       </div>
+      {p.catalyst && (
+        <div className="curated-card-catalyst">
+          📈 {p.catalyst.name}{" "}
+          <strong>
+            {catalystImpactEmoji(p.catalyst.impact)}
+            {p.catalyst.impact ?? ""}
+          </strong>
+        </div>
+      )}
       {p.transit_minutes != null && (
         <div className="curated-card-meta">직장 {p.transit_minutes}분</div>
       )}
