@@ -170,7 +170,8 @@ export default function CuratedView() {
 
   useEffect(() => {
     fetchProperties({ passes_only: true })
-      .then((list) => setItems(dedupeByCltr(list)))
+      // 블랙리스트(사용자 수동 제외 — 기획부동산·맹지 등)는 추천에서 전면 제외
+      .then((list) => setItems(dedupeByCltr(list.filter((p) => !p.alert_blacklist))))
       .finally(() => setLoading(false));
   }, []);
 
