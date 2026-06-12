@@ -13,3 +13,4 @@ web/dist/
 .run-pids.txt
 .DS_Store
 *.tsbuildinfo
+.cloudflared.out
