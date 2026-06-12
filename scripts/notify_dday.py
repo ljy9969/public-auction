@@ -126,6 +126,26 @@ def build_message(days: int) -> str | None:
     return "\n".join(lines)
 
 
+def _split_for_discord(text: str, limit: int = 1900) -> list[str]:
+    """Discord content 2000자 제한 → 줄 경계로 안전 분할(여유 1900).
+
+    한 줄이 자체로 limit 초과면 그 줄만 강제로 자른다. 헤더/항목 모두 보존.
+    """
+    chunks: list[str] = []
+    cur = ""
+    for ln in text.split("\n"):
+        if len(ln) > limit:
+            ln = ln[: limit - 1] + "…"
+        if cur and len(cur) + 1 + len(ln) > limit:
+            chunks.append(cur)
+            cur = ln
+        else:
+            cur = ln if not cur else cur + "\n" + ln
+    if cur:
+        chunks.append(cur)
+    return chunks
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--days", type=int, default=7)
@@ -143,12 +163,19 @@ def main() -> int:
             print("\n[note] DISCORD_WEBHOOK 미설정 — 실제 전송 생략")
         return 0
 
-    try:
-        resp = httpx.post(WEBHOOK, json={"content": msg}, timeout=20)
-        print(f"Discord D-day 알림 전송: HTTP {resp.status_code}")
-    except Exception as exc:
-        print(f"Discord D-day 알림 실패: {exc!r}")
-        return 1
+    # Discord 2000자 초과 시 HTTP 400 → 청크 분할 전송(2026-06-10: 2010자 초과 사례).
+    chunks = _split_for_discord(msg)
+    for i, chunk in enumerate(chunks, 1):
+        try:
+            resp = httpx.post(WEBHOOK, json={"content": chunk}, timeout=20)
+        except Exception as exc:
+            print(f"Discord D-day 알림 실패({i}/{len(chunks)}): {exc!r}")
+            return 1
+        suffix = f" ({i}/{len(chunks)})" if len(chunks) > 1 else ""
+        print(f"Discord D-day 알림 전송{suffix}: HTTP {resp.status_code}")
+        if resp.status_code >= 400:
+            print(f"  응답: {resp.text[:300]}")
+            return 1
     return 0
 
 
