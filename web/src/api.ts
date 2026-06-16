@@ -70,6 +70,7 @@ export interface Property {
   catalyst: Catalyst | null;
   alert_blacklist: boolean;
   alert_blacklist_reason: string | null;
+  memo: string | null;
   source: "onbid" | "court";
   court_case_no: string | null;
   court_office_cd: string | null;
@@ -236,6 +237,16 @@ export async function setBlacklist(
     blacklisted: data.alert_blacklist as boolean,
     reason: (data.alert_blacklist_reason ?? null) as string | null,
   };
+}
+
+/** 사용자 메모 저장 — ≤500자 자유 텍스트. 알림 블랙리스트와는 독립. */
+export async function setMemo(id: number, memo: string | null): Promise<{ memo: string | null }> {
+  const q = new URLSearchParams();
+  if (memo != null) q.set("memo", memo);
+  const res = await fetch(`/api/properties/${id}/memo?${q}`, { method: "POST" });
+  if (!res.ok) throw new Error("메모 저장 실패");
+  const data = await res.json();
+  return { memo: (data.memo ?? null) as string | null };
 }
 
 export interface StatsSummary {

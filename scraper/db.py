@@ -128,6 +128,9 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     # 마커와 함께 필지 영역을 강조 (2026-06-08). on-demand 1회 조회 후 영속.
     ("parcel_geojson", "TEXT"),       # JSON: {type, coordinates, pnu, jibun}
     ("parcel_fetched_at", "TEXT"),    # ISO8601 (조회 시각; 빈 결과도 기록해 재호출 방지)
+    # 사용자가 상세 페이지에서 자유롭게 적는 메모 — 알림 블랙리스트(=알림에서 제외)와
+    # 독립적으로, 임장 메모·체크 사항 등 자유로운 텍스트(≤500자, 2026-06-16).
+    ("memo", "TEXT"),
 ]
 
 
@@ -375,6 +378,31 @@ def set_alert_blacklist(
         "alert_blacklist": bool(row["alert_blacklist"]),
         "alert_blacklist_reason": row["alert_blacklist_reason"],
     }
+
+
+def set_memo(
+    prop_id: int,
+    memo: str | None,
+    db_path: Path | None = None,
+) -> dict | None:
+    """사용자 메모 갱신. 빈 문자열/공백/None 모두 NULL 로 통일. 매물이 없으면 None."""
+    clean: str | None = (memo or "").strip()[:500] or None
+    conn = get_connection(db_path)
+    cur = conn.execute(
+        "UPDATE properties SET memo = ? WHERE id = ?",
+        (clean, prop_id),
+    )
+    conn.commit()
+    changed = cur.rowcount
+    if not changed:
+        conn.close()
+        return None
+    row = conn.execute(
+        "SELECT memo FROM properties WHERE id = ?",
+        (prop_id,),
+    ).fetchone()
+    conn.close()
+    return {"memo": row["memo"]}
 
 
 def set_parcel(

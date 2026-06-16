@@ -75,6 +75,7 @@ class PropertyBase(BaseModel):
     catalyst: dict[str, Any] | None = None
     alert_blacklist: bool = False
     alert_blacklist_reason: str | None = None
+    memo: str | None = None
     source: str = "onbid"
     court_case_no: str | None = None
     court_office_cd: str | None = None

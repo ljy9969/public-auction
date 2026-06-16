@@ -1920,6 +1920,108 @@ button.secondary {
   border-color: #991b1b;
 }
 
+/* 메모 — 알림 블랙리스트와는 독립. 슬레이트/인디고 톤으로 색 분리 (블랙리스트=빨강). */
+.memo-toggle {
+  background: #fff;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.memo-toggle:hover {
+  background: #eef2ff;
+  border-color: #a5b4fc;
+  color: #4338ca;
+}
+
+.memo-toggle.on {
+  background: #e0e7ff;
+  color: #4338ca;
+  border-color: #818cf8;
+}
+
+.memo-toggle.on:hover {
+  background: #c7d2fe;
+}
+
+.memo-toggle:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.memo-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.memo-input {
+  width: 100%;
+  min-width: 0;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid #818cf8;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-family: inherit;
+  line-height: 1.45;
+  resize: vertical;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.memo-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.memo-input:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.memo-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.memo-counter {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+.memo-save {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid #4338ca;
+  background: #4338ca;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.memo-save:disabled {
+  background: #cbd5e1;
+  border-color: #cbd5e1;
+  cursor: default;
+}
+
+.memo-save:hover:not(:disabled) {
+  background: #3730a3;
+  border-color: #3730a3;
+}
+
 /* 블랙리스트 칩 — 상세 hero 는 적색, 추천 알림 제외 표식 */
 .bl-chip {
   display: inline-flex;

@@ -28,6 +28,7 @@ import {
   propertyTab,
   requestAiEstimate,
   setBlacklist,
+  setMemo,
   storeTab,
   parseFloor,
   tagCategory,
@@ -340,12 +341,21 @@ export default function PropertyDetail() {
   // 사유 입력 후 마지막으로 서버에 보낸 값 — 변경 감지(저장 버튼 활성/비활성)에 사용.
   const [blReasonSaved, setBlReasonSaved] = useState("");
   const [blLoading, setBlLoading] = useState(false);
+  // 사용자 메모 — 블랙리스트와 독립. 메모가 있으면 자동으로 열림.
+  const [memo, setMemoText] = useState("");
+  const [memoSaved, setMemoSaved] = useState("");
+  const [memoOpen, setMemoOpen] = useState(false);
+  const [memoLoading, setMemoLoading] = useState(false);
   useEffect(() => {
     setBlacklisted(prop?.alert_blacklist ?? false);
     const r = prop?.alert_blacklist_reason ?? "";
     setBlReason(r);
     setBlReasonSaved(r);
-  }, [prop?.id, prop?.alert_blacklist, prop?.alert_blacklist_reason]);
+    const m = prop?.memo ?? "";
+    setMemoText(m);
+    setMemoSaved(m);
+    setMemoOpen(m.length > 0); // 메모가 있는 매물은 자동으로 펼침
+  }, [prop?.id, prop?.alert_blacklist, prop?.alert_blacklist_reason, prop?.memo]);
 
   const toggleBlacklist = async () => {
     if (prop?.id == null || blLoading) return;
@@ -363,6 +373,22 @@ export default function PropertyDetail() {
       setBlacklisted(!next); // 실패 시 롤백
     } finally {
       setBlLoading(false);
+    }
+  };
+
+  const saveMemo = async () => {
+    if (prop?.id == null || memoLoading) return;
+    if (memo === memoSaved) return;
+    setMemoLoading(true);
+    try {
+      const res = await setMemo(prop.id, memo || null);
+      const m = res.memo ?? "";
+      setMemoText(m);
+      setMemoSaved(m);
+    } catch {
+      /* 실패 시 그대로 — 사용자가 다시 시도 */
+    } finally {
+      setMemoLoading(false);
     }
   };
 
@@ -518,6 +544,17 @@ export default function PropertyDetail() {
                 {blacklisted ? "🚫 추천 알림 제외됨" : "추천 알림 제외"}
               </button>
             )}
+            {prop.id != null && (
+              <button
+                type="button"
+                className={`memo-toggle ${memoSaved ? "on" : ""}`}
+                onClick={() => setMemoOpen((o) => !o)}
+                aria-pressed={memoOpen}
+                title={memoSaved ? "저장된 메모 보기/편집" : "이 매물에 메모 작성"}
+              >
+                {memoSaved ? "📝 메모 있음" : "📝 메모"}
+              </button>
+            )}
             {prop.status && (
               <span className={`status-badge ${statusKlass}`}>{formatStatus(prop.status)}</span>
             )}
@@ -568,6 +605,37 @@ export default function PropertyDetail() {
                 >
                   {blReason === blReasonSaved ? "저장됨" : "저장"}
                 </button>
+              </div>
+            )}
+            {memoOpen && prop.id != null && (
+              <div className="memo-row">
+                <textarea
+                  className="memo-input"
+                  maxLength={500}
+                  placeholder="이 매물에 대한 메모 — 임장 결과·체크 사항·가격 메리트 등 (최대 500자, Ctrl+Enter로 저장)"
+                  value={memo}
+                  onChange={(e) => setMemoText(e.target.value)}
+                  onBlur={saveMemo}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                      e.preventDefault();
+                      e.currentTarget.blur();
+                    }
+                  }}
+                  disabled={memoLoading}
+                  rows={3}
+                />
+                <div className="memo-actions">
+                  <span className="memo-counter">{memo.length}/500</span>
+                  <button
+                    type="button"
+                    className="memo-save"
+                    onClick={saveMemo}
+                    disabled={memoLoading || memo === memoSaved}
+                  >
+                    {memo === memoSaved ? "저장됨" : "저장"}
+                  </button>
+                </div>
               </div>
             )}
             {prop.source === "court" ? (

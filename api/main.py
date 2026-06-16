@@ -234,6 +234,21 @@ def set_blacklist(
     return {"id": prop_id, **result}
 
 
+@app.post("/api/properties/{prop_id}/memo")
+def set_memo(
+    prop_id: int,
+    memo: str | None = None,
+) -> dict[str, Any]:
+    """사용자 메모 저장 — 상세 페이지 자유 텍스트(≤500자).
+
+    알림 블랙리스트와는 독립. 빈 문자열/공백/None 모두 메모 비움으로 통일.
+    """
+    result = scraper_db.set_memo(prop_id, memo)
+    if result is None:
+        raise HTTPException(status_code=404, detail="Property not found")
+    return {"id": prop_id, **result}
+
+
 @app.get("/api/properties/{prop_id}/parcel")
 def get_parcel(prop_id: int) -> Response:
     """지번(번지) 경계 폴리곤 GeoJSON — 지도에서 마커와 함께 필지 영역 강조용.
