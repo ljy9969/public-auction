@@ -95,7 +95,9 @@ def build_message(days: int) -> str | None:
     if not starts and not ends:
         return None
 
-    lines: list[str] = [f"📅 **{days}일 이내 입찰 일정 D-day 알림** ({now:%Y-%m-%d %H:%M})"]
+    # 이전 메시지(재수집 완료 요약)와 시각적으로 분리 — Discord가 leading whitespace를
+    # 트림하므로 zero-width space(​)로 빈 줄을 강제한다.
+    lines: list[str] = ["​", f"📅 **{days}일 이내 입찰 일정 D-day 알림** ({now:%Y-%m-%d %H:%M})"]
 
     def fmt(rows: list[dict], date_key: str) -> list[str]:
         out: list[str] = []
