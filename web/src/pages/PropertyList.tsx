@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ListMap, { type ListMarker } from "../components/ListMap";
 import {
   buildingAge,
@@ -66,7 +66,6 @@ export default function PropertyList() {
   const [sortAsc, setSortAsc] = usePersistentState("auction:sortAsc", true);
   const cardListRef = useRef<HTMLDivElement | null>(null);
   const [scrollTargetId, setScrollTargetId] = useState<number | null>(null);
-  const navigate = useNavigate();
   const fav = useFavorites();
 
   // 마커 클릭 시에만 우측 카드로 스크롤 (카드 호버는 강조만, 스크롤 X)
@@ -601,21 +600,21 @@ export default function PropertyList() {
                 <article
                   key={p.id ?? p.cltr_no}
                   data-card-id={p.id ?? undefined}
-                  role="button"
-                  tabIndex={0}
                   className={`card ${hasCaution ? "warn" : ""} ${
                     p.catalyst ? "has-catalyst" : ""
                   } ${isActive ? "active" : ""}`}
-                  onClick={() => p.id != null && navigate(`/properties/${p.id}`)}
-                  onKeyDown={(e) => {
-                    if ((e.key === "Enter" || e.key === " ") && p.id != null) {
-                      e.preventDefault();
-                      navigate(`/properties/${p.id}`);
-                    }
-                  }}
                   onMouseEnter={() => p.id != null && setHighlightedId(p.id)}
                   onMouseLeave={() => setHighlightedId(null)}
                 >
+                  {/* 카드 전면을 real link로 덮어 우클릭 시 브라우저 기본 메뉴의
+                     "새 탭에서 링크 열기"·middle-click·Ctrl+click 자동 활성화. */}
+                  {p.id != null && (
+                    <Link
+                      to={`/properties/${p.id}`}
+                      className="card-link"
+                      aria-label={p.title}
+                    />
+                  )}
                   <header className="card-header">
                     <span className="card-idx">#{idx + 1}</span>
                     <span className={`source-badge source-${p.source || "onbid"}`}>

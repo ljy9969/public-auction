@@ -1558,10 +1558,25 @@ button.secondary {
 }
 
 .card {
+  position: relative;
   background: #fff;
   border-radius: 12px;
   padding: 1rem 1.25rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* 카드 표면 전체를 덮는 투명 링크. 우클릭 시 브라우저 기본 컨텍스트 메뉴의
+   "새 탭에서 링크 열기" / middle-click·Ctrl+click 자동 새 탭이 그대로 적용된다.
+   인터랙티브 컨트롤(.card-fav 등)은 z-index를 더 올려 클릭 가능하게 둔다. */
+.card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+.card-link:focus-visible {
+  outline: 2px solid #ef4444;
+  outline-offset: -2px;
 }
 
 .card.warn {
@@ -2162,6 +2177,8 @@ button.secondary {
 }
 
 .card-fav {
+  position: relative;
+  z-index: 2; /* .card-link 위에 떠야 클릭 가능 */
   margin-left: auto;
   background: transparent;
   border: none;
