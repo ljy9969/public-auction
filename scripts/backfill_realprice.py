@@ -11,6 +11,14 @@ import json
 import sys
 from pathlib import Path
 
+# 한국어 주소 출력이 cp949로 깨지면 Task Scheduler 셸이 NativeCommandError로 침묵 종료
+# (2026-06-16 [3/5] 직후 daily-scrape.ps1 사망 사례). notify_*.py 패턴과 동일.
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))

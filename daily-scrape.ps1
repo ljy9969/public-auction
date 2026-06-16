@@ -12,6 +12,13 @@ $log = Join-Path $root '.daily-scrape.log'
 # Without cd to $root, `python -m scraper.run` cannot find the scraper package.
 Set-Location $root
 
+# UTF-8 stdout for Python children. Without this, Korean strings from python scripts
+# are written as cp949 and PowerShell can raise NativeCommandError that silently kills
+# the shell (2026-06-16 [3/5] backfill_realprice incident).
+$env:PYTHONIOENCODING = 'utf-8'
+$OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 function Write-Log($msg) {
     $line = "{0:yyyy-MM-dd HH:mm:ss}  {1}" -f (Get-Date), $msg
     Write-Host $line
