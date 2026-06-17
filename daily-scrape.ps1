@@ -84,8 +84,10 @@ Append-Output (& $python -m scripts.notify_share_investment 2>&1)
 $sw.Stop()
 # NOTE: TimeSpan.Minutes returns ONLY the minute component (0-59).
 # Without including Hours, a 72-min job would print as '12m' (1h.Minutes=12).
+# Use [Math]::Floor for the hour part — [int] rounds (1.633h -> 2), so a
+# 1h 38m run would print as "2h 38m 0s" (2026-06-17 incident).
 if ($sw.Elapsed.TotalHours -ge 1) {
-    $dur = '{0}h {1}m {2}s' -f [int]$sw.Elapsed.TotalHours, $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
+    $dur = '{0}h {1}m {2}s' -f [Math]::Floor($sw.Elapsed.TotalHours), $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
 } else {
     $dur = '{0}m {1}s' -f $sw.Elapsed.Minutes, $sw.Elapsed.Seconds
 }
