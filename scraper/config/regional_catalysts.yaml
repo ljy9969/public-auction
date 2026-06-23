@@ -184,6 +184,10 @@ catalysts:
   - name: 서해선 안중역 (KTX-이음)
     type: 철도(서해선)
     match: ["평택시 안중읍"]
+    # 안중역 역사 좌표 (lat, lng). coord 있으면 매물 geo_lat/lng와 거리 매칭으로
+    # impact 동적 강등 (catalysts.py: <3km 유지 / <6km 한 단계 ↓ / <10km 두 단계 ↓
+    # / >10km 매칭 취소). coord 없는 호재는 현재처럼 주소 문자열 매칭만.
+    coord: [37.0050, 126.8660]
     confidence: high
     impact: 상
     note: 서해선 2024-11 개통(운행 중), 2026-03 서울방향 KTX-이음 운행. 경부고속 직결 시 서울 30분대(2031~)

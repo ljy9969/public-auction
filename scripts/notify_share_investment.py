@@ -56,16 +56,6 @@ def _load_catalysts() -> list[dict]:
         return []
 
 
-def _match_catalyst(address: str, catalysts: list[dict]) -> dict | None:
-    """매물 주소에 호재 match 문자열이 하나라도 포함되면 그 호재 반환."""
-    addr = address or ""
-    for c in catalysts:
-        for m in c.get("match") or []:
-            if m and m in addr:
-                return c
-    return None
-
-
 def _format_won(n: int | None) -> str:
     if not n:
         return "-"
@@ -192,7 +182,7 @@ def build_message(threshold: float, limit: int) -> str | None:
         SELECT id, title, address_jibun, category, source, share_yn,
                building_share_ratio, land_share_ratio, min_price, appraisal_price,
                market_median_price, fail_count, rights_analysis, filter_notes,
-               cltr_mnmt_no, court_case_no
+               cltr_mnmt_no, court_case_no, geo_lat, geo_lng
         FROM properties
         WHERE passes_filters = 1 AND share_yn = 'Y'
           AND COALESCE(alert_blacklist, 0) = 0
@@ -200,10 +190,19 @@ def build_message(threshold: float, limit: int) -> str | None:
     ).fetchall()
     con.close()
 
+    # 카테고리·좌표 기반 거리(B)·종목(C) 강등이 통합된 scraper.catalysts.match_catalyst
+    # 를 직접 사용. 자체 _match_catalyst(주소 문자열만)는 삭제(2026-06-17).
+    from scraper.catalysts import match_catalyst as _shared_match_catalyst
+
     picks: list[dict] = []
     for r in rows:
         p = dict(r)
-        p["_catalyst"] = _match_catalyst(p.get("address_jibun"), catalysts)
+        p["_catalyst"] = _shared_match_catalyst(
+            p.get("address_jibun"),
+            category=p.get("category"),
+            lat=p.get("geo_lat"),
+            lng=p.get("geo_lng"),
+        )
         hit = _pick(p, threshold)
         if hit:
             picks.append(hit)

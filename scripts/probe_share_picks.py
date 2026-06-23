@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from scripts.notify_share_investment import _load_catalysts, _match_catalyst  # noqa: E402
+from scraper.catalysts import load_catalysts, match_catalyst  # noqa: E402
 
 DB = ROOT / "data" / "onbid.db"
 THRESHOLD = 0.70
@@ -34,13 +34,13 @@ def main() -> int:
         SELECT id, title, address_jibun, category, share_yn,
                building_share_ratio, land_share_ratio, min_price, appraisal_price,
                market_median_price, fail_count, rights_analysis,
-               court_case_no
+               court_case_no, geo_lat, geo_lng
         FROM properties
         WHERE passes_filters = 1 AND share_yn = 'Y'
         """
     ).fetchall()
     con.close()
-    catalysts = _load_catalysts()
+    catalysts = load_catalysts()
     print(f"지분(share_yn=Y) 매물 총: {len(rows)}건")
     print(f"호재 화이트리스트 항목: {len(catalysts)}건")
 
@@ -97,7 +97,12 @@ def main() -> int:
             n_risk_low += 1
             pass_risk.append(r)
 
-        cat = _match_catalyst(r["address_jibun"] or "", catalysts)
+        cat = match_catalyst(
+            r["address_jibun"] or "",
+            category=r["category"],
+            lat=r["geo_lat"],
+            lng=r["geo_lng"],
+        )
         if cat:
             n_cat += 1
         if risk == "low" and cat:

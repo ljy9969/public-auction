@@ -451,5 +451,11 @@ def _public_fields(row: dict[str, Any]) -> dict[str, Any]:
     # 지역 호재 — 주소 기반 화이트리스트 매칭 (DB 컬럼 아님, 서빙 시 계산)
     if "catalyst" in allowed:
         from scraper.catalysts import match_catalyst
-        out["catalyst"] = match_catalyst(row.get("address_jibun"))
+        # 카테고리/좌표 같이 넘겨 거리(B)·종목(C) 강등 룰 적용.
+        out["catalyst"] = match_catalyst(
+            row.get("address_jibun"),
+            category=row.get("category"),
+            lat=row.get("geo_lat"),
+            lng=row.get("geo_lng"),
+        )
     return out
