@@ -666,6 +666,12 @@ export default function PropertyList() {
                             {catalystImpactEmoji(p.catalyst.impact)}
                             {p.catalyst.impact ?? ""}
                           </strong>
+                          {p.catalyst.distance_km != null && (
+                            <span className="catalyst-dist" title="호재 중심점(역사·단지)으로부터 매물까지 직선거리">
+                              {" · "}
+                              {p.catalyst.distance_km.toFixed(2)}km
+                            </span>
+                          )}
                         </dd>
                       </>
                     )}

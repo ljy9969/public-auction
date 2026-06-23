@@ -361,6 +361,12 @@ button.secondary {
 .catalyst-dd strong {
   color: #b45309;
 }
+/* 호재 중심점 직선거리 — 보조 정보라 흐리고 normal-weight. */
+.catalyst-dist {
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.85em;
+}
 
 .property-photo {
   background: transparent;

@@ -108,6 +108,7 @@ export interface Catalyst {
   type: string | null;
   impact: string | null; // 상/중/하 — 매도가 상승 기여도
   confidence: string | null; // high/medium/low — 추진 확실성
+  distance_km?: number | null; // 호재 중심점으로부터 직선거리 (yaml coord 있을 때만)
 }
 
 /** 호재 매도가 상승 기여도(impact) → 이모지 (상🔴·중🟠·하🟡) */
