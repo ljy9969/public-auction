@@ -33,7 +33,7 @@ DB_PATH = ROOT / os.environ.get("ONBID_DB_PATH", "data/onbid.db")
 def _start_message() -> str:
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     return (
-        f"🚀 **BidPick 경공매 통합 재수집 시작** ({now})\n"
+        f"🚀 **BidScope 경공매 통합 재수집 시작** ({now})\n"
         "5단계 (수집·건축물대장/Kakao/ODsay·시세·권리분석/낙찰가·sweep) "
         "진행 중 — 완료 시 결과 요약 알림"
     )
@@ -65,7 +65,7 @@ def _summary(duration: str | None) -> str:
     con.close()
 
     cat_lines = "\n".join(f"  · {c}: {n}" for c, n in rows)
-    lines = ["✅ **BidPick 경공매 통합 재수집 완료**"]
+    lines = ["✅ **BidScope 경공매 통합 재수집 완료**"]
     if duration:
         lines.append(f"⏱️ 소요 시간: **{duration}**")
     lines.append(f"📊 매물 **{total}건** (공매 {onbid} · 경매 {court}) · 시세 **{mkt}** · 임대수익률 **{rent}**")

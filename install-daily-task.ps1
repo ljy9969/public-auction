@@ -1,4 +1,4 @@
-# install-daily-task.ps1 - Register BidPick daily refresh at 08:00 KST.
+# install-daily-task.ps1 - Register BidScope daily refresh at 08:00 KST.
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File .\install-daily-task.ps1
 #   powershell -ExecutionPolicy Bypass -File .\install-daily-task.ps1 -Uninstall
@@ -73,7 +73,7 @@ Register-ScheduledTask `
     -Trigger $trigger `
     -Settings $settings `
     -Principal $principal `
-    -Description "BidPick daily refresh — onbid + court scrape + 5종 backfill + Discord notify. Re-run install-daily-task.ps1 to update." | Out-Null
+    -Description "BidScope daily refresh — onbid + court scrape + 5종 backfill + Discord notify. Re-run install-daily-task.ps1 to update." | Out-Null
 
 $next = (Get-ScheduledTaskInfo -TaskName $taskName).NextRunTime
 

@@ -104,7 +104,7 @@ export default function App() {
       <header className="app-header">
         <h1 className="brand-mark">
           <Link to="/" className="header-home" aria-label="목록으로 돌아가기">
-            <span className="brand-name">BidPick</span>
+            <span className="brand-name">BidScope</span>
             <span className="brand-dot"> · </span>
             <span className="brand-tagline">경공매 큐레이션</span>
           </Link>

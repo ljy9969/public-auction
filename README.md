@@ -1,10 +1,10 @@
-# BidPick · 공·경매 큐레이션
+# BidScope · 공·경매 큐레이션
 
 **공매**([온비드 조건검색](https://www.onbid.co.kr/op/cltrpbancinf/cltr/cltrcdtnsrch/CltrCdtnSrchController/mvmnCltrCdtnSrchClg.do) Playwright)
 + **경매**([법원경매정보](https://www.courtauction.go.kr) WebSquare JSON API)
 통합 스크래퍼 + 송파/강남·영등포/서대문·수도권 후처리 필터 + React UI + FastAPI 백엔드.
 
-> 브랜드: 헤더 워드마크 `BidPick · 공매 큐레이션` (그라데이션 slate→blue). 모바일 ≤420px에서 tagline·dot 자동 숨김.
+> 브랜드: 헤더 워드마크 `BidScope · 공매 큐레이션` (그라데이션 slate→blue). 모바일 ≤420px에서 tagline·dot 자동 숨김.
 
 매물 1건당:
 - **건축물대장**으로 지상층수·엘리베이터·사용승인일·도로명주소
@@ -269,7 +269,7 @@ scraper/
   analyze_rights.py   권리분석 휴리스틱 (#9)
   predict_price.py    낙찰가 예측 (#10)
 web/src/
-  App.tsx             라우팅 + 헤더(BidPick 워드마크·검색바·탭 칩)
+  App.tsx             라우팅 + 헤더(BidScope 워드마크·검색바·탭 칩)
   pages/
     PropertyList.tsx  목록 (탭 5개 + 필터 바 + 지도)
     PropertyDetail.tsx 상세 (KPI + 권리분석 + 모의입찰 + 시세 + 임대)
@@ -314,18 +314,18 @@ docs/                 API notes + TODO
 ## 법원경매 원문 자동 prefill (유저스크립트)
 
 법원경매정보(`courtauction.go.kr`)는 WebSquare SPA라 URL query params로 폼을
-prefill할 방법이 없다. **Tampermonkey + 유저스크립트** 한 번 설치하면 BidPick
+prefill할 방법이 없다. **Tampermonkey + 유저스크립트** 한 번 설치하면 BidScope
 링크 한 클릭으로 법원·연도·타경 번호가 자동 입력되고 검색 버튼까지 클릭된다.
 
 ### 설치 (1회)
 
 1. **Tampermonkey 확장** 설치 — [Chrome](https://chromewebstore.google.com/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) / [Edge](https://microsoftedge.microsoft.com/addons/detail/iikmkjmpaadaobahmlepeloendndfphd) / [Firefox](https://addons.mozilla.org/firefox/addon/tampermonkey/)
-2. [`userscript/bidpick-court-prefill.user.js`](userscript/bidpick-court-prefill.user.js) 파일 내용을 복사
+2. [`userscript/bidscope-court-prefill.user.js`](userscript/bidscope-court-prefill.user.js) 파일 내용을 복사
 3. Tampermonkey 대시보드 → 「새 스크립트 만들기」 → 붙여넣기 → 저장
 
 ### 동작
 
-- BidPick 카드의 `법원경매정보 물건상세검색 →` 링크 클릭 → 새 탭에 PGJ151F00 페이지
+- BidScope 카드의 `법원경매정보 물건상세검색 →` 링크 클릭 → 새 탭에 PGJ151F00 페이지
 - URL hash(`#cort=B000214&year=2025&sa=3671`) 를 유저스크립트가 읽음
 - WebSquare 폼이 그려지면 XPath로 법원/연도/타경 입력 + change 이벤트 발사
 - 0.6초 후 검색 버튼 자동 클릭 → 매물 결과 화면

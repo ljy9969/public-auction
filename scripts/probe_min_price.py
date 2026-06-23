@@ -1,6 +1,6 @@
 """한 매물의 가격 관련 필드 진단 — DB / detail API 양쪽에서.
 
-사용자 보고: 1회 유찰된 매물의 BidPick min_price 가 감정가와 동일.
+사용자 보고: 1회 유찰된 매물의 BidScope min_price 가 감정가와 동일.
 검색 API의 minmaePrice 가 첫 회차 가격을 그대로 반환하는 게 의심.
 
 Usage:

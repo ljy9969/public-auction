@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         BidPick · 법원경매 prefill
+// @name         BidScope · 법원경매 prefill
 // @namespace    https://github.com/ljy9969/public-auction
 // @version      1.3.0
-// @description  BidPick 카드 링크의 URL hash(#cort=...&year=...&sa=...)를 읽어 법원경매정보 물건상세검색 폼을 자동으로 채우고 검색 버튼 클릭
+// @description  BidScope 카드 링크의 URL hash(#cort=...&year=...&sa=...)를 읽어 법원경매정보 물건상세검색 폼을 자동으로 채우고 검색 버튼 클릭
 // @match        https://www.courtauction.go.kr/pgj/index.on*
 // @grant        none
 // @run-at       document-idle
@@ -11,11 +11,11 @@
 (function () {
   "use strict";
 
-  console.log("[BidPick] userscript v1.3.0 loaded on", location.href);
+  console.log("[BidScope] userscript v1.3.0 loaded on", location.href);
 
   // 물건상세검색(PGJ151F00) 페이지일 때만 동작 — 다른 메뉴 무시
   if (!location.search.includes("PGJ151F00")) {
-    console.log("[BidPick] skip: not PGJ151F00");
+    console.log("[BidScope] skip: not PGJ151F00");
     return;
   }
 
@@ -25,9 +25,9 @@
   const cortName = params.get("name");
   const year = params.get("year");
   const sa = params.get("sa");
-  console.log("[BidPick] hash params:", { cort, cortName, year, sa });
+  console.log("[BidScope] hash params:", { cort, cortName, year, sa });
   if (!cort && !cortName && !year && !sa) {
-    console.log("[BidPick] skip: no params");
+    console.log("[BidScope] skip: no params");
     return;
   }
 
@@ -102,21 +102,21 @@
       } else {
         // 디버깅 — 실제 option들이 어떤 값인지 console에 dump
         console.warn(
-          "[BidPick] prefill TIMEOUT — elements=%s cortReady=%s yearReady=%s",
+          "[BidScope] prefill TIMEOUT — elements=%s cortReady=%s yearReady=%s",
           !!elementsReady, cortReady, yearReady,
         );
         if (elCort && elCort.options) {
-          console.log("[BidPick] elCort options:",
+          console.log("[BidScope] elCort options:",
             Array.from(elCort.options).map(o => ({ value: o.value, text: o.text })));
         }
         if (elYear && elYear.options) {
-          console.log("[BidPick] elYear options:",
+          console.log("[BidScope] elYear options:",
             Array.from(elYear.options).map(o => ({ value: o.value, text: o.text })));
         }
         // 폴백: cort 매칭 실패해도 year + sa만 채우기 시도
         if (year && elYear) setAndFire(elYear, year);
         if (sa && elSa) setAndFire(elSa, sa);
-        console.log("[BidPick] 폴백 — cort 제외하고 year/sa만 채움");
+        console.log("[BidScope] 폴백 — cort 제외하고 year/sa만 채움");
       }
       return;
     }
@@ -126,14 +126,14 @@
     if (year && setAndFire(elYear, year)) touched++;
     if (sa && setAndFire(elSa, sa)) touched++;
     console.log(
-      `[BidPick] prefill: ${touched}개 필드 채움 (cort=${cortMatchValue} year=${year} sa=${sa})`
+      `[BidScope] prefill: ${touched}개 필드 채움 (cort=${cortMatchValue} year=${year} sa=${sa})`
     );
 
     // 검증 — 의도한 값이 실제로 들어갔는지 확인. 다르면 한 번 더.
     setTimeout(() => {
       if (cortMatchValue && elCort.value !== cortMatchValue) {
         console.warn(
-          "[BidPick] prefill: 법원 값 불일치 (expected=%s actual=%s) — 재시도",
+          "[BidScope] prefill: 법원 값 불일치 (expected=%s actual=%s) — 재시도",
           cortMatchValue,
           elCort.value,
         );
@@ -148,9 +148,9 @@
       const btn = findSearchButton();
       if (btn) {
         btn.click();
-        console.log("[BidPick] prefill: 검색 버튼 클릭");
+        console.log("[BidScope] prefill: 검색 버튼 클릭");
       } else {
-        console.warn("[BidPick] prefill: 검색 버튼 못 찾음 — 수동 클릭 필요");
+        console.warn("[BidScope] prefill: 검색 버튼 못 찾음 — 수동 클릭 필요");
       }
     }
   }
