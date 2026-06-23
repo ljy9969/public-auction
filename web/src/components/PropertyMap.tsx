@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatPrice, type MarketSample, type ParcelGeometry } from "../api";
 
 interface PropertyMapProps {
@@ -35,6 +35,10 @@ export default function PropertyMap({ lat, lng, title, comps, mapType = "normal"
   // SDK 객체에 정적 타입이 없어 런타임 ref 로만 보관 — mapType 변경 시 setMapTypeId 호출.
   const mapInstanceRef = useRef<any>(null);
   const parcelRef = useRef<any>(null);
+  // SDK 로드가 비동기라 parcel 도착이 map init 보다 빠르면 폴리곤 useEffect 가 일찍
+  // early-return 한 뒤 재트리거되지 않는다(2026-06-17 race). init 완료 신호를 state로
+  // 발행해 폴리곤 useEffect 의 의존성에 끼워 init 이후 한 번 더 돌게 한다.
+  const [mapReady, setMapReady] = useState(false);
   const naverKey = (import.meta.env.VITE_NAVER_MAP_CLIENT_ID as string | undefined)?.trim();
 
   useEffect(() => {
@@ -52,6 +56,7 @@ export default function PropertyMap({ lat, lng, title, comps, mapType = "normal"
         mapTypeControl: false, // 외부 토글 버튼이 H3 옆에 별도로 있음
       });
       mapInstanceRef.current = map;
+      setMapReady(true);
       // 매물 본 마커 (빨강 핀)
       new maps.Marker({
         position: center,
@@ -167,7 +172,7 @@ export default function PropertyMap({ lat, lng, title, comps, mapType = "normal"
     } catch {
       /* 좌표 형식 이상 시 폴리곤 생략 */
     }
-  }, [parcel]);
+  }, [parcel, mapReady]);
 
   if (naverKey) {
     return (
