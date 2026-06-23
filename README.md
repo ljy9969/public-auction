@@ -15,6 +15,7 @@
 - **국토부 오피스텔 전월세**로 임대 수익률 추정 (보증금 차감 후 연 수익률)
 - **온비드 사진 다건**(atchSn 2~6) — 갤러리 + lightbox 큰 사진(CLG)
 - **온비드 상세 페이지 자동 fetch** — `fn_goCltrDetail()` POST 우회로 면적정보 표 파싱 (건물지분 자동 분류)
+- **지역 호재 매칭**(`regional_catalysts.yaml`) — 주소 + 호재 중심좌표 거리 + 종목으로 impact(상/중/하) 동적 강등
 - 카테고리별 지역 분기 + 매물별 유찰 cap 분기 등 다중 후처리 필터
 
 ## 사전 준비
@@ -69,13 +70,20 @@ powershell -ExecutionPolicy Bypass -File .\stop-all.ps1
 
 매일 08:00에 [`daily-scrape.ps1`](daily-scrape.ps1) 1회 실행:
 
-1. 수집 (`scraper.run --max-pages 10`)
-2. Backfill_all (Kakao geo + 건축물대장 + ODsay)
-3. Backfill_realprice (국토부 실거래가)
-4. Backfill_analysis (권리분석 + 낙찰가 예측)
-4.5. **sweep_filters --apply --delete** — 강화된 필터에 안 맞는 잔존 행(drift) 자동 삭제
-5. Discord 요약 알림
-+ D-day 임박 매물 푸시(`notify_dday --days 7`)
+1. **[0/5]** Discord 시작 알림 (`notify_discord --start`)
+2. **[1/5]** 수집 (`scraper.run` + `scraper_court.run --apply`)
+3. **[1.5~1.7]** 법원경매 사진·면적·당회차 최저가 백필 (`backfill_court_photos/area/prices`)
+4. **[2/5]** Backfill_all (Kakao geo + 건축물대장 + ODsay)
+5. **[2.5]** 법원경매 토지 지분 비율 백필 (`backfill_land_share_ratio`)
+6. **[3/5]** Backfill_realprice (국토부 실거래가)
+7. **[4/5]** Backfill_analysis (권리분석 + 낙찰가 예측)
+8. **[4.5]** sweep_filters --apply --delete (drift 정리)
+9. **[4.7]** 지분 투자 추천 Discord 알림 (`notify_share_investment`) — 권리 안전 + 시세/감정가 ≤70% + 지역 호재 3조건 통과 매물
+10. **[5/5]** Discord 완료 요약 알림 + 소요 시간
+11. **[bonus]** D-day 임박 매물 푸시 (`notify_dday --days 7`)
+12. **[mark]** mark_daily_refresh_complete — 헤더 "마지막 갱신" 시각을 사이클 종료 시점으로 반영
+
+> 🛡️ daily-scrape.ps1 머리에 `$env:PYTHONIOENCODING='utf-8'` + `[Console]::OutputEncoding=UTF8` 설정 — 자식 Python의 한국어 stdout이 cp949로 깨져 PowerShell 셸이 NativeCommandError 로 침묵 종료되던 사고(2026-06-16) 재발 방지.
 
 ```powershell
 # 등록 (최초 1회)
@@ -146,6 +154,17 @@ http://localhost:5173 — Vite dev 서버가 `/api` → port 8000 프록시.
 - **상세 페이지 fetch**: 검색 페이지의 `fn_goCltrDetail()` JS 함수를 `page.evaluate`로 호출 — POST submit으로 detail HTML(792KB+) 정상 수신 후 면적정보 표 파싱 (PC table + 모바일 `.op_mobile_tbl01 ul li.col_item` 양쪽 지원)
 - **건축물대장 보강**: 지상층수, 엘리베이터 대수, 사용승인일, 도로명주소 자동 수집
 
+## 지역 호재 매칭 (`scraper/catalysts.py` + `regional_catalysts.yaml`)
+
+매물에 지역 호재(반도체·신도시·GTX 등 30종)를 자동 매칭. 광역 행정구역 단위 매칭이 *임야·외곽 매물*까지 "상" 으로 잡던 한계를 3단계 강등으로 보정.
+
+1. **주소 문자열 게이트** — yaml의 `match: ["평택시 안중읍"]` 같은 키워드가 매물 `address_jibun` 에 포함되면 후보 채택.
+2. **좌표 거리 강등 (B)** — yaml에 `coord: [lat, lng]` 가 있고 매물도 `geo_lat/lng` 가 있으면 haversine 직선거리 계산:
+   - `<3km` 유지 / `3~6km` 한 단계 ↓ / `6~10km` 두 단계 ↓ / `>10km` 매칭 취소
+3. **종목 강등 (C)** — `category` 가 호재 수혜 제한 종목(임야·전답·잡종지·묘지·종교용지·공원)이면 한 단계 ↓. 단 *대지·주거·주택·오피스텔·상가·도시형생활주택* 키워드가 함께 있으면 강등 보류.
+
+`coord` 없는 호재는 종전대로 주소 매칭만 적용(점진 마이그레이션). 매칭 결과는 `{name, type, impact, confidence, distance_km}` 로 매물 응답에 attach 되어 카드/상세에서 표시.
+
 ## 시세 매칭 로직 (국토부 실거래가) — `scraper/filters/realprice.py`
 
 MOLIT엔 좌표가 없어 **행정동(법정동)·지번·단지명·면적**으로 비교 거래를 찾는다.
@@ -208,6 +227,8 @@ MOLIT엔 좌표가 없어 **행정동(법정동)·지번·단지명·면적**으
   - 네이버: 검색 URL `m.land.naver.com/search/result/{단지명 or 도로명}` — 좌표 URL(`m.land.naver.com/map/{lat}:{lng}:17`)은 **404**, `fin.land.naver.com/map?layer=...`는 base64 인코딩 JSON이라 외부 구성 불가. 단지명 매칭되면 단지 카드 직진(필터 우회), 미매칭은 매물유형 필터 사용자 조정 필요
 - **유사 매물** — 같은 법정동 다른 매물 (최대 6개)
 - **온비드 원문 보기** — 검색 페이지에 물건관리번호 prefill (직접 mvmnCltrDtl.do 접근은 차단되어 우회)
+- **메모** — 헤더 "📝 메모" 토글 → textarea(≤500자) 자유 텍스트. 임장 기록·체크 사항·가격 메리트 등. onBlur·Ctrl+Enter 자동 저장(`POST /api/properties/{id}/memo`). 메모 있는 매물은 페이지 로드 시 자동 펼침
+- **추천 알림 제외(블랙리스트)** — 지분 투자 Discord 알림에서만 빼는 수동 플래그. 토글 + 사유(≤50자) 입력. 목록 카드의 '블랙리스트' 칩 hover 시 사유가 툴팁으로 노출
 
 ### 카테고리 칩 (한눈에 매물 평가)
 - **층수**: 저/중/고 (건축물대장 `grndFlrCnt` 기반 상대 비율, 미확보 시 절대 휴리스틱)
@@ -226,7 +247,7 @@ MOLIT엔 좌표가 없어 **행정동(법정동)·지번·단지명·면적**으
 
 ```text
 scraper/
-  config/             YAML 설정
+  config/             YAML 설정 (criteria.yaml, regional_catalysts.yaml)
   filters/
     region.py         송파/강남 화이트리스트, 선릉 3km
     geo.py            Kakao 지오코딩 + Nominatim 폴백
@@ -234,11 +255,13 @@ scraper/
     quality.py        지분/유찰/카테고리/마감
     building.py       건축물대장 표제부 — 층수/엘리베이터/도로명
     elevator.py       엘리베이터 추출 (raw + 상세 + 등본)
+    realprice.py      국토부 실거래가 매칭 (시세 + 임대수익률)
+  catalysts.py        지역 호재 매칭 (주소 게이트 → 거리 강등 → 종목 강등)
   session.py          Playwright 세션 (검색 + 상세 페이지)
   search.py           조건검색 POST
   parse.py            list/detail HTML 파싱
   detail.py           상세 페이지 fetch (Playwright → httpx 폴백)
-  db.py               SQLite + idempotent 마이그레이션
+  db.py               SQLite + idempotent 마이그레이션 (alert_blacklist·memo 포함)
   run.py              CLI 진입점
 
 api/main.py           FastAPI REST
@@ -259,9 +282,15 @@ scripts/
   backfill_all.py     세 가지 한꺼번에
   backfill_realprice.py 국토부 실거래가(시세) 백필
   backfill_analysis.py  권리분석·낙찰가 예측 백필 (#9/#10)
+  backfill_court_photos.py / backfill_court_prices.py / backfill_court_area.py
+                      법원경매 상세 페이지에서 사진·당회차 최저가·지번별 면적 백필
+  backfill_land_share_ratio.py 법원경매 토지 지분 비율 (10분의9 → 90%)
   sweep_filters.py    Drift 방지 — 강화된 quality.py로 기존 행 재평가
-  notify_discord.py   재수집 완료 Discord 웹훅 알림
-  notify_dday.py      입찰 D-day 임박 매물 Discord 알림 (#3)
+  notify_discord.py   재수집 시작·완료 Discord 웹훅 알림
+  notify_dday.py      입찰 D-day 임박 매물 Discord 알림 (#3, 2000자 초과 시 청크 분할)
+  notify_share_investment.py 지분 투자 추천 Discord 알림 (권리 안전 + 저가 + 호재)
+  probe_share_picks.py 지분 추천 0건 진단 — 조건별 통과 매물 카운트
+  mark_daily_refresh_complete.py search_runs에 사이클 종료 시점 row 추가
 api/
   main.py             FastAPI REST
   stats.py            현 매물 기반 통계 집계 (/api/stats/summary)
@@ -296,6 +325,9 @@ docs/                 API notes + TODO
 | GET | `/api/stats/summary` | 통계 대시보드 데이터 (카테고리·유찰·지역·가격대·시계열·권리 위험) |
 | POST | `/api/scrape?max_pages=3` | 백그라운드 수집 시작 — **풀파이프** (1) scraper.run (2) backfill_all (3) backfill_realprice (4) backfill_analysis (5) sweep_filters. daily-scrape.ps1과 동일 단계. 웹 헤더의 "지금 수집" 버튼이 이걸 호출 |
 | GET | `/api/scrape/status` | 수집 진행 상태 — **진행 중이 아니면 DB `search_runs` 우선** (daily-scrape.ps1 같은 별도 프로세스 수집도 반영). 진행 중일 땐 `message` 필드가 각 단계 라벨(예 `[3/5] 백필 (국토부 실거래가 시세)`)을 노출 |
+| POST | `/api/properties/{id}/blacklist?blacklisted=&reason=` | 추천 알림 블랙리스트 토글 + 사유(≤50자). reason 미전송 / blacklisted=false 면 사유 자동 비움 |
+| POST | `/api/properties/{id}/memo?memo=...` | 매물 메모 저장 (≤500자). 빈 문자열/None → NULL |
+| GET | `/api/properties/{id}/parcel` | 지번 경계 폴리곤 GeoJSON — VWorld 연속지적도 캐시. 좌표·키 없으면 204 |
 
 ## 외부 API 키 발급
 
