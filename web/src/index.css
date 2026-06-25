@@ -2428,7 +2428,10 @@ button.secondary {
 }
 .parties-list {
   display: grid;
-  grid-template-columns: max-content 1fr;
+  /* minmax(0, 1fr) — 1fr 만 두면 콘텐츠가 길 때 그리드가 부모를 밀고
+     늘어나 카드 밖으로 흐름. 0 minimum으로 강제해 dd 안의 인라인 텍스트가
+     자연 wrap 되도록 (해곡동 산65-5 공유자 64명 사례 2026-06-25). */
+  grid-template-columns: max-content minmax(0, 1fr);
   gap: 0.4rem 1rem;
   margin: 0.6rem 0 0.4rem;
 }
