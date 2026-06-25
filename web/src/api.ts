@@ -71,6 +71,10 @@ export interface Property {
   alert_blacklist: boolean;
   alert_blacklist_reason: string | null;
   memo: string | null;
+  /** 법원경매 사건의 당사자내역 (court 매물만 채워짐) */
+  parties: { role: string; name: string; seq: number }[] | null;
+  /** "공유자" + "채무자겸소유자" 합산 */
+  co_owner_count: number | null;
   source: "onbid" | "court";
   court_case_no: string | null;
   court_office_cd: string | null;

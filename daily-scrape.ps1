@@ -63,6 +63,9 @@ Append-Output (& $python -m scripts.backfill_court_prices 2>&1)
 Write-Log '[1.7/5] Backfill court object-level area (detail objctArDts)'
 Append-Output (& $python -m scripts.backfill_court_area 2>&1)
 
+Write-Log '[1.8/5] Backfill court parties (dlt_rletCsIntrpsLst - co-owner count)'
+Append-Output (& $python -m scripts.backfill_court_parties 2>&1)
+
 Write-Log '[2/5] Backfill building registry + Kakao geo + ODsay transit'
 Append-Output (& $python -m scripts.backfill_all 2>&1)
 

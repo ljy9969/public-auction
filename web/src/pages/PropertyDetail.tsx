@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import BidSimulator from "../components/BidSimulator";
 import MarketRangeChart from "../components/MarketRangeChart";
@@ -859,6 +859,40 @@ export default function PropertyDetail() {
                 </ul>
               )}
               <p className="section-disclaimer">{prop.rights_analysis.disclaimer}</p>
+            </section>
+          )}
+
+          {prop.parties && prop.parties.length > 0 && (
+            <section className="detail-section parties-section">
+              <h3 className="section-title">
+                사건 당사자
+                <span className="parties-count">총 {prop.parties.length}명</span>
+                {prop.co_owner_count != null && prop.co_owner_count > 0 && (
+                  <span className="parties-co-owner">
+                    공유자 {prop.co_owner_count}명
+                  </span>
+                )}
+              </h3>
+              <dl className="parties-list">
+                {Object.entries(
+                  prop.parties.reduce<Record<string, string[]>>((acc, p) => {
+                    const role = p.role || "기타";
+                    (acc[role] ||= []).push(p.name || "(이름 없음)");
+                    return acc;
+                  }, {}),
+                ).map(([role, names]) => (
+                  <Fragment key={role}>
+                    <dt>
+                      {role}
+                      {names.length > 1 && <span className="parties-role-n"> ({names.length})</span>}
+                    </dt>
+                    <dd>{names.join(", ")}</dd>
+                  </Fragment>
+                ))}
+              </dl>
+              <p className="section-disclaimer">
+                법원경매정보 사건상세조회 기준 — 변동 시 다음 일일 갱신에 반영
+              </p>
             </section>
           )}
 

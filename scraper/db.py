@@ -131,6 +131,11 @@ _EXTRA_COLUMNS: list[tuple[str, str]] = [
     # 사용자가 상세 페이지에서 자유롭게 적는 메모 — 알림 블랙리스트(=알림에서 제외)와
     # 독립적으로, 임장 메모·체크 사항 등 자유로운 텍스트(≤500자, 2026-06-16).
     ("memo", "TEXT"),
+    # 법원경매 사건의 당사자내역(채권자·공유자 등) — selectCsDtlInf endpoint에서
+    # fetch한 [{role, name, seq}] 리스트의 JSON. court 매물에만 채워짐(2026-06-25).
+    ("parties_json", "TEXT"),
+    # 공유자 카운트 = "공유자" + "채무자겸소유자" 합산 (사용자 결정 B).
+    ("co_owner_count", "INTEGER"),
 ]
 
 
@@ -377,6 +382,37 @@ def set_alert_blacklist(
     return {
         "alert_blacklist": bool(row["alert_blacklist"]),
         "alert_blacklist_reason": row["alert_blacklist_reason"],
+    }
+
+
+def set_parties(
+    prop_id: int,
+    parties: list[dict] | None,
+    co_owner_count: int | None,
+    db_path: Path | None = None,
+) -> dict | None:
+    """법원경매 사건 당사자내역 저장. 매물이 없으면 None.
+
+    parties=None / [] 면 parties_json=NULL 로. co_owner_count는 그대로 INT 저장.
+    """
+    parties_json = json.dumps(parties, ensure_ascii=False) if parties else None
+    conn = get_connection(db_path)
+    cur = conn.execute(
+        "UPDATE properties SET parties_json = ?, co_owner_count = ? WHERE id = ?",
+        (parties_json, co_owner_count, prop_id),
+    )
+    conn.commit()
+    if not cur.rowcount:
+        conn.close()
+        return None
+    row = conn.execute(
+        "SELECT parties_json, co_owner_count FROM properties WHERE id = ?",
+        (prop_id,),
+    ).fetchone()
+    conn.close()
+    return {
+        "parties_json": row["parties_json"],
+        "co_owner_count": row["co_owner_count"],
     }
 
 

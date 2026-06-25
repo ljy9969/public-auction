@@ -76,6 +76,10 @@ class PropertyBase(BaseModel):
     alert_blacklist: bool = False
     alert_blacklist_reason: str | None = None
     memo: str | None = None
+    # 법원경매 사건의 당사자내역(이해관계인). court 매물만 채워짐.
+    parties: list[dict[str, Any]] | None = None
+    # "공유자" + "채무자겸소유자" 합산 (사용자 결정 B).
+    co_owner_count: int | None = None
     source: str = "onbid"
     court_case_no: str | None = None
     court_office_cd: str | None = None

@@ -1,0 +1,517 @@
+[
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "cortExecrOfcDvsCd": "00079B"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcDeptLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "cortOfcCd": "B000210"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcDeptLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "cortOfcCd": "B000210"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectAdongSdLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "pbancMidYn": "Y",
+      "srchDvsCd": "B",
+      "pbancDvsCd": "A"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectAdongSdLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "pbancMidYn": "Y",
+      "srchDvsCd": "B",
+      "pbancDvsCd": "BR"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectRnConsonantLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": null
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectRdnmAddr.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "pbancMidYn": "Y",
+      "srchDvsCd": "B",
+      "pbancDvsCd": "B",
+      "adongSdCd": "",
+      "adongSggCd": "",
+      "conValue1": "35207",
+      "conValue2": "45207"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "STG-SYSTM_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "PGJ-BID_DVS_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "PGJ-RLET_DSPSL_SPC_COND_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectLclLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "dsignUsgDvsCd": ""
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj151/selectGdsDtlBmrkSrchCond.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "submissionid": "mf_wfm_mainFrame_sbm_selectBmrkSrchCondLst",
+      "content-type": "application/json;charset=UTF-8"
+    },
+    "body": {
+      "dma_srchBmrkSrchCond": {
+        "cortAuctnMbrsId": "",
+        "cortAuctnSrchCondCd": "0004601"
+      }
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/getLoginInfoUrl.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": null
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/lgnMbrsId.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "submissionid": "mf_wfm_header_sbm_lgnMbrsId",
+      "sc-userid": "SYSTEM",
+      "content-type": "application/json;charset=UTF-8"
+    },
+    "body": null
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcDeptLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "cortOfcCd": "B000253"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgjsearch/searchControllerMain.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "submissionid": "mf_wfm_mainFrame_sbm_selectGdsDtlSrch",
+      "sc-userid": "SYSTEM",
+      "content-type": "application/json;charset=UTF-8"
+    },
+    "body": {
+      "dma_pageInfo": {
+        "pageNo": 1,
+        "pageSize": 10,
+        "bfPageNo": "",
+        "startRowNo": "",
+        "totalCnt": "",
+        "totalYn": "Y",
+        "groupTotalCount": ""
+      },
+      "dma_srchGdsDtlSrchInfo": {
+        "rletDspslSpcCondCd": "",
+        "bidDvsCd": "000331",
+        "mvprpRletDvsCd": "00031R",
+        "cortAuctnSrchCondCd": "0004601",
+        "rprsAdongSdCd": "",
+        "rprsAdongSggCd": "",
+        "rprsAdongEmdCd": "",
+        "rdnmSdCd": "",
+        "rdnmSggCd": "",
+        "rdnmNo": "",
+        "mvprpDspslPlcAdongSdCd": "",
+        "mvprpDspslPlcAdongSggCd": "",
+        "mvprpDspslPlcAdongEmdCd": "",
+        "rdDspslPlcAdongSdCd": "",
+        "rdDspslPlcAdongSggCd": "",
+        "rdDspslPlcAdongEmdCd": "",
+        "cortOfcCd": "B000253",
+        "jdbnCd": "",
+        "execrOfcDvsCd": "",
+        "lclDspslGdsLstUsgCd": "",
+        "mclDspslGdsLstUsgCd": "",
+        "sclDspslGdsLstUsgCd": "",
+        "cortAuctnMbrsId": "",
+        "aeeEvlAmtMin": "",
+        "aeeEvlAmtMax": "",
+        "lwsDspslPrcRateMin": "",
+        "lwsDspslPrcRateMax": "",
+        "flbdNcntMin": "",
+        "flbdNcntMax": "",
+        "objctArDtsMin": "",
+        "objctArDtsMax": "",
+        "mvprpArtclKndCd": "",
+        "mvprpArtclNm": "",
+        "mvprpAtchmPlcTypCd": "",
+        "notifyLoc": "off",
+        "lafjOrderBy": "",
+        "pgmId": "PGJ151F01",
+        "csNo": "2025타경42692",
+        "cortStDvs": "1",
+        "statNum": 1,
+        "bidBgngYmd": "20260625",
+        "bidEndYmd": "20260709",
+        "dspslDxdyYmd": "",
+        "fstDspslHm": "",
+        "scndDspslHm": "",
+        "thrdDspslHm": "",
+        "fothDspslHm": "",
+        "dspslPlcNm": "",
+        "lwsDspslPrcMin": "",
+        "lwsDspslPrcMax": "",
+        "grbxTypCd": "",
+        "gdsVendNm": "",
+        "fuelKndCd": "",
+        "carMdyrMax": "",
+        "carMdyrMin": "",
+        "carMdlNm": "",
+        "sideDvsCd": ""
+      }
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "cortExecrOfcDvsCd": "00079B"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj15B/selectAuctnCsSrchRslt.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "submissionid": "mf_wfm_mainFrame_sbm_selectGdsDtlSrchDtlInfo",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json;charset=UTF-8"
+    },
+    "body": {
+      "dma_srchGdsDtlSrch": {
+        "csNo": "2025타경42692",
+        "cortOfcCd": "B000253",
+        "dspslGdsSeq": "1",
+        "pgmId": "PGJ151F01",
+        "srchInfo": {
+          "rletDspslSpcCondCd": "",
+          "bidDvsCd": "000331",
+          "mvprpRletDvsCd": "00031R",
+          "cortAuctnSrchCondCd": "0004601",
+          "rprsAdongSdCd": "",
+          "rprsAdongSggCd": "",
+          "rprsAdongEmdCd": "",
+          "rdnmSdCd": "",
+          "rdnmSggCd": "",
+          "rdnmNo": "",
+          "mvprpDspslPlcAdongSdCd": "",
+          "mvprpDspslPlcAdongSggCd": "",
+          "mvprpDspslPlcAdongEmdCd": "",
+          "rdDspslPlcAdongSdCd": "",
+          "rdDspslPlcAdongSggCd": "",
+          "rdDspslPlcAdongEmdCd": "",
+          "cortOfcCd": "B000253",
+          "jdbnCd": "",
+          "execrOfcDvsCd": "",
+          "lclDspslGdsLstUsgCd": "",
+          "mclDspslGdsLstUsgCd": "",
+          "sclDspslGdsLstUsgCd": "",
+          "cortAuctnMbrsId": "",
+          "aeeEvlAmtMin": "",
+          "aeeEvlAmtMax": "",
+          "lwsDspslPrcRateMin": "",
+          "lwsDspslPrcRateMax": "",
+          "flbdNcntMin": "",
+          "flbdNcntMax": "",
+          "objctArDtsMin": "",
+          "objctArDtsMax": "",
+          "mvprpArtclKndCd": "",
+          "mvprpArtclNm": "",
+          "mvprpAtchmPlcTypCd": "",
+          "notifyLoc": "off",
+          "lafjOrderBy": "",
+          "pgmId": "PGJ151F01",
+          "csNo": "2025타경42692",
+          "cortStDvs": "1",
+          "statNum": 1,
+          "bidBgngYmd": "20260625",
+          "bidEndYmd": "20260709",
+          "dspslDxdyYmd": "",
+          "fstDspslHm": "",
+          "scndDspslHm": "",
+          "thrdDspslHm": "",
+          "fothDspslHm": "",
+          "dspslPlcNm": "",
+          "lwsDspslPrcMin": "",
+          "lwsDspslPrcMax": "",
+          "grbxTypCd": "",
+          "gdsVendNm": "",
+          "fuelKndCd": "",
+          "carMdyrMax": "",
+          "carMdyrMin": "",
+          "carMdlNm": "",
+          "sideDvsCd": "2",
+          "srchRowIndex": 0,
+          "menuNm": "물건상세검색"
+        }
+      }
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "cortExecrOfcDvsCd": "00079B"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "PGJ-AUCTN_GDS_USG_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "PGJ-DSPSL_GDS_LST_USG_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "PGJ-CORT_AUCTN_PIC_DVS_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "LJH-AUCTN_DXDY_RSLT_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "PGJ-AUCTN_DXDY_KND_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "LJH-AUCTN_LST_DVS_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "PGJ-AEE_WEVL_MNPNT_TBLT_DVS_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "PGJ-AEE_WEVL_MNPNT_ITM_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj002/selectCortOfcLst.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "content-type": "application/json"
+    },
+    "body": {
+      "cortExecrOfcDvsCd": "00079B"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/pgj15A/selectAuctnCsSrchRslt.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "submissionid": "mf_wfm_mainFrame_sbm_selectCsDtlInf",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json;charset=UTF-8"
+    },
+    "body": {
+      "dma_srchCsDtlInf": {
+        "cortOfcCd": "B000253",
+        "csNo": "20250130042692"
+      }
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "STG-JDCPC_OFCWK_TASK_TYP_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "LJH-JH-ULTMT_DVS_CD"
+    }
+  },
+  {
+    "url": "https://www.courtauction.go.kr/pgj/scframe/lib/sccd/list.on",
+    "method": "POST",
+    "headers": {
+      "referer": "https://www.courtauction.go.kr/pgj/index.on?w2xPath=/pgj/ui/pgj100/PGJ151F00.xml",
+      "sc-userid": "NONUSER",
+      "content-type": "application/json"
+    },
+    "body": {
+      "intgGrpCdLst": "PGJ-ULTMT_DVS_CD"
+    }
+  }
+]

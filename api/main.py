@@ -448,6 +448,14 @@ def _public_fields(row: dict[str, Any]) -> dict[str, Any]:
             out["scraped_at"] = datetime.fromisoformat(out["scraped_at"].replace("Z", "+00:00"))
         except ValueError:
             pass
+    # parties_json(DB TEXT) → parties(list[dict]) 디코드. court 매물만 채워짐.
+    pj = row.get("parties_json")
+    if "parties" in allowed and isinstance(pj, str) and pj:
+        try:
+            import json as _json
+            out["parties"] = _json.loads(pj)
+        except (ValueError, TypeError):
+            pass
     # 지역 호재 — 주소 기반 화이트리스트 매칭 (DB 컬럼 아님, 서빙 시 계산)
     if "catalyst" in allowed:
         from scraper.catalysts import match_catalyst

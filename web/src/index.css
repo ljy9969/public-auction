@@ -2383,6 +2383,64 @@ button.secondary {
   color: #0f172a;
   font-size: 0.95rem;
 }
+
+/* 사건 당사자내역 — 권리분석 다음에 옴. 헤더에 총원 + 공유자 카운트 배지. */
+.parties-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.parties-count {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+.parties-co-owner {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #b45309;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+}
+.parties-list {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1rem;
+  margin: 0.6rem 0 0.4rem;
+}
+.parties-list dt {
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.88rem;
+  white-space: nowrap;
+}
+.parties-list dt .parties-role-n {
+  color: #b45309;
+  font-weight: 700;
+  margin-left: 0.15rem;
+}
+.parties-list dd {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  .parties-list {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+  .parties-list dd {
+    margin-bottom: 0.4rem;
+  }
+}
 .rights-flags {
   list-style: none;
   margin: 0 0 0.6rem;
