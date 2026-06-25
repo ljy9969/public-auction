@@ -881,19 +881,50 @@ export default function PropertyDetail() {
                     return acc;
                   }, {}),
                 ).map(([role, names]) => {
-                  // 공유자만 가나다(한국어) 순 정렬 — 같은 성씨끼리 모이게.
-                  // 다른 역할은 등기/접수 순서가 의미 있어 그대로 둠.
-                  const displayNames =
-                    role === "공유자"
-                      ? [...names].sort((a, b) => a.localeCompare(b, "ko"))
-                      : names;
+                  // 공유자는 인원수만 의미 있어 이름 나열 X — 성씨별 카운트로 표시
+                  // (동성=상속 여부 단서). 가나다 순. 2명 이상 성씨는 강조.
+                  if (role === "공유자") {
+                    const counts: Record<string, number> = {};
+                    for (const name of names) {
+                      const s = name.charAt(0) || "?";
+                      counts[s] = (counts[s] || 0) + 1;
+                    }
+                    const sorted = Object.entries(counts).sort(
+                      ([a], [b]) => a.localeCompare(b, "ko"),
+                    );
+                    return (
+                      <Fragment key={role}>
+                        <dt>
+                          공유자
+                          <span className="parties-role-n"> ({names.length})</span>
+                        </dt>
+                        <dd>
+                          {sorted.map(([s, n], i) => (
+                            <span
+                              key={s}
+                              className={
+                                n >= 2
+                                  ? "co-owner-surname dup"
+                                  : "co-owner-surname"
+                              }
+                              title={n >= 2 ? "동성 — 상속 등으로 인한 다지분 가능성" : undefined}
+                            >
+                              {i > 0 && ", "}
+                              {s} {n}명
+                            </span>
+                          ))}
+                        </dd>
+                      </Fragment>
+                    );
+                  }
+                  // 다른 역할은 등기/접수 순서가 의미 있어 그대로 이름 나열
                   return (
                     <Fragment key={role}>
                       <dt>
                         {role}
                         {names.length > 1 && <span className="parties-role-n"> ({names.length})</span>}
                       </dt>
-                      <dd>{displayNames.join(", ")}</dd>
+                      <dd>{names.join(", ")}</dd>
                     </Fragment>
                   );
                 })}

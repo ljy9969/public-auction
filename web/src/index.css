@@ -2443,6 +2443,14 @@ button.secondary {
   font-weight: 700;
   margin-left: 0.15rem;
 }
+/* 공유자 성씨별 카운트 — 동성(상속 의심) 강조 */
+.co-owner-surname {
+  white-space: nowrap;
+}
+.co-owner-surname.dup {
+  color: #b45309;
+  font-weight: 700;
+}
 .parties-list dd {
   margin: 0;
   color: #0f172a;
