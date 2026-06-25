@@ -62,7 +62,11 @@ export default function PropertyList() {
   const [subCategory, setSubCategory] = usePersistentState<string>("auction:subCategory", "all");
   const [tenantRisk, setTenantRisk] = usePersistentState<"all" | "yes" | "no">("auction:tenantRisk", "all");
   const [sourceFilter, setSourceFilter] = usePersistentState<"all" | "onbid" | "court">("auction:sourceFilter", "all");
-  const [sortKey, setSortKey] = usePersistentState<"default" | "price" | "area" | "transit" | "bidStart" | "fail" | "buildAge" | "shareRatio">("auction:sortKey", "default");
+  // 공유자(+채무자겸소유자) 카운트 범위 필터. court 매물만 값 있고, onbid는 null.
+  const [coOwnerRange, setCoOwnerRange] = usePersistentState<
+    "all" | "2" | "3-5" | "6-9" | "10+"
+  >("auction:coOwnerRange", "all");
+  const [sortKey, setSortKey] = usePersistentState<"default" | "price" | "area" | "transit" | "bidStart" | "fail" | "buildAge" | "shareRatio" | "coOwner">("auction:sortKey", "default");
   const [sortAsc, setSortAsc] = usePersistentState("auction:sortAsc", true);
   const cardListRef = useRef<HTMLDivElement | null>(null);
   const [scrollTargetId, setScrollTargetId] = useState<number | null>(null);
@@ -202,9 +206,16 @@ export default function PropertyList() {
         if (tenantRisk === "yes" && !hasRisk) return false;
         if (tenantRisk === "no" && hasRisk) return false;
       }
+      if (coOwnerRange !== "all") {
+        const c = p.co_owner_count ?? 0;
+        if (coOwnerRange === "2" && c !== 2) return false;
+        if (coOwnerRange === "3-5" && (c < 3 || c > 5)) return false;
+        if (coOwnerRange === "6-9" && (c < 6 || c > 9)) return false;
+        if (coOwnerRange === "10+" && c < 10) return false;
+      }
       return true;
     });
-  }, [items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, fav]);
+  }, [items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, coOwnerRange, fav]);
 
   const sortedItems: Property[] = useMemo(() => {
     if (sortKey === "default") return filteredItems;
@@ -212,6 +223,7 @@ export default function PropertyList() {
       if (sortKey === "price") return p.min_price ?? null;
       if (sortKey === "area") return p.area_build_m2 ?? null;
       if (sortKey === "fail") return p.fail_count ?? 0;
+      if (sortKey === "coOwner") return p.co_owner_count ?? null;
       if (sortKey === "bidStart") {
         if (!p.bid_start) return null;
         const d = new Date(p.bid_start.replace(" ", "T"));
@@ -286,6 +298,7 @@ export default function PropertyList() {
     setSubCategory("all");
     setTenantRisk("all");
     setSourceFilter("all");
+    setCoOwnerRange("all");
     setSortKey("default");
     setSortAsc(true);
   };
@@ -298,6 +311,7 @@ export default function PropertyList() {
     floorFilter !== "all" ||
     subCategory !== "all" ||
     tenantRisk !== "all" ||
+    coOwnerRange !== "all" ||
     sourceFilter !== "all" ||
     sortKey !== "default";
 
@@ -344,6 +358,21 @@ export default function PropertyList() {
       active.push({ key: "source", label: `구분: ${sourceFilter === "court" ? "경매" : "공매"}`, pred: (p) => (p.source || "onbid") === sourceFilter, clear: () => setSourceFilter("all") });
     if (tenantRisk !== "all")
       active.push({ key: "tenant", label: `임차인 인수: ${tenantRisk === "yes" ? "위험 있음" : "위험 없음"}`, pred: (p) => { const has = (p.filter_notes || []).some((t) => t.includes("임차인 인수")); return tenantRisk === "yes" ? has : !has; }, clear: () => setTenantRisk("all") });
+    if (coOwnerRange !== "all") {
+      const labelMap = { "2": "2명", "3-5": "3~5명", "6-9": "6~9명", "10+": "10명 이상" } as const;
+      active.push({
+        key: "coOwner",
+        label: `공유자: ${labelMap[coOwnerRange]}`,
+        pred: (p) => {
+          const c = p.co_owner_count ?? 0;
+          if (coOwnerRange === "2") return c === 2;
+          if (coOwnerRange === "3-5") return c >= 3 && c <= 5;
+          if (coOwnerRange === "6-9") return c >= 6 && c <= 9;
+          return c >= 10;
+        },
+        clear: () => setCoOwnerRange("all"),
+      });
+    }
 
     if (active.length === 0) return [];
 
@@ -355,7 +384,7 @@ export default function PropertyList() {
       })
       .filter((r) => r.count > 0)
       .sort((a, b) => b.count - a.count);
-  }, [sortedItems, items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, fav]);
+  }, [sortedItems, items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, coOwnerRange, fav]);
 
   return (
     <>
@@ -474,6 +503,19 @@ export default function PropertyList() {
           </select>
         </label>
         <label className="filter-select">
+          <span>공유자</span>
+          <select
+            value={coOwnerRange}
+            onChange={(e) => setCoOwnerRange(e.target.value as typeof coOwnerRange)}
+          >
+            <option value="all">전체</option>
+            <option value="2">2명</option>
+            <option value="3-5">3~5명</option>
+            <option value="6-9">6~9명</option>
+            <option value="10+">10명 이상</option>
+          </select>
+        </label>
+        <label className="filter-select">
           <span>구분</span>
           <select
             value={sourceFilter}
@@ -495,6 +537,7 @@ export default function PropertyList() {
               ["fail", "유찰횟수"],
               ["transit", "직장까지"],
               ["bidStart", "입찰 시작"],
+              ["coOwner", "공유자"],
             ];
             // '지분 %' 는 주거/토지 지분 탭에서만 의미가 있어 그 탭에서만 노출.
             if (tab === "주거 지분" || tab === "토지 지분") {
