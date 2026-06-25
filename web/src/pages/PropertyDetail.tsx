@@ -880,15 +880,23 @@ export default function PropertyDetail() {
                     (acc[role] ||= []).push(p.name || "(이름 없음)");
                     return acc;
                   }, {}),
-                ).map(([role, names]) => (
-                  <Fragment key={role}>
-                    <dt>
-                      {role}
-                      {names.length > 1 && <span className="parties-role-n"> ({names.length})</span>}
-                    </dt>
-                    <dd>{names.join(", ")}</dd>
-                  </Fragment>
-                ))}
+                ).map(([role, names]) => {
+                  // 공유자만 가나다(한국어) 순 정렬 — 같은 성씨끼리 모이게.
+                  // 다른 역할은 등기/접수 순서가 의미 있어 그대로 둠.
+                  const displayNames =
+                    role === "공유자"
+                      ? [...names].sort((a, b) => a.localeCompare(b, "ko"))
+                      : names;
+                  return (
+                    <Fragment key={role}>
+                      <dt>
+                        {role}
+                        {names.length > 1 && <span className="parties-role-n"> ({names.length})</span>}
+                      </dt>
+                      <dd>{displayNames.join(", ")}</dd>
+                    </Fragment>
+                  );
+                })}
               </dl>
               <p className="section-disclaimer">
                 법원경매정보 사건상세조회 기준 — 변동 시 다음 일일 갱신에 반영
