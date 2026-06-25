@@ -2052,6 +2052,23 @@ button.secondary {
   z-index: 2;
 }
 
+/* 공유자(+채무자겸소유자) 수 칩 — 지분 매물 협상 복잡도 신호. 보라 톤. */
+.card-header .co-owner-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #ede9fe;
+  color: #6d28d9;
+  border: 1px solid #c4b5fd;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  /* .card-link(z-index:1) 위로 띄워야 hover 시 title 툴팁이 보인다. */
+  position: relative;
+  z-index: 2;
+}
+
 /* 토지+건물 일괄매각 지분 구분 칩 — 청록 계열 */
 .bundle-chip {
   display: inline-flex;

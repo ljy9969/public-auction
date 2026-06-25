@@ -640,6 +640,14 @@ export default function PropertyList() {
                         블랙리스트
                       </span>
                     )}
+                    {p.co_owner_count != null && p.co_owner_count >= 2 && (
+                      <span
+                        className="co-owner-chip"
+                        title='"공유자" + "채무자겸소유자" 합산 — 지분권자 수가 많을수록 공유물분할 협상·매각 절차 복잡'
+                      >
+                        공유자 {p.co_owner_count}명
+                      </span>
+                    )}
                     {p.id != null && (
                       <button
                         type="button"
