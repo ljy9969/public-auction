@@ -900,18 +900,21 @@ export default function PropertyDetail() {
                         </dt>
                         <dd>
                           {sorted.map(([s, n], i) => (
-                            <span
-                              key={s}
-                              className={
-                                n >= 2
-                                  ? "co-owner-surname dup"
-                                  : "co-owner-surname"
-                              }
-                              title={n >= 2 ? "동성 — 상속 등으로 인한 다지분 가능성" : undefined}
-                            >
+                            <Fragment key={s}>
+                              {/* 콤마는 span 밖 — 각 항목은 nowrap이지만
+                                  콤마 위치에서 자연 줄바꿈 가능하게 한다. */}
                               {i > 0 && ", "}
-                              {s} {n}명
-                            </span>
+                              <span
+                                className={
+                                  n >= 2
+                                    ? "co-owner-surname dup"
+                                    : "co-owner-surname"
+                                }
+                                title={n >= 2 ? "동성 — 상속 등으로 인한 다지분 가능성" : undefined}
+                              >
+                                {s} {n}명
+                              </span>
+                            </Fragment>
                           ))}
                         </dd>
                       </Fragment>
