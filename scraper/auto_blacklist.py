@@ -6,12 +6,13 @@
   · 백필 분리: scripts/backfill_planned_re_suspect.py 가 매일 호출
 
 룰 (우선순위 — 매칭 시 첫 번째 reason만 채택):
-  1. 기획부동산 의심       ← planned_re_filter.judge (공유자+다양성)
-  2. 분양형 호텔           ← danger.py 가 filter_notes에 마킹 (caution:)
-  3. 분묘기지권 성립       ← danger.py (성립 명시·부정어 부재)
-  4. 무허가/불법건축물     ← danger.py (농지)
-  5. 선하지(고압선)        ← danger.py
-  6. 맹지(도로 미접)       ← danger.py
+  1. 기획부동산 의심        ← planned_re_filter.judge (공유자+다양성)
+  2. 분양형 호텔            ← danger.py 가 filter_notes에 마킹 (caution:)
+  3. 분묘기지권 성립        ← danger.py (성립 명시·부정어 부재)
+  4. 국가산단 지식산업센터  ← danger.py (가산동·구로동 우선)
+  5. 무허가/불법건축물      ← danger.py (농지)
+  6. 선하지(고압선)         ← danger.py
+  7. 맹지(도로 미접)        ← danger.py
 
 원천: 「실전 부동산 경매(수익 실현편)」 — 유근용·정민우
 """
@@ -32,6 +33,7 @@ from scraper.planned_re_filter import (
 _CAUTION_BLACKLIST_RULES = (
     ("분양형 호텔", "분양형 호텔 (시세 신뢰↓)"),
     ("분묘기지권 성립", "분묘기지권 성립"),
+    ("국가산단 지식산업센터", "국가산단 지산 (임대 제한)"),
     ("무허가/불법건축물", "무허가/불법건축물"),
     ("선하지", "선하지 (고압선)"),
     ("맹지", "맹지 (도로 미접)"),

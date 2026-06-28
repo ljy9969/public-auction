@@ -133,5 +133,13 @@ def apply_danger_filters(prop: dict[str, Any]) -> dict[str, Any]:
         ):
             notes.append("caution: 무허가/불법건축물 (농취증 불가 위험)")
 
+    # 16. 국가 산업단지 내 지식산업센터 — 임대 목적 취득 제한 (책 L478).
+    #   서울디지털산업단지(금천구 가산동·구로구 구로동) 우선 적용.
+    #   향후 KICOX GeoJSON 연동으로 전국 국가산단 확장 가능.
+    if re.search(r"지식산업\s*센터|아파트형\s*공장", text):
+        addr = (prop.get("address_jibun") or "")
+        if re.search(r"금천구\s*가산동|구로구\s*구로동", addr):
+            notes.append("caution: 국가산단 지식산업센터 (임대 목적 취득 제한)")
+
     prop["filter_notes"] = notes
     return prop
