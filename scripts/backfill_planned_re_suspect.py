@@ -38,10 +38,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scraper import db as scraper_db  # noqa: E402
-from scraper.planned_re_filter import (  # noqa: E402
-    AUTO_REASON_PREFIX,
+from scraper.auto_blacklist import (  # noqa: E402
     is_auto_managed,
-    judge,
+    judge_blacklist as judge,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -58,18 +57,19 @@ def main(argv: list[str] | None = None) -> int:
     scraper_db.get_connection(db_path).close()  # migration trigger
     con = sqlite3.connect(db_path)
     con.row_factory = sqlite3.Row
+    # 모든 매물 대상 — court(공유자 정보) + 전체(맹지/선하지/호텔 등 filter_notes 기반)
     rows = con.execute(
         """
-        SELECT id, address_jibun, parties_json, co_owner_count,
-               alert_blacklist, alert_blacklist_reason
+        SELECT id, source, address_jibun, parties_json, co_owner_count,
+               filter_notes, alert_blacklist, alert_blacklist_reason
         FROM properties
-        WHERE source = 'court' AND parties_json IS NOT NULL
+        WHERE passes_filters = 1
         """
     ).fetchall()
     con.close()
 
     if not rows:
-        print("대상 0건 (court 매물 + parties_json 채워진 매물 없음)")
+        print("대상 0건")
         return 0
 
     print(f"대상 {len(rows)}건 평가 시작{' (dry-run)' if args.dry_run else ''}")
@@ -80,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
     no_change = 0  # 변동 없음
 
     for r in rows:
-        suspect, new_reason = judge(r["parties_json"], r["co_owner_count"])
+        suspect, new_reason = judge(dict(r))
         current_bl = bool(r["alert_blacklist"])
         current_reason = r["alert_blacklist_reason"]
         auto = is_auto_managed(current_bl, current_reason)

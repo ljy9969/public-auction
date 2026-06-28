@@ -24,6 +24,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from scraper.db import delete_failed_properties, get_connection
+from scraper.filters.danger import apply_danger_filters
 from scraper.filters.quality import apply_quality_filters
 from scraper.filters.region import in_target_region
 
@@ -90,19 +91,28 @@ def main(argv: list[str] | None = None) -> int:
 
         # 2) quality 화이트리스트
         prop = apply_quality_filters(prop)
+        # 3) danger 룰(맹지·선하지·분양형 호텔·농업진흥지역 등) 재평가 — notes 보강.
+        #    수집 시 적용된 danger를 코드 변경 후 기존 매물에도 재반영하기 위함.
+        prop = apply_danger_filters(prop)
+        if args.apply:
+            # passes_filters는 quality/danger의 hard-block 결과를 그대로 반영,
+            # filter_notes는 새 룰까지 합쳐 갱신(블랙리스트 자동 격상이 이걸 보고 판단).
+            conn.execute(
+                "UPDATE properties SET passes_filters=?, filter_notes=? WHERE id=?",
+                (
+                    1 if prop.get("passes_filters", True) else 0,
+                    json.dumps(prop.get("filter_notes") or [], ensure_ascii=False),
+                    r["id"],
+                ),
+            )
         if not prop.get("passes_filters", True):
             fail += 1
             notes = prop.get("filter_notes") or []
             logger.info(
                 "FAIL id=%s min=%s appr=%s — %s",
                 r["id"], r["min_price"], r["appraisal_price"],
-                [n for n in notes if "quality:" in n],
+                [n for n in notes if "quality:" in n or "danger:" in n],
             )
-            if args.apply:
-                conn.execute(
-                    "UPDATE properties SET passes_filters=0, filter_notes=? WHERE id=?",
-                    (json.dumps(notes, ensure_ascii=False), r["id"]),
-                )
 
     if args.apply:
         conn.commit()

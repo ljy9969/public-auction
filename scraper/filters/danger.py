@@ -101,5 +101,12 @@ def apply_danger_filters(prop: dict[str, Any]) -> dict[str, Any]:
     if re.search(r"대지권\s*(?:미등기|없음|없|미정리)", text):
         notes.append("caution: 대지권 미등기")
 
+    # 14. 분양형 호텔 — 시세 신뢰 부족 + 운영사 의존 (책: 조심해야 할 분양형 호텔 투자)
+    #   생활숙박시설(레지던스)·호텔 객실 단위 분양 매물. 감정가·시세 비교 데이터 부족.
+    purp = (prop.get("main_purps") or "") + " " + (prop.get("title") or "")
+    if re.search(r"(?:생활)?\s*숙박\s*시설|레지던스|분양형\s*호텔", purp) or \
+            ("호텔" in purp and "객실" in text):
+        notes.append("caution: 분양형 호텔 (시세 신뢰↓·운영사 의존)")
+
     prop["filter_notes"] = notes
     return prop
