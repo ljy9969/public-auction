@@ -39,7 +39,12 @@ def _is_land(prop: dict[str, Any]) -> bool:
 
 
 def apply_danger_filters(prop: dict[str, Any]) -> dict[str, Any]:
-    notes: list[str] = list(prop.get("filter_notes") or [])
+    # filter_notes는 sweep 재실행 시 중복 누적 방지를 위해 caution/danger 항목은
+    # 모두 초기화하고 다시 평가한다. 사용자/타 모듈이 추가한 다른 prefix 노트는 유지.
+    notes: list[str] = [
+        n for n in (prop.get("filter_notes") or [])
+        if not (n.startswith("caution:") or n.startswith("danger:"))
+    ]
     text = _haystack(prop)
     is_land = _is_land(prop)
 
@@ -52,9 +57,15 @@ def apply_danger_filters(prop: dict[str, Any]) -> dict[str, Any]:
     if is_land and "맹지" in text:
         notes.append("caution: 맹지 (도로 미접)")
 
-    # 3. 분묘기지권 — 토지에 caution
+    # 3. 분묘기지권 — 토지. '성립' 명시되고 '미성립/불분명' 부재 시 격상 대상.
     if is_land and "분묘기지권" in text:
-        notes.append("caution: 분묘기지권")
+        # 부정어 인근 매칭 회피 — '미성립', '성립여부 불분명', '성립하지 아니' 등
+        neg = re.search(r"분묘기지권[\s\S]{0,40}(?:미\s*성립|성립\s*여부|성립하지|성립되지|불분명)", text)
+        pos = re.search(r"분묘기지권[\s\S]{0,40}성립", text)
+        if pos and not neg:
+            notes.append("caution: 분묘기지권 성립")
+        else:
+            notes.append("caution: 분묘기지권 (성립 여부 검토)")
 
     # 4. 대항력 있는 임차인 + 인수 위험 — 주거/오피스텔
     if not is_land:
@@ -73,9 +84,11 @@ def apply_danger_filters(prop: dict[str, Any]) -> dict[str, Any]:
     if is_land and "선하지" in text:
         notes.append("caution: 선하지 (고압선)")
 
-    # 7. 분묘 관련 일반 표현
-    if is_land and ("분묘" in text and "분묘기지권" not in text):
-        notes.append("caution: 분묘 존재")
+    # 7. 분묘 관련 일반 표현 — 부정어("분묘는 없", "분묘 없음", "발견되지" 등) 회피.
+    if is_land and "분묘" in text and "분묘기지권" not in text:
+        # '분묘' 뒤 0~10자 안에 '없'/'발견되지'/'발견하지 못' 같은 부정어 없을 때만
+        if not re.search(r"분묘[\s\S]{0,15}(?:없|발견되지|발견하지\s*못|확인되지)", text):
+            notes.append("caution: 분묘 존재")
 
     # 8. 유치권 — 공통 (등기부 외 권리, 인수 위험)
     if "유치권" in text:
@@ -107,6 +120,18 @@ def apply_danger_filters(prop: dict[str, Any]) -> dict[str, Any]:
     if re.search(r"(?:생활)?\s*숙박\s*시설|레지던스|분양형\s*호텔", purp) or \
             ("호텔" in purp and "객실" in text):
         notes.append("caution: 분양형 호텔 (시세 신뢰↓·운영사 의존)")
+
+    # 15. 농지 위 무허가/불법건축물 — 농취증 발급 불가 위험 (책 L827).
+    #   토지 매물에 한해 적용. 부정어("없음/없는" 등) 인근 매칭 회피.
+    if is_land and re.search(
+        r"(?:무허가|불법\s*건축물|위반\s*건축물|무단\s*증축|미등기\s*건물)", text
+    ):
+        # 직접 부정 부근(없음/없는/철거됨/철거완료)이 아닐 때만
+        if not re.search(
+            r"(?:무허가|불법\s*건축물|위반\s*건축물|미등기\s*건물)[\s\S]{0,12}"
+            r"(?:없|철거|미존재|확인되지)", text
+        ):
+            notes.append("caution: 무허가/불법건축물 (농취증 불가 위험)")
 
     prop["filter_notes"] = notes
     return prop
