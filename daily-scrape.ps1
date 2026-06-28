@@ -81,6 +81,9 @@ Append-Output (& $python -m scripts.backfill_analysis 2>&1)
 Write-Log '[4.5/5] Sweep filters — drop drift rows (stricter criteria.yaml)'
 Append-Output (& $python -m scripts.sweep_filters --apply --delete 2>&1)
 
+Write-Log '[4.55/5] Planned-RE suspect auto-blacklist (co-owner >=7 + surname diversity)'
+Append-Output (& $python -m scripts.backfill_planned_re_suspect 2>&1)
+
 Write-Log '[4.7/5] Discord notify — 지분 투자 추천 (권리 안전 + 시세/감정가 대비 저가 + 지역 호재)'
 Append-Output (& $python -m scripts.notify_share_investment 2>&1)
 
