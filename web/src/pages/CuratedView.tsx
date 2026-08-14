@@ -71,8 +71,11 @@ const THEMES: Theme[] = [
     key: "safe",
     emoji: "🛡️",
     title: "권리 안전",
-    description: "자동 권리분석 risk_level=안전 + 임차인 없음",
+    description: "주거용건물 중 자동 권리분석 risk_level=안전 + 임차인 없음",
+    // 토지(대지·임야·전답 등)는 임차인 개념 자체가 없어 tenant_count=0 이 무의미.
+    // '권리 안전' 은 대항력 있는 임차인 인수 리스크 판단 테마이므로 주거용건물에 한정.
     filter: (p) =>
+      (p.category || "").includes("주거") &&
       p.rights_analysis?.risk_level === "low" &&
       (p.rights_analysis?.tenant_count ?? 0) === 0,
     sort: (a, b) => (a.min_price ?? 0) - (b.min_price ?? 0),
