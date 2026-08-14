@@ -28,6 +28,28 @@ load_dotenv(ROOT / ".env")
 
 WEBHOOK = os.environ.get("DISCORD_WEBHOOK", "").strip()
 DB_PATH = ROOT / os.environ.get("ONBID_DB_PATH", "data/onbid.db")
+CLOUDFLARED_LOG = ROOT / ".cloudflared.log"
+
+
+def _current_tunnel_url() -> str | None:
+    """`.cloudflared.log`에서 가장 최근에 발급된 trycloudflare URL 반환.
+
+    cloudflared는 로그를 UTF-16 LE(BOM 포함)로 쓴다. 재기동마다 URL이 바뀌므로
+    항상 최신 발급분을 채택. 없으면 None(운영자가 curl로 대신 확인).
+    """
+    import re
+    if not CLOUDFLARED_LOG.exists():
+        return None
+    try:
+        # utf-16는 BOM 자동 감지. 실패 시 utf-16-le 폴백.
+        try:
+            content = CLOUDFLARED_LOG.read_text(encoding="utf-16")
+        except UnicodeError:
+            content = CLOUDFLARED_LOG.read_text(encoding="utf-16-le", errors="ignore")
+    except Exception:
+        return None
+    matches = re.findall(r"https://[a-z0-9-]+\.trycloudflare\.com", content)
+    return matches[-1] if matches else None
 
 
 def _start_message() -> str:
@@ -70,6 +92,10 @@ def _summary(duration: str | None) -> str:
         lines.append(f"⏱️ 소요 시간: **{duration}**")
     lines.append(f"📊 매물 **{total}건** (공매 {onbid} · 경매 {court}) · 시세 **{mkt}** · 임대수익률 **{rent}**")
     lines.append(cat_lines)
+    # 매 알림에 현재 접속 URL 동봉 — cloudflared 재기동마다 URL 바뀌어 매번 묻지 않게.
+    url = _current_tunnel_url()
+    if url:
+        lines.append(f"\n🌐 {url}")
     return "\n".join(lines)
 
 
