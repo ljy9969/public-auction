@@ -1753,10 +1753,13 @@ button.secondary {
   padding: 0.05rem 0.5rem;
   border-radius: 999px;
   color: #fff;
-  font-size: 0.75rem;
+  /* 큐레이션 카드 헤더에서 "D-Day"(4자)가 좁은 공간에 wrap 되던 문제 —
+     폰트 살짝 축소 + nowrap 강제. */
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   vertical-align: middle;
+  white-space: nowrap;
   background: linear-gradient(135deg, #38bdf8, #0ea5e9);
 }
 
