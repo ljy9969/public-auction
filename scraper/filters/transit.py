@@ -136,7 +136,10 @@ def kakao_car_minutes(
 
 def heuristic_transit_minutes(prop_lat: float, prop_lng: float) -> int:
     criteria = load_criteria()
-    dest_lat, dest_lng = _transit_destination(criteria)
+    # _transit_destination 은 (lat, lng, label) 3-tuple 반환 — dest_label 추가된
+    # 리팩터에서 이 호출부가 누락되어 신규 매물 좌표 백필이 매일 실패해온 버그
+    # (2026-08-30 이후 daily-scrape [2/5] 실패, id=2464/2475/2480 등 좌표 미채움).
+    dest_lat, dest_lng, _ = _transit_destination(criteria)
     best = 999
     for _name, slat, slng in NEARBY_STATIONS:
         walk_km = haversine_km(prop_lat, prop_lng, slat, slng)
