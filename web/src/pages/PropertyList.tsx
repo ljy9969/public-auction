@@ -26,6 +26,7 @@ import {
   tagCategory,
   translateTag,
   transitModeLabel,
+  formatTransitMinutes,
   type ParcelGeometry,
   type Property,
   type PropertyTab,
@@ -829,7 +830,7 @@ export default function PropertyList() {
                           ) : propertyTab(p) === "용도복합·오피스텔 쪈" ? (
                             <span className="dest-label me">선릉역 </span>
                           ) : null}
-                          {transitModeLabel(p.transit_mode)} 약 {p.transit_minutes}분 소요
+                          {transitModeLabel(p.transit_mode)} 약 {formatTransitMinutes(p.transit_minutes)} 소요
                           {p.transit_estimated ? " (추정)" : ""}
                           {p.transit_summary && (
                             <div className="route-summary">{p.transit_summary}</div>

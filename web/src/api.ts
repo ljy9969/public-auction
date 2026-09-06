@@ -344,6 +344,16 @@ export function formatArea(m2: number | null | undefined): string {
   return `${m2}㎡ (${pyeong.toFixed(2)}평)`;
 }
 
+/** 대중교통 소요 시간 포맷. 60분 미만은 "{n}분", 이상은 "{h}시간 {r}분" (r=0이면 시간만). */
+export function formatTransitMinutes(minutes: number | null | undefined): string {
+  if (minutes == null || !Number.isFinite(minutes) || minutes < 0) return "-";
+  const m = Math.round(minutes);
+  if (m < 60) return `${m}분`;
+  const h = Math.floor(m / 60);
+  const r = m % 60;
+  return r ? `${h}시간 ${r}분` : `${h}시간`;
+}
+
 /** 입찰 보증금 (공매 기본 10% — 최저가 기준) */
 export function bidDeposit(minPrice: number | null | undefined): number | null {
   if (!minPrice || minPrice <= 0) return null;
@@ -519,13 +529,13 @@ export function translateTag(tag: string): string {
   if (m) return `강남 (선릉 ${m[1]}km 이내)${zoneSuffix}`;
 
   m = tag.match(/^transit: (\d+)min to .+ \(est\.\)$/);
-  if (m) return `직장까지 약 ${m[1]}분 (추정)`;
+  if (m) return `직장까지 약 ${formatTransitMinutes(parseInt(m[1], 10))} (추정)`;
 
   m = tag.match(/^transit: (\d+)min to .+ \(actual\)$/);
-  if (m) return `직장까지 약 ${m[1]}분`;
+  if (m) return `직장까지 약 ${formatTransitMinutes(parseInt(m[1], 10))}`;
 
   m = tag.match(/^transit: (\d+)min to .+$/);
-  if (m) return `직장까지 약 ${m[1]}분`;
+  if (m) return `직장까지 약 ${formatTransitMinutes(parseInt(m[1], 10))}`;
 
   m = tag.match(/^transit: unreachable/);
   if (m) return "교통 경로 없음";

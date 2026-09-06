@@ -6,6 +6,7 @@ import {
   fetchProperties,
   formatDDay,
   formatPrice,
+  formatTransitMinutes,
   type Property,
 } from "../api";
 
@@ -161,7 +162,7 @@ function PropCard({ p }: { p: Property }) {
         </div>
       )}
       {p.transit_minutes != null && (
-        <div className="curated-card-meta">직장 {p.transit_minutes}분</div>
+        <div className="curated-card-meta">직장 {formatTransitMinutes(p.transit_minutes)}</div>
       )}
     </Link>
   );

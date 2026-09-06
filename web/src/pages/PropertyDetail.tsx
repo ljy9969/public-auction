@@ -34,6 +34,7 @@ import {
   tagCategory,
   translateTag,
   transitModeLabel,
+  formatTransitMinutes,
   type AiEstimate,
   type ParcelGeometry,
   type Property,
@@ -946,7 +947,7 @@ export default function PropertyDetail() {
                   label: "직장까지",
                   value:
                     prop.transit_minutes != null
-                      ? `${isSisterZone ? "서대문역 " : isMeZone ? "선릉역 " : ""}${transitModeLabel(prop.transit_mode)} 약 ${prop.transit_minutes}분 소요${prop.transit_estimated ? " (추정)" : ""}`
+                      ? `${isSisterZone ? "서대문역 " : isMeZone ? "선릉역 " : ""}${transitModeLabel(prop.transit_mode)} 약 ${formatTransitMinutes(prop.transit_minutes)} 소요${prop.transit_estimated ? " (추정)" : ""}`
                       : null,
                 },
                 {
@@ -1507,7 +1508,7 @@ export default function PropertyDetail() {
                   <span className="similar-title">{s.title}</span>
                   <span className="similar-meta">
                     {formatPrice(s.min_price)} · 유찰 {s.fail_count ?? 0}회
-                    {s.transit_minutes != null && ` · 직장 ${s.transit_minutes}분`}
+                    {s.transit_minutes != null && ` · 직장 ${formatTransitMinutes(s.transit_minutes)}`}
                   </span>
                 </Link>
               </li>
