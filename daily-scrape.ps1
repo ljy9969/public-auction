@@ -1,4 +1,4 @@
-# daily-scrape.ps1 - Daily auction data refresh (scrape + backfills + Discord notify).
+﻿# daily-scrape.ps1 - Daily auction data refresh (scrape + backfills + Discord notify).
 # Registered to run at 08:00 daily via Task Scheduler (see install-daily-task.ps1).
 # Strictly ASCII English - PowerShell 5.1 cp949 fallback safe.
 # Logs to .daily-scrape.log.

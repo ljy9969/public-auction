@@ -1,4 +1,4 @@
-# install-daily-task.ps1 - Register BidScope daily refresh at 08:00 KST.
+﻿# install-daily-task.ps1 - Register BidScope daily refresh at 08:00 KST.
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File .\install-daily-task.ps1
 #   powershell -ExecutionPolicy Bypass -File .\install-daily-task.ps1 -Uninstall
