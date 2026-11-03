@@ -249,6 +249,68 @@ def set_memo(
     return {"id": prop_id, **result}
 
 
+@app.get("/api/properties/{prop_id}/photo/{idx}")
+def proxy_photo(prop_id: int, idx: int) -> Response:
+    """온비드 CDN 사진을 프록시 — Referer 세팅 + image/jpeg Content-Type 강제.
+
+    브라우저가 <img>로 직접 CDN URL을 요청하면 Content-Type이
+    application/octet-stream 이거나 Referer 체크로 가끔 거부되어
+    섹션 통째로 사라지는 문제(2026-11-03 id=3200 사례) 해결.
+    """
+    row = scraper_db.get_property(prop_id)
+    if not row:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    urls_raw = row.get("image_urls")
+    urls: list[str] = []
+    if urls_raw:
+        try:
+            parsed = json.loads(urls_raw) if isinstance(urls_raw, str) else urls_raw
+            if isinstance(parsed, list):
+                urls = [str(u) for u in parsed if u]
+        except (TypeError, ValueError):
+            pass
+    if not urls and row.get("image_url"):
+        urls = [str(row["image_url"])]
+    if idx < 0 or idx >= len(urls):
+        raise HTTPException(status_code=404, detail="Photo index out of range")
+
+    import httpx
+    try:
+        r = httpx.get(
+            urls[idx],
+            headers={
+                "Referer": "https://www.onbid.co.kr/",
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                    "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+                ),
+            },
+            timeout=15.0,
+            follow_redirects=True,
+        )
+    except httpx.HTTPError as e:
+        logger.warning("photo proxy fetch err id=%s idx=%s: %r", prop_id, idx, e)
+        raise HTTPException(status_code=502, detail="upstream fetch failed")
+    if r.status_code != 200 or not r.content:
+        raise HTTPException(status_code=502, detail=f"upstream status {r.status_code}")
+
+    # JFIF 시그니처 확인 → image/jpeg, 아니면 upstream Content-Type 유지
+    ct = "image/jpeg"
+    if r.content[:3] == b"\x89PN":
+        ct = "image/png"
+    elif r.content[:3] == b"GIF":
+        ct = "image/gif"
+    elif r.content[:2] != b"\xff\xd8":
+        ct = r.headers.get("content-type", "application/octet-stream")
+
+    return Response(
+        content=r.content,
+        media_type=ct,
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
 @app.get("/api/properties/{prop_id}/parcel")
 def get_parcel(prop_id: int) -> Response:
     """지번(번지) 경계 폴리곤 GeoJSON — 지도에서 마커와 함께 필지 영역 강조용.

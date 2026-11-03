@@ -671,11 +671,18 @@ export default function PropertyDetail() {
 
       {(prop.image_urls?.length || prop.image_url) && (
         <PhotoGallery
-          urls={prop.image_urls && prop.image_urls.length > 0
-            ? prop.image_urls
-            : prop.image_url
-            ? [prop.image_url]
-            : []}
+          urls={(() => {
+            // onbid 매물은 백엔드 프록시(/api/.../photo/{idx})로 라우트 —
+            // CDN 직접 요청 시 Content-Type/Referer 문제로 안 뜨는 경우가 있음.
+            // court 매물은 이미 로컬 파일 경로라 그대로.
+            const list = prop.image_urls && prop.image_urls.length > 0
+              ? prop.image_urls
+              : prop.image_url ? [prop.image_url] : [];
+            if (prop.source === "onbid" && prop.id != null) {
+              return list.map((_, i) => `/api/properties/${prop.id}/photo/${i}`);
+            }
+            return list;
+          })()}
           alt={prop.title}
         />
       )}

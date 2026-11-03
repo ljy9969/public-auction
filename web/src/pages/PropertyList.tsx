@@ -60,7 +60,8 @@ export default function PropertyList() {
   const [priceMax, setPriceMax] = usePersistentState<"all" | "1" | "2" | "3">("auction:priceMax", "all");
   const [ageMax, setAgeMax] = usePersistentState<"all" | "5" | "10" | "20">("auction:ageMax", "all");
   const [floorFilter, setFloorFilter] = usePersistentState<"all" | "저층" | "중층" | "고층">("auction:floorFilter", "all");
-  const [subCategory, setSubCategory] = usePersistentState<string>("auction:subCategory", "all");
+  // 다중선택 — 빈 배열이면 "전체 통과". localStorage 호환 위해 string[] 저장.
+  const [subCategories, setSubCategories] = usePersistentState<string[]>("auction:subCategories", []);
   const [tenantRisk, setTenantRisk] = usePersistentState<"all" | "yes" | "no">("auction:tenantRisk", "all");
   const [sourceFilter, setSourceFilter] = usePersistentState<"all" | "onbid" | "court">("auction:sourceFilter", "all");
   // 공유자(+채무자겸소유자) 카운트 범위 필터. court 매물만 값 있고, onbid는 null.
@@ -195,8 +196,10 @@ export default function PropertyList() {
         const floor = parseFloor(p.title, p.floor_total);
         if (floor.category !== floorFilter) return false;
       }
-      if (subCategory !== "all") {
-        if (!(p.category || "").includes(subCategory)) return false;
+      if (subCategories.length > 0) {
+        const cat = p.category || "";
+        // 선택된 것 중 하나라도 category 에 포함되면 통과(OR)
+        if (!subCategories.some((s) => cat.includes(s))) return false;
       }
       if (sourceFilter !== "all") {
         const src = p.source || "onbid";
@@ -216,7 +219,7 @@ export default function PropertyList() {
       }
       return true;
     });
-  }, [items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, coOwnerRange, fav]);
+  }, [items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategories, tenantRisk, sourceFilter, coOwnerRange, fav]);
 
   const sortedItems: Property[] = useMemo(() => {
     if (sortKey === "default") return filteredItems;
@@ -296,7 +299,7 @@ export default function PropertyList() {
     setPriceMax("all");
     setAgeMax("all");
     setFloorFilter("all");
-    setSubCategory("all");
+    setSubCategories([]);
     setTenantRisk("all");
     setSourceFilter("all");
     setCoOwnerRange("all");
@@ -310,7 +313,7 @@ export default function PropertyList() {
     priceMax !== "all" ||
     ageMax !== "all" ||
     floorFilter !== "all" ||
-    subCategory !== "all" ||
+    subCategories.length > 0 ||
     tenantRisk !== "all" ||
     coOwnerRange !== "all" ||
     sourceFilter !== "all" ||
@@ -353,8 +356,16 @@ export default function PropertyList() {
       active.push({ key: "age", label: `연식 ${ageMax}년 이내`, pred: (p) => { if (!(p.use_apr_day && /^\d{8}$/.test(p.use_apr_day))) return true; return nowY - parseInt(p.use_apr_day.slice(0, 4), 10) <= parseInt(ageMax, 10); }, clear: () => setAgeMax("all") });
     if (floorFilter !== "all")
       active.push({ key: "floor", label: `층수: ${floorFilter}`, pred: (p) => parseFloor(p.title, p.floor_total).category === floorFilter, clear: () => setFloorFilter("all") });
-    if (subCategory !== "all")
-      active.push({ key: "sub", label: `용도: ${subCategory}`, pred: (p) => (p.category || "").includes(subCategory), clear: () => setSubCategory("all") });
+    if (subCategories.length > 0)
+      active.push({
+        key: "sub",
+        label: `용도: ${subCategories.length === 1 ? subCategories[0] : subCategories.length + '종'}`,
+        pred: (p) => {
+          const cat = p.category || "";
+          return subCategories.some((s) => cat.includes(s));
+        },
+        clear: () => setSubCategories([]),
+      });
     if (sourceFilter !== "all")
       active.push({ key: "source", label: `구분: ${sourceFilter === "court" ? "경매" : "공매"}`, pred: (p) => (p.source || "onbid") === sourceFilter, clear: () => setSourceFilter("all") });
     if (tenantRisk !== "all")
@@ -385,7 +396,7 @@ export default function PropertyList() {
       })
       .filter((r) => r.count > 0)
       .sort((a, b) => b.count - a.count);
-  }, [sortedItems, items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategory, tenantRisk, sourceFilter, coOwnerRange, fav]);
+  }, [sortedItems, items, tab, favOnly, showBlacklist, regionFilter, priceMax, ageMax, floorFilter, subCategories, tenantRisk, sourceFilter, coOwnerRange, fav]);
 
   return (
     <>
@@ -480,18 +491,48 @@ export default function PropertyList() {
             <option value="고층">고층</option>
           </select>
         </label>
-        <label className="filter-select">
-          <span>용도</span>
-          <select
-            value={subCategory}
-            onChange={(e) => setSubCategory(e.target.value)}
-          >
-            <option value="all">전체</option>
-            {SUB_CATEGORIES.map((c) => (
-              <option key={c} value={c}>{c}</option>
-            ))}
-          </select>
-        </label>
+        <details className="filter-select multi-select">
+          <summary>
+            <span>용도</span>
+            <span className="multi-value">
+              {subCategories.length === 0
+                ? "전체"
+                : subCategories.length === 1
+                  ? subCategories[0]
+                  : `${subCategories.length}종 선택`}
+            </span>
+          </summary>
+          <div className="multi-opts">
+            {SUB_CATEGORIES.map((c) => {
+              const on = subCategories.includes(c);
+              return (
+                <label key={c} className="multi-opt">
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSubCategories([...subCategories, c]);
+                      } else {
+                        setSubCategories(subCategories.filter((x) => x !== c));
+                      }
+                    }}
+                  />
+                  <span>{c}</span>
+                </label>
+              );
+            })}
+            {subCategories.length > 0 && (
+              <button
+                type="button"
+                className="multi-clear"
+                onClick={() => setSubCategories([])}
+              >
+                선택 전체 해제
+              </button>
+            )}
+          </div>
+        </details>
         <label className="filter-select">
           <span>임차인 인수</span>
           <select
