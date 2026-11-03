@@ -39,6 +39,7 @@ if str(ROOT) not in sys.path:
 
 from scraper import db as scraper_db  # noqa: E402
 from scraper.auto_blacklist import (  # noqa: E402
+    find_bundle_sale_case_nos,
     is_auto_managed,
     judge_blacklist as judge,
 )
@@ -57,11 +58,16 @@ def main(argv: list[str] | None = None) -> int:
     scraper_db.get_connection(db_path).close()  # migration trigger
     con = sqlite3.connect(db_path)
     con.row_factory = sqlite3.Row
+    # 묶음 분할 매각 — 같은 사건에 소지분 매물 ≥3건 집계 (사전 계산 후 각 판정에 전달)
+    bundle_case_nos = find_bundle_sale_case_nos(con.cursor())
+    if bundle_case_nos:
+        print(f"묶음 분할 사건: {len(bundle_case_nos)}건 — {sorted(bundle_case_nos)[:5]}{'...' if len(bundle_case_nos) > 5 else ''}")
     # 모든 매물 대상 — court(공유자 정보) + 전체(맹지/선하지/호텔 등 filter_notes 기반)
     rows = con.execute(
         """
         SELECT id, source, address_jibun, parties_json, co_owner_count,
-               filter_notes, alert_blacklist, alert_blacklist_reason
+               filter_notes, alert_blacklist, alert_blacklist_reason,
+               court_case_no, land_share_ratio, building_share_ratio
         FROM properties
         WHERE passes_filters = 1
         """
@@ -80,7 +86,7 @@ def main(argv: list[str] | None = None) -> int:
     no_change = 0  # 변동 없음
 
     for r in rows:
-        suspect, new_reason = judge(dict(r))
+        suspect, new_reason = judge(dict(r), bundle_case_nos=bundle_case_nos)
         current_bl = bool(r["alert_blacklist"])
         current_reason = r["alert_blacklist_reason"]
         auto = is_auto_managed(current_bl, current_reason)
